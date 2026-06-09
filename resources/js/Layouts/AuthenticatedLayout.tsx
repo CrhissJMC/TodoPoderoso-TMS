@@ -32,13 +32,11 @@ export default function Authenticated({
                         Panel de Control
                     </SidebarNavLink>
 
-                    {/* Nuevas opciones de ejemplo */}
-                    <SidebarNavLink href="#" active={false}>
-                        Clientes
-                    </SidebarNavLink>
-
-                    <SidebarNavLink href="#" active={false}>
-                        Usuarios
+                    <SidebarNavLink
+                        href={route('vehicles.index')}
+                        active={route().current('vehicles.index')}
+                    >
+                        Vehículos
                     </SidebarNavLink>
                 </div>
             </aside>
