@@ -31,7 +31,7 @@ class Vehicle extends Model
     // Tipos de vehículo disponibles
     public static function types(): array
     {
-        return ['camion', 'camioneta', 'furgon', 'trailer', 'moto', 'otro'];
+        return ['Auto', 'Minivan', 'Otro'];
     }
 
     // Estados posibles
