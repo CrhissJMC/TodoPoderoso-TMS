@@ -29,7 +29,7 @@ export default function GuestLayout({ children }: PropsWithChildren) {
                             Para mantenerte conectado con nosotros<br />por favor {isLogin ? 'inicia sesión con' : 'ingresa'} tus datos
                         </p>
 
-                        {/* Botón alternante */}
+                        {/* Botón alternante (Solo Escritorio) */}
                         <Link
                             href={isLogin ? route('register') : route('login')}
                             className="rounded-full border border-white px-14 py-2 text-sm font-semibold text-white transition hover:bg-white hover:text-[#136c40]"
@@ -41,17 +41,33 @@ export default function GuestLayout({ children }: PropsWithChildren) {
 
                 {/* Panel Derecho (Blanco - Contenido del Formulario) */}
                 <div className="flex w-full flex-col justify-center bg-white p-8 sm:p-16 lg:w-1/2">
+
                     {/* Logo Fuego para móviles (Solo se ve si la pantalla es pequeña) */}
                     <div className="mb-6 flex justify-center lg:hidden">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#136c40]">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#136c40] shadow-md">
                             <svg className="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M11.64,5.93h0l1.4,2.05a1.85,1.85,0,0,0,3,.14L17.84,6a.54.54,0,0,1,.87.48C18.4,11.23,15.26,17,12,17s-6.3-5.67-6.66-10.42a.54.54,0,0,1,.85-.51l1.6,1.44a1.86,1.86,0,0,0,2.89-.35Z" />
                             </svg>
                         </div>
                     </div>
-                    {children}
-                </div>
 
+                    {/* Formulario */}
+                    {children}
+
+                    {/* NUEVO: Enlace alternante para móviles (Oculto en escritorio) */}
+                    <div className="mt-8 text-center lg:hidden">
+                        <p className="text-sm text-gray-600 mb-2">
+                            {isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}
+                        </p>
+                        <Link
+                            href={isLogin ? route('register') : route('login')}
+                            className="text-sm font-bold text-[#136c40] hover:underline transition-colors"
+                        >
+                            {isLogin ? 'REGÍSTRATE AQUÍ' : 'INICIA SESIÓN AQUÍ'}
+                        </Link>
+                    </div>
+
+                </div>
             </div>
         </div>
     );

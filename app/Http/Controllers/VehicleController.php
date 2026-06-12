@@ -13,7 +13,6 @@ class VehicleController extends Controller
     {
         $query = Vehicle::query();
 
-        // Búsqueda general
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('plate', 'ilike', "%{$search}%")
@@ -22,12 +21,10 @@ class VehicleController extends Controller
             });
         }
 
-        // Filtro por estado
         if ($status = $request->get('status')) {
             $query->where('status', $status);
         }
 
-        // Filtro por tipo
         if ($type = $request->get('type')) {
             $query->where('type', $type);
         }
@@ -37,12 +34,13 @@ class VehicleController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        // Contadores para el resumen
+        // Contadores actualizados con los nuevos estados
         $counts = [
-            'total'            => Vehicle::count(),
-            'disponible'       => Vehicle::where('status', 'disponible')->count(),
-            'en_viaje'         => Vehicle::where('status', 'en_viaje')->count(),
-            'en_mantenimiento' => Vehicle::where('status', 'en_mantenimiento')->count(),
+            'total'         => Vehicle::count(),
+            'disponible'    => Vehicle::where('status', 'disponible')->count(),
+            'en_ruta'       => Vehicle::where('status', 'en_ruta')->count(),
+            'mantenimiento' => Vehicle::where('status', 'mantenimiento')->count(),
+            'inactivo'      => Vehicle::where('status', 'inactivo')->count(),
         ];
 
         return Inertia::render('Vehicles/Index', [
@@ -74,8 +72,7 @@ class VehicleController extends Controller
 
     public function destroy(Vehicle $vehicle)
     {
-        // Verificar si tiene viajes activos
-        if ($vehicle->trips()->whereIn('status', ['pendiente', 'en_curso'])->exists()) {
+        if ($vehicle->trips()->whereIn('status', ['programado', 'abordando', 'en_ruta'])->exists()) {
             return back()->with('error', 'No se puede eliminar un vehículo con viajes activos.');
         }
 
@@ -86,11 +83,11 @@ class VehicleController extends Controller
             ->with('success', 'Vehículo eliminado correctamente.');
     }
 
-    // Actualizar solo el estado (acceso rápido desde la tabla)
     public function updateStatus(Request $request, Vehicle $vehicle)
     {
+        // Validación actualizada
         $request->validate([
-            'status' => ['required', 'in:disponible,en_viaje,en_mantenimiento'],
+            'status' => ['required', 'in:disponible,en_ruta,mantenimiento,inactivo'],
         ]);
 
         $vehicle->update(['status' => $request->status]);

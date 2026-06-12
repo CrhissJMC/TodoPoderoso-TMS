@@ -12,8 +12,8 @@ export default function Dashboard() {
 
                     {/* Mensaje principal del Proyecto */}
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
-                        <div className="p-6 text-gray-900 dark:text-gray-100 text-xl font-bold">
-                            Bienvenido a Proyecto Tsm
+                        <div className="p-6 text-gray-900 dark:text-gray-400 text-xl font-bold">
+                            Bienvenido a Proyecto TSM
                         </div>
                     </div>
 

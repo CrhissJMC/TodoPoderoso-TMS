@@ -15,8 +15,8 @@ class Vehicle extends Model
         'brand',
         'model',
         'year',
-        'capacity',
-        'capacity_unit',
+        'capacity_seats', // NUEVO
+        'sellable_seats', // NUEVO
         'type',
         'status',
         'color',
@@ -24,23 +24,23 @@ class Vehicle extends Model
     ];
 
     protected $casts = [
-        'year'     => 'integer',
-        'capacity' => 'integer',
+        'year'           => 'integer',
+        'capacity_seats' => 'integer',
+        'sellable_seats' => 'integer',
     ];
 
-    // Tipos de vehículo disponibles
+    // Tipos de vehículo ajustados para personas
     public static function types(): array
     {
-        return ['Auto', 'Minivan', 'Otro'];
+        return ['Auto', 'Minivan', 'Bus', 'Otro'];
     }
 
-    // CORRECCIÓN CLAVE: Alineado con la BD y el DriverController
+    // Estados corregidos
     public static function statuses(): array
     {
         return ['disponible', 'en_ruta', 'mantenimiento', 'inactivo'];
     }
 
-    // Label legible del estado actualizado
     public function statusLabel(): string
     {
         return match ($this->status) {
@@ -52,19 +52,16 @@ class Vehicle extends Model
         };
     }
 
-    // Relación con conductores asignados (¡Ya lo tenías!)
     public function drivers()
     {
         return $this->hasMany(Driver::class);
     }
 
-    // Relación con viajes
     public function trips()
     {
         return $this->hasMany(Trip::class);
     }
 
-    // Scope: solo disponibles
     public function scopeAvailable($query)
     {
         return $query->where('status', 'disponible');
