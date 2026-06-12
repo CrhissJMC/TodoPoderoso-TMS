@@ -38,6 +38,13 @@ export default function Authenticated({
                     >
                         Vehículos
                     </SidebarNavLink>
+
+                    <SidebarNavLink
+                        href={route('drivers.index')}
+                        active={route().current('drivers.index')}
+                    >
+                        Conductores
+                    </SidebarNavLink>
                 </div>
             </aside>
 

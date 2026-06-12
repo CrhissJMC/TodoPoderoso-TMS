@@ -34,24 +34,25 @@ class Vehicle extends Model
         return ['Auto', 'Minivan', 'Otro'];
     }
 
-    // Estados posibles
+    // CORRECCIÓN CLAVE: Alineado con la BD y el DriverController
     public static function statuses(): array
     {
-        return ['disponible', 'en_viaje', 'en_mantenimiento'];
+        return ['disponible', 'en_ruta', 'mantenimiento', 'inactivo'];
     }
 
-    // Label legible del estado
+    // Label legible del estado actualizado
     public function statusLabel(): string
     {
         return match ($this->status) {
-            'disponible'       => 'Disponible',
-            'en_viaje'         => 'En viaje',
-            'en_mantenimiento' => 'En mantenimiento',
-            default            => $this->status,
+            'disponible'    => 'Disponible',
+            'en_ruta'       => 'En ruta',
+            'mantenimiento' => 'Mantenimiento',
+            'inactivo'      => 'Inactivo',
+            default         => ucfirst($this->status),
         };
     }
 
-    // Relación con conductores asignados
+    // Relación con conductores asignados (¡Ya lo tenías!)
     public function drivers()
     {
         return $this->hasMany(Driver::class);
