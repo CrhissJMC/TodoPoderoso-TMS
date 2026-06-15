@@ -32,6 +32,24 @@ export default function Authenticated({
                     <SidebarNavLink href={route('drivers.index')} active={route().current('drivers.index')}>
                         Conductores
                     </SidebarNavLink>
+                    <SidebarNavLink href={route('routes.index')} active={route().current('routes.index')}>
+                        Rutas
+                    </SidebarNavLink>
+                    <SidebarNavLink href={route('schedules.index')} active={route().current('schedules.index')}>
+                        Horarios
+                    </SidebarNavLink>
+                    <SidebarNavLink href={route('passengers.index')} active={route().current('passengers.index')}>
+                        Pasajeros
+                    </SidebarNavLink>
+                    <SidebarNavLink href={route('trips.index')} active={route().current('trips.index')}>
+                        Viajes
+                    </SidebarNavLink>
+                    <SidebarNavLink href={route('tickets.index')} active={route().current('tickets.index')}>
+                        Boletos
+                    </SidebarNavLink>
+                    <SidebarNavLink href={route('packages.index')} active={route().current('packages.index')}>
+                        Paquetes
+                    </SidebarNavLink>
                 </div>
             </aside>
 
@@ -42,7 +60,7 @@ export default function Authenticated({
                 {/* Cabecera del cajón */}
                 <div className="flex h-16 shrink-0 items-center justify-between border-b border-gray-800 px-6">
                     <span className="text-xl font-bold tracking-wider text-white uppercase">
-                        <span className="text-blue-500">TMS</span> Fuego
+                        <span className="text-blue-500">TMS</span>
                     </span>
                     <button onClick={() => setShowingMobileDrawer(false)} className="text-gray-400 hover:text-white">
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,6 +79,25 @@ export default function Authenticated({
                     </ResponsiveNavLink>
                     <ResponsiveNavLink href={route('drivers.index')} active={route().current('drivers.index')}>
                         Conductores
+                    </ResponsiveNavLink>
+                    {/* ENLACES MÓVILES AGREGADOS AQUÍ */}
+                    <ResponsiveNavLink href={route('routes.index')} active={route().current('routes.index')}>
+                        Rutas
+                    </ResponsiveNavLink>
+                    <ResponsiveNavLink href={route('schedules.index')} active={route().current('schedules.index')}>
+                        Horarios
+                    </ResponsiveNavLink>
+                    <ResponsiveNavLink href={route('passengers.index')} active={route().current('passengers.index')}>
+                        Pasajeros
+                    </ResponsiveNavLink>
+                    <ResponsiveNavLink href={route('trips.index')} active={route().current('trips.index')}>
+                        Viajes
+                    </ResponsiveNavLink>
+                    <ResponsiveNavLink href={route('tickets.index')} active={route().current('tickets.index')}>
+                        Boletos
+                    </ResponsiveNavLink>
+                    <ResponsiveNavLink href={route('packages.index')} active={route().current('packages.index')}>
+                        Paquetes
                     </ResponsiveNavLink>
                 </div>
 

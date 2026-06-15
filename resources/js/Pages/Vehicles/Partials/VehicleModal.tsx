@@ -17,8 +17,8 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
         brand: '',
         model: '',
         year: '',
-        capacity_seats: '', // NUEVO: Asientos totales
-        sellable_seats: '', // NUEVO: Asientos vendibles
+        capacity_seats: '',
+        sellable_seats: '',
         type: 'Minivan',
         status: 'disponible',
         color: '',
@@ -86,8 +86,9 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
                         <Field label="Placa *" error={errors.plate}>
                             <input
                                 value={data.plate}
-                                onChange={e => setData('plate', e.target.value.toUpperCase())}
+                                onChange={e => setData('plate', e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''))} // Bloquea caracteres no peruanos
                                 placeholder="ABC-123"
+                                maxLength={8}
                                 className={inputClass(errors.plate)}
                             />
                         </Field>
@@ -110,20 +111,44 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
                         </Field>
                     </div>
 
-                    {/* Fila 3: Asientos (NUEVO) */}
+                    {/* Fila 3: Asientos (Asegurados a solo números) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <Field label="Asientos Físicos Totales *" error={errors.capacity_seats}>
-                            <input type="number" min="1" value={data.capacity_seats} onChange={e => setData('capacity_seats', e.target.value)} placeholder="Ej. 15" className={inputClass(errors.capacity_seats)} />
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={3}
+                                value={data.capacity_seats}
+                                onChange={e => setData('capacity_seats', e.target.value.replace(/[^0-9]/g, ''))}
+                                placeholder="Ej. 15"
+                                className={inputClass(errors.capacity_seats)}
+                            />
                         </Field>
                         <Field label="Asientos Vendibles (Para pasajeros) *" error={errors.sellable_seats}>
-                            <input type="number" min="0" value={data.sellable_seats} onChange={e => setData('sellable_seats', e.target.value)} placeholder="Ej. 14" className={inputClass(errors.sellable_seats)} />
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={3}
+                                value={data.sellable_seats}
+                                onChange={e => setData('sellable_seats', e.target.value.replace(/[^0-9]/g, ''))}
+                                placeholder="Ej. 14"
+                                className={inputClass(errors.sellable_seats)}
+                            />
                         </Field>
                     </div>
 
                     {/* Fila 4 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                         <Field label="Año" error={errors.year}>
-                            <input type="number" value={data.year} onChange={e => setData('year', e.target.value)} placeholder="2024" min="1900" max={new Date().getFullYear() + 1} className={inputClass(errors.year)} />
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={4}
+                                value={data.year}
+                                onChange={e => setData('year', e.target.value.replace(/[^0-9]/g, ''))}
+                                placeholder="2024"
+                                className={inputClass(errors.year)}
+                            />
                         </Field>
                         <Field label="Color" error={errors.color}>
                             <input value={data.color} onChange={e => setData('color', e.target.value)} placeholder="Blanco" className={inputClass(errors.color)} />

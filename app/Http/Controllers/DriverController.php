@@ -48,9 +48,12 @@ class DriverController extends Controller
             'counts'            => $counts,
             'availableVehicles' => $availableVehicles,
             'filters'           => $request->only(['search', 'status']),
-            'statuses'          => Driver::statuses(),
-            'licenseTypes'      => Driver::licenseTypes(),
-            'contractTypes'     => Driver::contractTypes(), 
+            'statuses'          => Driver::statuses() ?? ['activo', 'inactivo', 'en_viaje'],
+            'licenseTypes'      => Driver::licenseTypes() ?? ['A-I', 'A-IIa', 'A-IIb', 'A-IIIa', 'A-IIIb', 'A-IIIc'],
+            'contractTypes'     => Driver::contractTypes() ?? ['Propietario', 'Tercero', 'Planilla'], 
+            // NUEVO: Agregamos esto para el modal de Vehículos
+            'vehicleTypes'      => ['Auto', 'Minivan', 'Bus', 'Otro'],
+            'vehicleStatuses'   => ['disponible', 'en_ruta', 'mantenimiento', 'inactivo'],
         ]);
     }
 
@@ -80,7 +83,6 @@ class DriverController extends Controller
 
     public function destroy(Driver $driver)
     {
-        // CORRECCIÓN CLAVE: Buscamos los estados del nuevo modelo de pasajeros
         if ($driver->trips()->whereIn('status', ['programado', 'abordando', 'en_ruta'])->exists()) {
             return back()->with('error', 'No se puede eliminar un conductor con viajes o salidas programadas.');
         }
@@ -111,7 +113,7 @@ class DriverController extends Controller
         return back()->with('success', 'Estado actualizado.');
     }
 
-    // ── METODOS PRIVADOS DE LÓGICA DE NEGOCIO ──────────────────────────────
+    // ── METODOS PRIVADOS ──────────────────────────────
 
     private function syncVehicleAssignment($vehicleId, $driverId)
     {
