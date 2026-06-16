@@ -24,32 +24,34 @@ class Ticket extends Model
         'ticket_code',
     ];
 
-    // Relaciones
-    public function trip()
+    protected $casts = [
+        'fare'        => 'decimal:2',
+        'seat_number' => 'integer',
+    ];
+
+    public static function ticketStatuses(): array
     {
-        return $this->belongsTo(Trip::class);
+        return ['emitido', 'abordado', 'anulado'];
     }
 
-    public function passenger()
+    public static function paymentMethods(): array
     {
-        return $this->belongsTo(Passenger::class);
+        return ['efectivo', 'yape', 'plin', 'tarjeta'];
     }
 
-    public function seller()
+    public static function paymentStatuses(): array
     {
-        return $this->belongsTo(User::class, 'sold_by');
+        return ['pagado', 'pendiente'];
     }
 
-    // Auto-generar código de ticket antes de crear
-    protected static function boot()
+    // Genera código único: TKT-00001
+    public static function generateTicketCode(): string
     {
-        parent::boot();
-
-        static::creating(function ($ticket) {
-            if (empty($ticket->ticket_code)) {
-                // Genera un código tipo: TKT-654A9B
-                $ticket->ticket_code = 'TKT-' . strtoupper(substr(uniqid(), -6));
-            }
-        });
+        $last = self::withTrashed()->latest('id')->value('id') ?? 0;
+        return 'TKT-' . str_pad($last + 1, 5, '0', STR_PAD_LEFT);
     }
+
+    public function trip()      { return $this->belongsTo(Trip::class); }
+    public function passenger() { return $this->belongsTo(Passenger::class); }
+    public function soldBy()    { return $this->belongsTo(User::class, 'sold_by'); }
 }

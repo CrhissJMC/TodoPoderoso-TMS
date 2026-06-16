@@ -48,8 +48,9 @@ export default function Authenticated({
                         Boletos
                     </SidebarNavLink>
                     <SidebarNavLink href={route('packages.index')} active={route().current('packages.index')}>
-                        Paquetes
+                        Encomiendas
                     </SidebarNavLink>
+
                 </div>
             </aside>
 
@@ -96,9 +97,10 @@ export default function Authenticated({
                     <ResponsiveNavLink href={route('tickets.index')} active={route().current('tickets.index')}>
                         Boletos
                     </ResponsiveNavLink>
-                    <ResponsiveNavLink href={route('packages.index')} active={route().current('packages.index')}>
-                        Paquetes
-                    </ResponsiveNavLink>
+                    <SidebarNavLink href={route('packages.index')} active={route().current('packages.index')}>
+                        Encomiendas
+                    </SidebarNavLink>
+
                 </div>
 
                 {/* Sección de usuario del cajón (abajo) */}

@@ -73,15 +73,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
          
     // Módulo de Boletos
     Route::resource('tickets', TicketController::class)
-         ->except(['create', 'edit', 'show']);
-    Route::patch('tickets/{ticket}/status', [TicketController::class, 'updateStatus'])
-         ->name('tickets.updateStatus');
-     
-     Route::resource('packages', PackageController::class)
          ->only(['index', 'store', 'update', 'destroy']);
 
-    Route::patch('packages/{package}/status', [PackageController::class, 'updateStatus'])
-         ->name('packages.updateStatus');
+    Route::patch('tickets/{ticket}/board', [TicketController::class, 'markBoarded'])
+         ->name('tickets.markBoarded');
+
+    Route::get('trips/{trip}/seat-map', [TicketController::class, 'seatMap'])
+         ->name('trips.seatMap');
+
+    // ── MÓDULO DE ENCOMIENDAS (AQUÍ ESTÁ LA SOLUCIÓN) ──
+    Route::resource('packages', PackageController::class)
+         ->only(['index', 'store', 'update', 'destroy']);
 
     // Consulta de rastreo (puede exponerse sin auth si se desea)
     Route::get('packages/track', [PackageController::class, 'track'])
