@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Http\Requests;
+
+use App\Models\Package;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class PackageRequest extends FormRequest
+{
+    public function authorize(): bool { return true; }
+
+    public function rules(): array
+    {
+        return [
+            'sender_name'    => ['required', 'string', 'max:150'],
+            'receiver_name'  => ['required', 'string', 'max:150'],
+            'origin'         => ['required', 'string', 'max:100'],
+            'destination'    => ['required', 'string', 'max:100'],
+            'trip_id'        => ['nullable', 'exists:trips,id'],
+            'package_type'   => ['required', 'string', Rule::in(Package::packageTypes())],
+            'weight'         => ['nullable', 'numeric', 'min:0.01', 'max:999'],
+            'dimensions'     => ['nullable', 'string', 'max:100'],
+            'price'          => ['required', 'numeric', 'min:0'],
+            'payment_method' => ['required', 'string', Rule::in(Package::paymentMethods())],
+            'payment_status' => ['required', 'string', Rule::in(Package::paymentStatuses())],
+            'observations'   => ['nullable', 'string', 'max:500'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'sender_name.required'   => 'El nombre del remitente es obligatorio.',
+            'receiver_name.required' => 'El nombre del destinatario es obligatorio.',
+            'origin.required'        => 'El origen es obligatorio.',
+            'destination.required'   => 'El destino es obligatorio.',
+            'package_type.required'  => 'El tipo de paquete es obligatorio.',
+            'price.required'         => 'El precio es obligatorio.',
+            'payment_method.required'=> 'El método de pago es obligatorio.',
+            'payment_status.required'=> 'El estado de pago es obligatorio.',
+            'weight.min'             => 'El peso debe ser mayor a 0.',
+        ];
+    }
+}

@@ -2,12 +2,11 @@ import { useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
 
 const TYPE_LABELS: Record<string, string> = {
-    camion: 'Camión', camioneta: 'Camioneta', furgon: 'Furgón',
-    trailer: 'Tráiler', moto: 'Moto', otro: 'Otro',
+    Auto: 'Auto', Minivan: 'Minivan', Bus: 'Bus', Otro: 'Otro',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-    disponible: 'Disponible', en_viaje: 'En viaje', en_mantenimiento: 'En mantenimiento',
+    disponible: 'Disponible', en_ruta: 'En ruta', mantenimiento: 'Mantenimiento', inactivo: 'Inactivo'
 };
 
 export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose }: any) {
@@ -18,9 +17,9 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
         brand: '',
         model: '',
         year: '',
-        capacity: '',
-        capacity_unit: 'ton',
-        type: 'camion',
+        capacity_seats: '',
+        sellable_seats: '',
+        type: 'Minivan',
         status: 'disponible',
         color: '',
         observations: '',
@@ -33,9 +32,9 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
                 brand: vehicle.brand ?? '',
                 model: vehicle.model ?? '',
                 year: vehicle.year ?? '',
-                capacity: vehicle.capacity ?? '',
-                capacity_unit: vehicle.capacity_unit ?? 'ton',
-                type: vehicle.type ?? 'camion',
+                capacity_seats: vehicle.capacity_seats ?? '',
+                sellable_seats: vehicle.sellable_seats ?? '',
+                type: vehicle.type ?? 'Minivan',
                 status: vehicle.status ?? 'disponible',
                 color: vehicle.color ?? '',
                 observations: vehicle.observations ?? '',
@@ -87,8 +86,9 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
                         <Field label="Placa *" error={errors.plate}>
                             <input
                                 value={data.plate}
-                                onChange={e => setData('plate', e.target.value.toUpperCase())}
+                                onChange={e => setData('plate', e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''))} // Bloquea caracteres no peruanos
                                 placeholder="ABC-123"
+                                maxLength={8}
                                 className={inputClass(errors.plate)}
                             />
                         </Field>
@@ -107,31 +107,51 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
                             <input value={data.brand} onChange={e => setData('brand', e.target.value)} placeholder="Ej. Toyota" className={inputClass(errors.brand)} />
                         </Field>
                         <Field label="Modelo *" error={errors.model}>
-                            <input value={data.model} onChange={e => setData('model', e.target.value)} placeholder="Ej. Hilux" className={inputClass(errors.model)} />
+                            <input value={data.model} onChange={e => setData('model', e.target.value)} placeholder="Ej. Hiace" className={inputClass(errors.model)} />
                         </Field>
                     </div>
 
-                    {/* Fila 3 */}
+                    {/* Fila 3: Asientos (Asegurados a solo números) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <Field label="Año" error={errors.year}>
-                            <input type="number" value={data.year} onChange={e => setData('year', e.target.value)} placeholder="2024" min="1900" max={new Date().getFullYear() + 1} className={inputClass(errors.year)} />
+                        <Field label="Asientos Físicos Totales *" error={errors.capacity_seats}>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={3}
+                                value={data.capacity_seats}
+                                onChange={e => setData('capacity_seats', e.target.value.replace(/[^0-9]/g, ''))}
+                                placeholder="Ej. 15"
+                                className={inputClass(errors.capacity_seats)}
+                            />
                         </Field>
-                        <Field label="Color" error={errors.color}>
-                            <input value={data.color} onChange={e => setData('color', e.target.value)} placeholder="Blanco" className={inputClass(errors.color)} />
+                        <Field label="Asientos Vendibles (Para pasajeros) *" error={errors.sellable_seats}>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={3}
+                                value={data.sellable_seats}
+                                onChange={e => setData('sellable_seats', e.target.value.replace(/[^0-9]/g, ''))}
+                                placeholder="Ej. 14"
+                                className={inputClass(errors.sellable_seats)}
+                            />
                         </Field>
                     </div>
 
                     {/* Fila 4 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <Field label="Capacidad *" error={errors.capacity}>
-                            <input type="number" value={data.capacity} onChange={e => setData('capacity', e.target.value)} placeholder="20" min="1" className={inputClass(errors.capacity)} />
+                        <Field label="Año" error={errors.year}>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={4}
+                                value={data.year}
+                                onChange={e => setData('year', e.target.value.replace(/[^0-9]/g, ''))}
+                                placeholder="2024"
+                                className={inputClass(errors.year)}
+                            />
                         </Field>
-                        <Field label="Unidad" error={errors.capacity_unit}>
-                            <select value={data.capacity_unit} onChange={e => setData('capacity_unit', e.target.value)} className={inputClass(errors.capacity_unit)}>
-                                <option value="ton">Toneladas</option>
-                                <option value="kg">Kilogramos</option>
-                                <option value="m3">Metros cúbicos</option>
-                            </select>
+                        <Field label="Color" error={errors.color}>
+                            <input value={data.color} onChange={e => setData('color', e.target.value)} placeholder="Blanco" className={inputClass(errors.color)} />
                         </Field>
                         <Field label="Estado *" error={errors.status}>
                             <select value={data.status} onChange={e => setData('status', e.target.value)} className={inputClass(errors.status)}>
@@ -182,7 +202,7 @@ function Field({ label, error, children }: any) {
 
 function inputClass(error: string | undefined) {
     return `w-full px-4 py-2.5 border rounded-lg text-sm bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 outline-none transition-shadow ${error
-            ? 'border-red-400 dark:border-red-500 focus:ring-red-500 focus:border-red-500'
-            : 'border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500'
+        ? 'border-red-400 dark:border-red-500 focus:ring-red-500 focus:border-red-500'
+        : 'border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500'
         }`;
 }

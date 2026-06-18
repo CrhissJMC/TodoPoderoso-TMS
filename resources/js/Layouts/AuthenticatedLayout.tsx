@@ -9,50 +9,60 @@ export default function Authenticated({
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const user = usePage().props.auth.user;
-
-    // Renombrado para que sea más claro el propósito
     const [showingMobileDrawer, setShowingMobileDrawer] = useState(false);
 
     return (
         <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-            {/* Sidebar (Desktop) - Se mantiene igual */}
+            {/* Sidebar (Desktop) */}
             <aside className="hidden w-64 flex-shrink-0 bg-gray-900 md:flex md:flex-col">
                 {/* Logo Area */}
                 <div className="flex h-16 shrink-0 items-center justify-center border-b border-gray-800 px-6">
-                    <span className="text-2xl font-bold tracking-wider text-white">
-                        <span className="text-blue-500">Mi</span>App
+                    <span className="text-xl font-bold tracking-wider text-white uppercase">
+                        <span className="text-blue-500">TMS</span>
                     </span>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
-                    <SidebarNavLink
-                        href={route('dashboard')}
-                        active={route().current('dashboard')}
-                    >
+                    <SidebarNavLink href={route('dashboard')} active={route().current('dashboard')}>
                         Panel de Control
                     </SidebarNavLink>
-
-                    <SidebarNavLink
-                        href={route('vehicles.index')}
-                        active={route().current('vehicles.index')}
-                    >
+                    <SidebarNavLink href={route('vehicles.index')} active={route().current('vehicles.index')}>
                         Vehículos
                     </SidebarNavLink>
+                    <SidebarNavLink href={route('drivers.index')} active={route().current('drivers.index')}>
+                        Conductores
+                    </SidebarNavLink>
+                    <SidebarNavLink href={route('routes.index')} active={route().current('routes.index')}>
+                        Rutas
+                    </SidebarNavLink>
+                    <SidebarNavLink href={route('schedules.index')} active={route().current('schedules.index')}>
+                        Horarios
+                    </SidebarNavLink>
+                    <SidebarNavLink href={route('passengers.index')} active={route().current('passengers.index')}>
+                        Pasajeros
+                    </SidebarNavLink>
+                    <SidebarNavLink href={route('trips.index')} active={route().current('trips.index')}>
+                        Viajes
+                    </SidebarNavLink>
+                    <SidebarNavLink href={route('tickets.index')} active={route().current('tickets.index')}>
+                        Boletos
+                    </SidebarNavLink>
+                    <SidebarNavLink href={route('packages.index')} active={route().current('packages.index')}>
+                        Encomiendas
+                    </SidebarNavLink>
+
                 </div>
             </aside>
 
-            {/* Mobile Drawer (Menu) - Nuevo cajón lateral profesional */}
-            {/* Superposición de fondo clickeable para cerrar */}
+            {/* Mobile Drawer (Menu) */}
             <div className={(showingMobileDrawer ? 'fixed' : 'hidden') + ' fixed inset-0 z-50 bg-black/60 md:hidden'} onClick={() => setShowingMobileDrawer(false)}></div>
 
-            {/* El cajón lateral que se desliza */}
             <div className={(showingMobileDrawer ? 'translate-x-0' : '-translate-x-full') + ' fixed inset-y-0 left-0 z-50 w-72 transform bg-gray-900 shadow-xl transition-transform duration-300 ease-in-out md:hidden flex flex-col'}>
                 {/* Cabecera del cajón */}
                 <div className="flex h-16 shrink-0 items-center justify-between border-b border-gray-800 px-6">
-                    <span className="text-2xl font-bold tracking-wider text-white">
-                        <span className="text-blue-500">Mi</span>App
+                    <span className="text-xl font-bold tracking-wider text-white uppercase">
+                        <span className="text-blue-500">TMS</span>
                     </span>
-                    {/* Botón de cierre 'X' */}
                     <button onClick={() => setShowingMobileDrawer(false)} className="text-gray-400 hover:text-white">
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -60,24 +70,43 @@ export default function Authenticated({
                     </button>
                 </div>
 
-                {/* Contenido de navegación del cajón */}
+                {/* Contenido de navegación del cajón (AHORA SINCRONIZADO) */}
                 <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
                     <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')}>
                         Panel de Control
                     </ResponsiveNavLink>
-                    <ResponsiveNavLink href="#" active={false}>
-                        Clientes
+                    <ResponsiveNavLink href={route('vehicles.index')} active={route().current('vehicles.index')}>
+                        Vehículos
                     </ResponsiveNavLink>
-                    <ResponsiveNavLink href="#" active={false}>
-                        Usuarios
+                    <ResponsiveNavLink href={route('drivers.index')} active={route().current('drivers.index')}>
+                        Conductores
                     </ResponsiveNavLink>
+                    {/* ENLACES MÓVILES AGREGADOS AQUÍ */}
+                    <ResponsiveNavLink href={route('routes.index')} active={route().current('routes.index')}>
+                        Rutas
+                    </ResponsiveNavLink>
+                    <ResponsiveNavLink href={route('schedules.index')} active={route().current('schedules.index')}>
+                        Horarios
+                    </ResponsiveNavLink>
+                    <ResponsiveNavLink href={route('passengers.index')} active={route().current('passengers.index')}>
+                        Pasajeros
+                    </ResponsiveNavLink>
+                    <ResponsiveNavLink href={route('trips.index')} active={route().current('trips.index')}>
+                        Viajes
+                    </ResponsiveNavLink>
+                    <ResponsiveNavLink href={route('tickets.index')} active={route().current('tickets.index')}>
+                        Boletos
+                    </ResponsiveNavLink>
+                    <SidebarNavLink href={route('packages.index')} active={route().current('packages.index')}>
+                        Encomiendas
+                    </SidebarNavLink>
+
                 </div>
 
                 {/* Sección de usuario del cajón (abajo) */}
                 <div className="border-t border-gray-800 pb-4 pt-4 px-6 bg-gray-950">
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
-                            {/* Un avatar de usuario simple por ahora */}
                             <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-lg">
                                 {user.name.charAt(0)}
                             </div>
@@ -114,9 +143,7 @@ export default function Authenticated({
                         </button>
                     </div>
 
-                    {/* Barra de búsqueda simulada - ELIMINADA */}
-
-                    {/* Settings Dropdown (Desktop) - Se mantiene igual */}
+                    {/* Settings Dropdown (Desktop) */}
                     <div className="hidden md:flex md:items-center">
                         <div className="relative">
                             <Dropdown>
@@ -144,8 +171,6 @@ export default function Authenticated({
                         </div>
                     </div>
                 </header>
-
-                {/* Menú de navegación móvil antiguo (Dropdown) - ELIMINADO COMPLETAMENTE */}
 
                 {/* Main Scrollable Area */}
                 <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">

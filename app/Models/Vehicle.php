@@ -15,8 +15,8 @@ class Vehicle extends Model
         'brand',
         'model',
         'year',
-        'capacity',
-        'capacity_unit',
+        'capacity_seats', // NUEVO
+        'sellable_seats', // NUEVO
         'type',
         'status',
         'color',
@@ -24,46 +24,44 @@ class Vehicle extends Model
     ];
 
     protected $casts = [
-        'year'     => 'integer',
-        'capacity' => 'integer',
+        'year'           => 'integer',
+        'capacity_seats' => 'integer',
+        'sellable_seats' => 'integer',
     ];
 
-    // Tipos de vehículo disponibles
+    // Tipos de vehículo ajustados para personas
     public static function types(): array
     {
-        return ['Auto', 'Minivan', 'Otro'];
+        return ['Auto', 'Minivan', 'Bus', 'Otro'];
     }
 
-    // Estados posibles
+    // Estados corregidos
     public static function statuses(): array
     {
-        return ['disponible', 'en_viaje', 'en_mantenimiento'];
+        return ['disponible', 'en_ruta', 'mantenimiento', 'inactivo'];
     }
 
-    // Label legible del estado
     public function statusLabel(): string
     {
         return match ($this->status) {
-            'disponible'       => 'Disponible',
-            'en_viaje'         => 'En viaje',
-            'en_mantenimiento' => 'En mantenimiento',
-            default            => $this->status,
+            'disponible'    => 'Disponible',
+            'en_ruta'       => 'En ruta',
+            'mantenimiento' => 'Mantenimiento',
+            'inactivo'      => 'Inactivo',
+            default         => ucfirst($this->status),
         };
     }
 
-    // Relación con conductores asignados
     public function drivers()
     {
         return $this->hasMany(Driver::class);
     }
 
-    // Relación con viajes
     public function trips()
     {
         return $this->hasMany(Trip::class);
     }
 
-    // Scope: solo disponibles
     public function scopeAvailable($query)
     {
         return $query->where('status', 'disponible');

@@ -7,19 +7,18 @@ import DeleteConfirmModal from './Partials/DeleteConfirmModal';
 // ── Constantes de UI ────────────────────────────────────────────────────────
 
 const TYPE_LABELS: Record<string, string> = {
-    camion: 'Camión',
-    camioneta: 'Camioneta',
-    furgon: 'Furgón',
-    trailer: 'Tráiler',
-    moto: 'Moto',
-    otro: 'Otro',
+    Auto: 'Auto',
+    Minivan: 'Minivan',
+    Bus: 'Bus',
+    Otro: 'Otro',
 };
 
-// Mapeo de colores Tailwind para los estados
+// Mapeo de colores Tailwind para los nuevos estados
 const STATUS_STYLES: Record<string, { label: string, classes: string }> = {
     disponible: { label: 'Disponible', classes: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800' },
-    en_viaje: { label: 'En viaje', classes: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' },
-    en_mantenimiento: { label: 'En mantenimiento', classes: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800' },
+    en_ruta: { label: 'En ruta', classes: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' },
+    mantenimiento: { label: 'Mantenimiento', classes: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800' },
+    inactivo: { label: 'Inactivo', classes: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700' },
 };
 
 // ── Componentes pequeños ────────────────────────────────────────────────────
@@ -85,7 +84,7 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
     }
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800 dark:text-white">Vehículos</h2>}>
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800 dark:text-white">Flota de Vehículos</h2>}>
             <Head title="Vehículos" />
 
             <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
@@ -106,14 +105,13 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     <StatCard label="Total" value={counts.total} accent="#6b7280" />
                     <StatCard label="Disponibles" value={counts.disponible} accent="#16a34a" />
-                    <StatCard label="En viaje" value={counts.en_viaje} accent="#2563eb" />
-                    <StatCard label="Mantenimiento" value={counts.en_mantenimiento} accent="#d97706" />
+                    <StatCard label="En ruta" value={counts.en_ruta} accent="#2563eb" />
+                    <StatCard label="Mantenimiento" value={counts.mantenimiento} accent="#d97706" />
                 </div>
 
                 {/* Toolbar (Filtros y Búsqueda) */}
                 <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
                     <div className="flex flex-col sm:flex-row gap-3 flex-1">
-
                         {/* Buscador */}
                         <div className="relative flex-1 sm:max-w-xs">
                             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="none">
@@ -176,26 +174,17 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Placa</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Vehículo</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Tipo</th>
-                                <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Capacidad</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Asientos (Vendibles)</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Estado</th>
-                                <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Año</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                             {vehicles.data.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-16 text-center">
+                                    <td colSpan={6} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center gap-3 text-gray-400 dark:text-gray-500">
-                                            <svg viewBox="0 0 64 64" fill="none" width="56" height="56">
-                                                <rect x="8" y="20" width="48" height="30" rx="6" stroke="currentColor" strokeWidth="2" />
-                                                <path d="M8 32h48M20 32V50M44 32V50" stroke="currentColor" strokeWidth="2" />
-                                                <circle cx="18" cy="54" r="4" stroke="currentColor" strokeWidth="2" />
-                                                <circle cx="46" cy="54" r="4" stroke="currentColor" strokeWidth="2" />
-                                                <path d="M20 20V16a4 4 0 014-4h16a4 4 0 014 4v4" stroke="currentColor" strokeWidth="2" />
-                                            </svg>
                                             <p className="text-base font-medium text-gray-600 dark:text-gray-300">No hay vehículos registrados</p>
-                                            <p className="text-sm">Agrega el primero con el botón "Nuevo vehículo"</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -209,10 +198,15 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="font-semibold text-gray-900 dark:text-white">{v.brand} {v.model}</div>
-                                            {v.color && <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{v.color}</div>}
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Año: {v.year ?? '—'} {v.color && `• Color: ${v.color}`}</div>
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{TYPE_LABELS[v.type] ?? v.type}</td>
-                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{v.capacity} {v.capacity_unit}</td>
+
+                                        {/* NUEVO: Asientos Vendibles vs Totales */}
+                                        <td className="px-6 py-4 text-gray-900 dark:text-gray-100 font-medium">
+                                            {v.sellable_seats} <span className="text-xs text-gray-500 font-normal">/ {v.capacity_seats} totales</span>
+                                        </td>
+
                                         <td className="px-6 py-4">
                                             <select
                                                 value={v.status}
@@ -224,7 +218,6 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
                                                 ))}
                                             </select>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{v.year ?? '—'}</td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button onClick={() => openEdit(v)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Editar">
@@ -260,8 +253,8 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
                                     disabled={!link.url || link.active}
                                     onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
                                     className={`min-w-[32px] h-8 px-2 flex items-center justify-center rounded-lg text-sm font-medium transition-colors border ${link.active
-                                            ? 'bg-blue-600 text-white border-blue-600'
-                                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                                        ? 'bg-blue-600 text-white border-blue-600'
+                                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
                                         }`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
