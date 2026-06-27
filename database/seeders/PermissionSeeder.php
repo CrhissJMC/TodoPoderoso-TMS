@@ -12,23 +12,28 @@ class PermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        $permissions = [
-            [
-                'name' => 'usuarios.ver',
-                'description' => 'Ver listado de usuarios',
-            ],
-            [
-                'name' => 'usuarios.cambiar_rol',
-                'description' => 'Cambiar rol de usuarios',
-            ],
-            [
-                'name' => 'usuarios.suspender',
-                'description' => 'Suspender usuarios',
-            ],
+        $modules = [
+            'usuarios'    => 'Usuarios',
+            'vehiculos'   => 'Vehículos',
+            'conductores' => 'Conductores',
+            'rutas'       => 'Rutas',
+            'horarios'    => 'Horarios',
+            'clientes'    => 'Clientes',
+            'viajes'      => 'Viajes',
+            'boletos'     => 'Boletos',
+            'encomiendas' => 'Encomiendas',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate($permission);
+        foreach ($modules as $slug => $name) {
+            Permission::firstOrCreate([
+                'name' => "{$slug}.ver",
+                'description' => "Ver {$name}"
+            ]);
+
+            Permission::firstOrCreate([
+                'name' => "{$slug}.admin",
+                'description' => "Administrar {$name} (Crear, Editar, Eliminar)"
+            ]);
         }
     }
 }

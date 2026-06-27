@@ -9,6 +9,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\PackageController;
+use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -88,6 +89,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Consulta de rastreo (puede exponerse sin auth si se desea)
     Route::get('packages/track', [PackageController::class, 'track'])
          ->name('packages.track');
+
+    // ── MÓDULO DE ROLES (Solo Administrador) ──
+    Route::middleware('role:administrador')->group(function () {
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+        Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+    });
          
 });
 

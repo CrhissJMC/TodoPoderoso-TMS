@@ -8,7 +8,7 @@ export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
-    const user = usePage().props.auth.user;
+    const { user, role } = (usePage().props as any).auth;
     const [showingMobileDrawer, setShowingMobileDrawer] = useState(false);
 
     return (
@@ -50,6 +50,13 @@ export default function Authenticated({
                     <SidebarNavLink href={route('packages.index')} active={route().current('packages.index')}>
                         Encomiendas
                     </SidebarNavLink>
+                    {role === 'administrador' && (
+                        <div className="pt-4 mt-4 border-t border-gray-800">
+                            <SidebarNavLink href={route('roles.index')} active={route().current('roles.index')}>
+                                Roles y Permisos
+                            </SidebarNavLink>
+                        </div>
+                    )}
 
                 </div>
             </aside>
@@ -97,9 +104,16 @@ export default function Authenticated({
                     <ResponsiveNavLink href={route('tickets.index')} active={route().current('tickets.index')}>
                         Boletos
                     </ResponsiveNavLink>
-                    <SidebarNavLink href={route('packages.index')} active={route().current('packages.index')}>
+                    <ResponsiveNavLink href={route('packages.index')} active={route().current('packages.index')}>
                         Encomiendas
-                    </SidebarNavLink>
+                    </ResponsiveNavLink>
+                    {role === 'administrador' && (
+                        <div className="pt-2 mt-2 border-t border-gray-800">
+                            <ResponsiveNavLink href={route('roles.index')} active={route().current('roles.index')}>
+                                Roles y Permisos
+                            </ResponsiveNavLink>
+                        </div>
+                    )}
 
                 </div>
 
