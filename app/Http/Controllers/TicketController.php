@@ -15,7 +15,7 @@ class TicketController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Ticket::with(['trip.route', 'trip.vehicle', 'client', 'soldBy']);
+        $query = Ticket::with(['trip.route', 'trip.vehicle', 'client', 'soldBy', 'voidedBy']);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -148,7 +148,11 @@ class TicketController extends Controller
     public function destroy(Ticket $ticket)
     {
         // Anular en lugar de eliminar físicamente (libera el asiento)
-        $ticket->update(['ticket_status' => 'anulado']);
+        $ticket->update([
+            'ticket_status' => 'anulado',
+            'voided_by'     => Auth::id(),
+            'voided_at'     => now(),
+        ]);
         $ticket->delete();
 
         return redirect()

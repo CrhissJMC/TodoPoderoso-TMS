@@ -22,11 +22,14 @@ class Ticket extends Model
         'payment_status',
         'payment_method',
         'ticket_code',
+        'voided_by',
+        'voided_at',
     ];
 
     protected $casts = [
         'fare'        => 'decimal:2',
         'seat_number' => 'integer',
+        'voided_at'   => 'datetime',
     ];
 
     public static function ticketStatuses(): array
@@ -54,4 +57,5 @@ class Ticket extends Model
     public function trip()      { return $this->belongsTo(Trip::class); }
     public function client() { return $this->belongsTo(Client::class); }
     public function soldBy()    { return $this->belongsTo(User::class, 'sold_by'); }
+    public function voidedBy()  { return $this->belongsTo(User::class, 'voided_by'); }
 }

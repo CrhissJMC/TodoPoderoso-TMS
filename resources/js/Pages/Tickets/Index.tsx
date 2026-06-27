@@ -18,6 +18,8 @@ interface TicketItem {
     seat_number: number; boarding_stop: string; dropoff_stop: string; fare: string;
     ticket_status: string; payment_status: string; payment_method: string;
     ticket_code: string; sold_by: { name: string }; created_at: string;
+    voided_by?: { name: string } | null;
+    voided_at?: string | null;
 }
 
 interface Paginated<T> {
@@ -193,6 +195,14 @@ export default function TicketsIndex({ tickets, counts, availableTrips, filters,
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ${STATUS_CONFIG[t.ticket_status]?.badge ?? 'bg-gray-100 text-gray-600 ring-gray-200'}`}>
                                             {STATUS_CONFIG[t.ticket_status]?.label ?? t.ticket_status}
                                         </span>
+                                        <div className="mt-1 flex flex-col gap-0.5">
+                                            {t.sold_by && (
+                                                <span className="text-[10px] text-gray-500">Vendido por: {t.sold_by.name}</span>
+                                            )}
+                                            {t.ticket_status === 'anulado' && t.voided_by && (
+                                                <span className="text-[10px] text-red-500">Anulado por: {t.voided_by.name}</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center justify-end gap-1">

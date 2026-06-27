@@ -11,7 +11,9 @@ class RoleController extends Controller
 {
     public function index()
     {
-        $roles = Role::with('permissions')->get();
+        $roles = Role::with(['permissions', 'users' => function ($query) {
+            $query->select('id', 'name', 'email', 'estado', 'role_id');
+        }])->get();
         
         $modules = [
             'usuarios'    => 'Usuarios',
@@ -31,11 +33,49 @@ class RoleController extends Controller
         ]);
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|unique:roles,name|max:255',
+            'description' => 'nullable|string|max:1000',
+            'permissions' => 'required|array',
+        ]);
+
+        $role = Role::create([
+            'name' => $request->input('name'),
+            'description' => $request->input('description'),
+        ]);
+
+        $moduleConfig = $request->input('permissions');
+        $permissionsToAttach = [];
+
+        foreach ($moduleConfig as $module => $accessLevel) {
+            if ($accessLevel === 'ver') {
+                $perm = Permission::where('name', "{$module}.ver")->first();
+                if ($perm) $permissionsToAttach[] = $perm->id;
+            } elseif ($accessLevel === 'admin') {
+                $permVer = Permission::where('name', "{$module}.ver")->first();
+                $permAdmin = Permission::where('name', "{$module}.admin")->first();
+                if ($permVer) $permissionsToAttach[] = $permVer->id;
+                if ($permAdmin) $permissionsToAttach[] = $permAdmin->id;
+            }
+        }
+
+        $role->permissions()->sync($permissionsToAttach);
+
+        return back()->with('success', 'Rol creado correctamente.');
+    }
+
     public function update(Request $request, Role $role)
     {
         $request->validate([
             'permissions' => 'required|array',
+            'description' => 'nullable|string|max:1000',
         ]);
+
+        if ($role->id !== 1 && $request->has('description')) {
+            $role->update(['description' => $request->input('description')]);
+        }
 
         $moduleConfig = $request->input('permissions'); // e.g. ['usuarios' => 'admin', 'vehiculos' => 'ver', ...]
 

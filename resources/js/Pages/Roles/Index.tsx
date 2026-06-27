@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 interface Permission {
@@ -11,7 +11,9 @@ interface Permission {
 interface Role {
     id: number;
     name: string;
+    description: string | null;
     permissions: Permission[];
+    users: { id: number; name: string; email: string; estado: string; role_id: number; }[];
 }
 
 interface Props {
@@ -25,12 +27,38 @@ export default function RolesIndex({ roles, modules }: Props) {
 
     // Estado local para los permisos (modulo -> 'no' | 'ver' | 'admin')
     const [permissionsState, setPermissionsState] = useState<Record<string, string>>({});
+    const [descriptionState, setDescriptionState] = useState('');
+    const [isEditingDesc, setIsEditingDesc] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
+    
+    const { data: formData, setData: setFormData, post, processing: isCreating, errors, reset, clearErrors } = useForm({
+        name: '',
+        description: '',
+        permissions: Object.keys(modules).reduce((acc, mod) => ({ ...acc, [mod]: 'no' }), {} as Record<string, string>)
+    });
+
+    function openCreateModal() {
+        reset();
+        clearErrors();
+        setIsCreateModalOpen(true);
+    }
+
+    function submitCreate(e: React.FormEvent) {
+        e.preventDefault();
+        post(route('roles.store'), {
+            onSuccess: () => setIsCreateModalOpen(false)
+        });
+    }
 
     // Calcular el estado de los permisos cuando se selecciona un rol
     useEffect(() => {
         if (!selectedRole) return;
         
+        setDescriptionState(selectedRole.description || '');
+        setIsEditingDesc(false);
+
         const newState: Record<string, string> = {};
         const rolePerms = selectedRole.permissions.map(p => p.name);
 
@@ -54,7 +82,8 @@ export default function RolesIndex({ roles, modules }: Props) {
         if (!selectedRole) return;
         setIsSaving(true);
         router.put(route('roles.update', selectedRole.id), {
-            permissions: permissionsState
+            permissions: permissionsState,
+            description: descriptionState
         }, {
             preserveScroll: true,
             onSuccess: () => {
@@ -100,8 +129,11 @@ export default function RolesIndex({ roles, modules }: Props) {
                     {/* Lista de Roles */}
                     <div className="w-full md:w-1/3">
                         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
                                 <h3 className="font-semibold text-gray-700">Roles del Sistema</h3>
+                                <button onClick={openCreateModal} className="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-gray-700 transition-colors">
+                                    + Crear Rol
+                                </button>
                             </div>
                             <ul className="divide-y divide-gray-100">
                                 {roles.map(role => (
@@ -137,6 +169,11 @@ export default function RolesIndex({ roles, modules }: Props) {
                                         <p className="text-sm text-gray-500 mt-0.5">
                                             Configura el nivel de acceso para cada módulo de la aplicación.
                                         </p>
+                                        <div className="mt-2">
+                                            <button onClick={() => setIsUsersModalOpen(true)} className="text-xs font-medium text-blue-600 hover:text-blue-800 underline">
+                                                Ver lista de usuarios ({selectedRole.users?.length || 0})
+                                            </button>
+                                        </div>
                                     </div>
                                     {selectedRole.id !== 1 && (
                                         <button
@@ -150,17 +187,40 @@ export default function RolesIndex({ roles, modules }: Props) {
                                 </div>
 
                                 <div className="p-0 overflow-y-auto">
-                                    {selectedRole.id === 1 && (
-                                        <div className="m-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
-                                            <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                            <div>
-                                                <h4 className="text-sm font-bold text-blue-900">Rol Administrador Principal</h4>
+                                    <div className="m-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+                                        <svg className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start">
+                                                <h4 className="text-sm font-bold text-blue-900 capitalize">Rol {selectedRole.name}</h4>
+                                                {selectedRole.id !== 1 && !isEditingDesc && (
+                                                    <button onClick={() => setIsEditingDesc(true)} className="text-xs text-blue-600 hover:text-blue-800 underline font-medium">
+                                                        Modificar descripción
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {selectedRole.id === 1 ? (
                                                 <p className="text-sm text-blue-700 mt-1">
                                                     El rol <strong>administrador</strong> tiene acceso irrestricto a todo el sistema por defecto. Sus permisos no pueden ser removidos para evitar la pérdida de control del sistema.
                                                 </p>
-                                            </div>
+                                            ) : (
+                                                <div className="mt-2">
+                                                    {isEditingDesc ? (
+                                                        <textarea 
+                                                            className="w-full text-sm border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white" 
+                                                            rows={2} 
+                                                            value={descriptionState} 
+                                                            onChange={e => setDescriptionState(e.target.value)}
+                                                            placeholder="Escribe la descripción del rol..."
+                                                        ></textarea>
+                                                    ) : (
+                                                        <p className="text-sm text-blue-700">
+                                                            {selectedRole.description || 'Este rol no tiene una descripción configurada aún. Puedes editar sus permisos en la tabla inferior.'}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
 
                                     <table className="w-full text-sm">
                                         <thead>
@@ -212,6 +272,94 @@ export default function RolesIndex({ roles, modules }: Props) {
                 </div>
 
             </div>
+
+            {/* Modal Crear Rol */}
+            {isCreateModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={e => e.target === e.currentTarget && setIsCreateModalOpen(false)}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-gray-900">Crear Nuevo Rol</h3>
+                            <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <form onSubmit={submitCreate} className="flex-1 overflow-y-auto">
+                            <div className="px-6 py-4 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Rol *</label>
+                                    <input type="text" required value={formData.name} onChange={e => setFormData('name', e.target.value)} className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej. Auditor" />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                                    <textarea value={formData.description} onChange={e => setFormData('description', e.target.value)} className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Describe brevemente las responsabilidades del rol..."></textarea>
+                                    {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Permisos por defecto</label>
+                                    <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                                        <table className="w-full text-sm">
+                                            <tbody className="divide-y divide-gray-100">
+                                                {Object.entries(modules).map(([slug, name]) => (
+                                                    <tr key={slug}>
+                                                        <td className="px-4 py-2 font-medium text-gray-700">{name}</td>
+                                                        <td className="px-4 py-2">
+                                                            <select value={formData.permissions[slug]} onChange={e => setFormData('permissions', { ...formData.permissions, [slug]: e.target.value })} className="text-sm border-gray-300 rounded-lg py-1.5 focus:ring-blue-500 focus:border-blue-500">
+                                                                <option value="no">No</option>
+                                                                <option value="ver">Ver</option>
+                                                                <option value="admin">Admin</option>
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2 bg-gray-50 rounded-b-2xl">
+                                <button type="button" onClick={() => setIsCreateModalOpen(false)} className="px-4 py-2 text-sm text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
+                                <button type="submit" disabled={isCreating} className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">{isCreating ? 'Guardando...' : 'Crear Rol'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Lista de Usuarios */}
+            {isUsersModalOpen && selectedRole && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={e => e.target === e.currentTarget && setIsUsersModalOpen(false)}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-gray-900">Usuarios: {selectedRole.name}</h3>
+                            <button onClick={() => setIsUsersModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto flex-1">
+                            {!selectedRole.users || selectedRole.users.length === 0 ? (
+                                <p className="text-gray-500 text-sm text-center py-4">No hay usuarios asignados a este rol.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {selectedRole.users.map(u => (
+                                        <div key={u.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-900">{u.name}</p>
+                                                <p className="text-xs text-gray-500">{u.email}</p>
+                                            </div>
+                                            <div>
+                                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${u.estado === 'activo' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                    {u.estado}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

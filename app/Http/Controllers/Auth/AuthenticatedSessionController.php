@@ -29,7 +29,7 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
-        if ($request->user()->estado === 'suspendido') {
+        if ($request->user()->estado === 'inactivo' || $request->user()->estado === 'suspendido') {
             Auth::guard('web')->logout();
 
             $request->session()->invalidate();
@@ -37,7 +37,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->regenerateToken();
 
             throw ValidationException::withMessages([
-                'email' => __('Su cuenta ha sido suspendida. Contacte al administrador.'),
+                'email' => __('Su cuenta ha sido dada de baja o suspendida. Contacte al administrador.'),
             ]);
         }
 
