@@ -1,7 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
 
-interface TicketItem { id: number; ticket_code: string; seat_number: number; passenger: { full_name: string } }
+interface TicketItem { id: number; ticket_code: string; seat_number: number; client: { name: string } }
 interface Props { ticket: TicketItem | null; onClose: () => void; }
 
 export default function DeleteConfirmModal({ ticket, onClose }: Props) {
@@ -31,7 +31,7 @@ export default function DeleteConfirmModal({ ticket, onClose }: Props) {
                     <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
                         ¿Confirmas anular el boleto{' '}
                         <span className="font-mono font-semibold text-gray-700">{ticket.ticket_code}</span>{' '}
-                        de <span className="font-medium text-gray-700">{ticket.passenger.full_name}</span>?
+                        de <span className="font-medium text-gray-700">{ticket.client.name}</span>?
                         <br />
                         <span className="text-xs">El asiento {ticket.seat_number} quedará disponible nuevamente.</span>
                     </p>

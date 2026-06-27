@@ -16,8 +16,8 @@ interface ActiveTrip {
 
 interface PackageItem {
     id: number;
-    sender: { name: string };
-    receiver: { name: string };
+    sender: { name: string; document_number: string; document_type: string; phone: string | null };
+    receiver: { name: string; document_number: string; document_type: string; phone: string | null };
     origin: string;
     destination: string;
     package_type: string;
