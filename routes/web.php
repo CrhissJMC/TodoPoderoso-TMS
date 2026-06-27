@@ -5,7 +5,7 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\ScheduleController;
-use App\Http\Controllers\PassengerController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\PackageController;
@@ -56,12 +56,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // ── CORRECCIONES APLICADAS DESDE AQUÍ ──
 
-    // Módulo de Pasajeros
-    Route::resource('passengers', PassengerController::class)
+    // Módulo de Clientes
+    Route::resource('clients', ClientController::class)
          ->only(['index', 'store', 'update', 'destroy']);
-    // Agregamos la ruta de búsqueda por DNI en lugar de toggle-active
-    Route::post('passengers/search-by-dni', [PassengerController::class, 'searchByDni'])
-         ->name('passengers.searchByDni');
+    // Agregamos la ruta de búsqueda por documento
+    Route::post('clients/search-by-document', [ClientController::class, 'searchByDocument'])
+         ->name('clients.searchByDocument');
      
     // Módulo de Viajes
     // Usamos 'except' en lugar de 'only' para que Laravel SÍ cree la ruta trips.show

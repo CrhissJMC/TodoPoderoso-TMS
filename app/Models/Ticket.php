@@ -52,6 +52,6 @@ class Ticket extends Model
     }
 
     public function trip()      { return $this->belongsTo(Trip::class); }
-    public function passenger() { return $this->belongsTo(Passenger::class); }
+    public function client() { return $this->belongsTo(Client::class); }
     public function soldBy()    { return $this->belongsTo(User::class, 'sold_by'); }
 }

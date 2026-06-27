@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
             // 2. Tablas base operativas (No dependen de nadie)
             VehicleSeeder::class,   // Necesario para conductores y viajes
             RouteSeeder::class,     // Necesario para paradas, horarios y viajes
-            PassengerSeeder::class, // Necesario para boletos
+            ClientSeeder::class, // Necesario para boletos y encomiendas
 
             // 3. Tablas de primer nivel (Dependen de las bases)
             DriverSeeder::class,    // Depende de Vehicle

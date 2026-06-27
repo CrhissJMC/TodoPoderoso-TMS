@@ -38,8 +38,8 @@ export default function Authenticated({
                     <SidebarNavLink href={route('schedules.index')} active={route().current('schedules.index')}>
                         Horarios
                     </SidebarNavLink>
-                    <SidebarNavLink href={route('passengers.index')} active={route().current('passengers.index')}>
-                        Pasajeros
+                    <SidebarNavLink href={route('clients.index')} active={route().current('clients.index')}>
+                        Clientes
                     </SidebarNavLink>
                     <SidebarNavLink href={route('trips.index')} active={route().current('trips.index')}>
                         Viajes
@@ -88,8 +88,8 @@ export default function Authenticated({
                     <ResponsiveNavLink href={route('schedules.index')} active={route().current('schedules.index')}>
                         Horarios
                     </ResponsiveNavLink>
-                    <ResponsiveNavLink href={route('passengers.index')} active={route().current('passengers.index')}>
-                        Pasajeros
+                    <ResponsiveNavLink href={route('clients.index')} active={route().current('clients.index')}>
+                        Clientes
                     </ResponsiveNavLink>
                     <ResponsiveNavLink href={route('trips.index')} active={route().current('trips.index')}>
                         Viajes

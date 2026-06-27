@@ -16,8 +16,8 @@ interface ActiveTrip {
 
 interface PackageItem {
     id: number;
-    sender_name: string;
-    receiver_name: string;
+    sender: { name: string };
+    receiver: { name: string };
     origin: string;
     destination: string;
     package_type: string;
@@ -242,10 +242,10 @@ export default function PackagesIndex({
 
                                     {/* Remitente → Destinatario */}
                                     <td className="px-4 py-3">
-                                        <p className="font-medium text-gray-900">{p.sender_name}</p>
+                                        <p className="font-medium text-gray-900">{p.sender?.name}</p>
                                         <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-500">
                                             <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
-                                            <span>{p.receiver_name}</span>
+                                            <span>{p.receiver?.name}</span>
                                         </div>
                                     </td>
 

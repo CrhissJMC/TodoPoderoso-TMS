@@ -1,20 +1,22 @@
 import { useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import PassengerModal from './Partials/PassengerModal';
+import ClientModal from './Partials/ClientModal';
 import DeleteConfirmModal from './Partials/DeleteConfirmModal';
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
-interface Passenger {
+interface Client {
     id: number;
-    full_name: string;
-    dni: string;
+    name: string;
+    document_type: string;
+    document_number: string;
     phone: string | null;
-    // Eliminado: email: string | null;
+    email: string | null;
+    address: string | null;
     tickets_count: number;
-    completed_trips_count: number;
-    initials: string;
+    packages_as_sender_count: number;
+    packages_as_receiver_count: number;
     created_at: string;
 }
 
@@ -25,8 +27,8 @@ interface Paginated<T> {
 }
 
 interface Props {
-    passengers: Paginated<Passenger>;
-    counts: { total: number; with_tickets: number };
+    clients: Paginated<Client>;
+    counts: { total: number; with_tickets: number; with_packages: number };
     filters: { search?: string };
 }
 
@@ -45,28 +47,32 @@ function avatarColor(id: number) {
     return AVATAR_COLORS[id % AVATAR_COLORS.length];
 }
 
+function getInitials(name: string) {
+    return name.substring(0, 2).toUpperCase();
+}
+
 // ── Página ───────────────────────────────────────────────────────────────────
 
-export default function PassengersIndex({ passengers, counts, filters }: Props) {
+export default function ClientsIndex({ clients, counts, filters }: Props) {
     const { flash } = usePage().props as any;
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [modalOpen, setModalOpen] = useState(false);
-    const [editPassenger, setEdit] = useState<Passenger | null>(null);
-    const [deleteTarget, setDelete] = useState<Passenger | null>(null);
+    const [editClient, setEdit] = useState<Client | null>(null);
+    const [deleteTarget, setDelete] = useState<Client | null>(null);
 
     function applySearch(value: string) {
-        router.get(route('passengers.index'), { search: value }, { preserveState: true, replace: true });
+        router.get(route('clients.index'), { search: value }, { preserveState: true, replace: true });
     }
 
-    function openEdit(p: Passenger) { setEdit(p); setModalOpen(true); }
+    function openEdit(c: Client) { setEdit(c); setModalOpen(true); }
     function closeModal() { setModalOpen(false); setEdit(null); }
 
     return (
         <AuthenticatedLayout header={
-            <h2 className="text-xl font-semibold text-gray-800">Pasajeros</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Clientes</h2>
         }>
-            <Head title="Pasajeros" />
+            <Head title="Clientes" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
 
@@ -89,7 +95,7 @@ export default function PassengersIndex({ passengers, counts, filters }: Props) 
                 )}
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="bg-white rounded-xl border border-gray-200 px-5 py-4 flex items-center gap-4">
                         <div className="w-10 h-10 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
@@ -109,7 +115,18 @@ export default function PassengersIndex({ passengers, counts, filters }: Props) 
                         </div>
                         <div>
                             <p className="text-2xl font-semibold text-gray-900 leading-none">{counts.with_tickets}</p>
-                            <p className="text-sm text-gray-500 mt-0.5">Con viajes registrados</p>
+                            <p className="text-sm text-gray-500 mt-0.5">Como Pasajeros</p>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200 px-5 py-4 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p className="text-2xl font-semibold text-gray-900 leading-none">{counts.with_packages}</p>
+                            <p className="text-sm text-gray-500 mt-0.5">En Encomiendas</p>
                         </div>
                     </div>
                 </div>
@@ -122,7 +139,7 @@ export default function PassengersIndex({ passengers, counts, filters }: Props) 
                         </svg>
                         <input
                             type="text"
-                            placeholder="Buscar por nombre, DNI o teléfono…"
+                            placeholder="Buscar por nombre, documento o teléfono…"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && applySearch(e.currentTarget.value)}
@@ -147,7 +164,7 @@ export default function PassengersIndex({ passengers, counts, filters }: Props) 
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
-                            Nuevo pasajero
+                            Nuevo cliente
                         </button>
                     </div>
                 </div>
@@ -157,15 +174,15 @@ export default function PassengersIndex({ passengers, counts, filters }: Props) 
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-gray-100 bg-gray-50">
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Pasajero</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">DNI</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Cliente</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Documento</th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Contacto</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Viajes</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Transacciones</th>
                                 <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {passengers.data.length === 0 ? (
+                            {clients.data.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-4 py-16">
                                         <div className="flex flex-col items-center gap-3 text-gray-400">
@@ -173,73 +190,64 @@ export default function PassengersIndex({ passengers, counts, filters }: Props) 
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                                             </svg>
                                             <p className="text-base font-medium text-gray-500">
-                                                {search ? 'No se encontraron resultados' : 'No hay pasajeros registrados'}
+                                                {search ? 'No se encontraron resultados' : 'No hay clientes registrados'}
                                             </p>
                                             <p className="text-sm">
-                                                {search ? `Ningún pasajero coincide con "${search}"` : 'Agrega el primero con el botón "Nuevo pasajero"'}
+                                                {search ? `Ningún cliente coincide con "${search}"` : 'Agrega el primero con el botón "Nuevo cliente"'}
                                             </p>
                                         </div>
                                     </td>
                                 </tr>
-                            ) : passengers.data.map(p => (
-                                <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                            ) : clients.data.map(c => (
+                                <tr key={c.id} className="hover:bg-gray-50 transition-colors">
 
-                                    {/* Pasajero */}
+                                    {/* Cliente */}
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-semibold ${avatarColor(p.id)}`}>
-                                                {p.initials}
+                                            <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-semibold ${avatarColor(c.id)}`}>
+                                                {getInitials(c.name)}
                                             </div>
                                             <div>
-                                                <p className="font-medium text-gray-900">{p.full_name}</p>
-                                                <p className="text-xs text-gray-400 mt-0.5 md:hidden">DNI: {p.dni}</p>
+                                                <p className="font-medium text-gray-900">{c.name}</p>
+                                                <p className="text-xs text-gray-400 mt-0.5 md:hidden">{c.document_type}: {c.document_number}</p>
                                             </div>
                                         </div>
                                     </td>
 
-                                    {/* DNI */}
+                                    {/* Documento */}
                                     <td className="px-4 py-3">
+                                        <span className="font-mono text-sm text-gray-700 bg-gray-100 px-2 py-0.5 rounded mr-1">
+                                            {c.document_type}
+                                        </span>
                                         <span className="font-mono text-sm text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
-                                            {p.dni}
+                                            {c.document_number}
                                         </span>
                                     </td>
 
                                     {/* Contacto */}
                                     <td className="px-4 py-3 hidden md:table-cell">
-                                        {p.phone ? (
+                                        {c.phone ? (
                                             <div>
-                                                <p className="text-gray-700 text-sm">{p.phone}</p>
+                                                <p className="text-gray-700 text-sm">{c.phone}</p>
                                             </div>
                                         ) : (
                                             <span className="text-gray-400 text-sm">—</span>
                                         )}
                                     </td>
 
-                                    {/* Viajes */}
+                                    {/* Transacciones */}
                                     <td className="px-4 py-3 hidden lg:table-cell">
-                                        {p.tickets_count > 0 ? (
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-medium text-gray-900">
-                                                        {p.completed_trips_count} completado{p.completed_trips_count !== 1 ? 's' : ''}
-                                                    </span>
-                                                    {p.tickets_count !== p.completed_trips_count && (
-                                                        <span className="text-xs text-gray-400">
-                                                            {p.tickets_count} boleto{p.tickets_count !== 1 ? 's' : ''} en total
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <span className="text-gray-400 text-sm">Sin viajes</span>
-                                        )}
+                                        <div className="flex flex-col">
+                                            <span className="text-xs text-gray-600">Boletos: {c.tickets_count || 0}</span>
+                                            <span className="text-xs text-gray-600">Envíos: {c.packages_as_sender_count || 0}</span>
+                                        </div>
                                     </td>
 
                                     {/* Acciones */}
                                     <td className="px-4 py-3">
                                         <div className="flex items-center justify-end gap-1">
                                             <button
-                                                onClick={() => openEdit(p)}
+                                                onClick={() => openEdit(c)}
                                                 title="Editar"
                                                 className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
                                             >
@@ -248,7 +256,7 @@ export default function PassengersIndex({ passengers, counts, filters }: Props) 
                                                 </svg>
                                             </button>
                                             <button
-                                                onClick={() => setDelete(p)}
+                                                onClick={() => setDelete(c)}
                                                 title="Eliminar"
                                                 className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                             >
@@ -265,13 +273,13 @@ export default function PassengersIndex({ passengers, counts, filters }: Props) 
                 </div>
 
                 {/* Paginación */}
-                {passengers.last_page > 1 && (
+                {clients.last_page > 1 && (
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                         <p className="text-sm text-gray-500">
-                            Mostrando {passengers.from}–{passengers.to} de {passengers.total} pasajeros
+                            Mostrando {clients.from}–{clients.to} de {clients.total} clientes
                         </p>
                         <div className="flex items-center gap-1">
-                            {passengers.links.map((link, i) => (
+                            {clients.links.map((link, i) => (
                                 <button
                                     key={i}
                                     disabled={!link.url || link.active}
@@ -289,8 +297,8 @@ export default function PassengersIndex({ passengers, counts, filters }: Props) 
                 )}
             </div>
 
-            <PassengerModal isOpen={modalOpen} passenger={editPassenger} onClose={closeModal} />
-            <DeleteConfirmModal passenger={deleteTarget} onClose={() => setDelete(null)} />
+            <ClientModal isOpen={modalOpen} client={editClient} onClose={closeModal} />
+            <DeleteConfirmModal client={deleteTarget} onClose={() => setDelete(null)} />
         </AuthenticatedLayout>
     );
 }
