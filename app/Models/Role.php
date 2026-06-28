@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Role extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'description'];
 
     /**
      * Get the users associated with this role.

@@ -19,11 +19,12 @@ class TicketRequest extends FormRequest
         return [
             'trip_id'         => ['required', 'exists:trips,id'],
 
-            // Datos del pasajero (se busca por DNI o se crea uno nuevo)
-            'passenger_id'    => ['nullable', 'exists:passengers,id'],
-            'passenger_name'  => ['required_without:passenger_id', 'string', 'max:150'],
-            'passenger_dni'   => ['required', 'string', 'max:20'],
-            'passenger_phone' => ['nullable', 'string', 'max:30'],
+            // Datos del cliente (se busca por documento o se crea uno nuevo)
+            'client_id'              => ['nullable', 'exists:clients,id'],
+            'client_name'            => ['required_without:client_id', 'string', 'max:150'],
+            'client_document_type'   => ['required', 'string', 'in:DNI,RUC,CE,PASAPORTE'],
+            'client_document_number' => ['required', 'string', 'max:20'],
+            'client_phone'           => ['nullable', 'string', 'max:30'],
 
             'seat_number'   => [
                 'required', 'integer', 'min:1',
@@ -45,8 +46,9 @@ class TicketRequest extends FormRequest
     {
         return [
             'trip_id.required'           => 'El viaje es obligatorio.',
-            'passenger_dni.required'     => 'El DNI del pasajero es obligatorio.',
-            'passenger_name.required_without' => 'El nombre del pasajero es obligatorio.',
+            'client_document_type.required'   => 'El tipo de documento es obligatorio.',
+            'client_document_number.required' => 'El número de documento es obligatorio.',
+            'client_name.required_without'    => 'El nombre del cliente es obligatorio.',
             'seat_number.required'       => 'El número de asiento es obligatorio.',
             'seat_number.unique'         => 'Este asiento ya fue vendido para este viaje.',
             'boarding_stop.required'     => 'La parada de abordaje es obligatoria.',

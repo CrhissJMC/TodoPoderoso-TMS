@@ -5,10 +5,11 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\ScheduleController;
-use App\Http\Controllers\PassengerController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\PackageController;
+use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -31,63 +32,116 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Módulo de Vehículos
-    Route::resource('vehicles', VehicleController::class)
-         ->only(['index', 'store', 'update', 'destroy']);
-    Route::patch('vehicles/{vehicle}/status', [VehicleController::class, 'updateStatus'])
-         ->name('vehicles.updateStatus');
+    Route::middleware('permission:vehiculos.ver')->group(function () {
+        Route::get('vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
+        Route::get('vehicles/{vehicle}', [VehicleController::class, 'show'])->name('vehicles.show');
+    });
+    Route::middleware('permission:vehiculos.admin')->group(function () {
+        Route::post('vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
+        Route::put('vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
+        Route::delete('vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+        Route::patch('vehicles/{vehicle}/status', [VehicleController::class, 'updateStatus'])->name('vehicles.updateStatus');
+    });
 
     // Módulo de Conductores
-    Route::resource('drivers', DriverController::class)
-         ->only(['index', 'store', 'update', 'destroy']);
-    Route::patch('drivers/{driver}/status', [DriverController::class, 'updateStatus'])
-         ->name('drivers.updateStatus');
+    Route::middleware('permission:conductores.ver')->group(function () {
+        Route::get('drivers', [DriverController::class, 'index'])->name('drivers.index');
+        Route::get('drivers/{driver}', [DriverController::class, 'show'])->name('drivers.show');
+    });
+    Route::middleware('permission:conductores.admin')->group(function () {
+        Route::post('drivers', [DriverController::class, 'store'])->name('drivers.store');
+        Route::put('drivers/{driver}', [DriverController::class, 'update'])->name('drivers.update');
+        Route::delete('drivers/{driver}', [DriverController::class, 'destroy'])->name('drivers.destroy');
+        Route::patch('drivers/{driver}/status', [DriverController::class, 'updateStatus'])->name('drivers.updateStatus');
+    });
 
     // Módulo de Rutas y Paradas
-    Route::resource('routes', RouteController::class)
-         ->only(['index', 'store', 'update', 'destroy']);
-    Route::patch('routes/{route}/toggle-active', [RouteController::class, 'toggleActive'])
-         ->name('routes.toggleActive');
+    Route::middleware('permission:rutas.ver')->group(function () {
+        Route::get('routes', [RouteController::class, 'index'])->name('routes.index');
+        Route::get('routes/{route}', [RouteController::class, 'show'])->name('routes.show');
+    });
+    Route::middleware('permission:rutas.admin')->group(function () {
+        Route::post('routes', [RouteController::class, 'store'])->name('routes.store');
+        Route::put('routes/{route}', [RouteController::class, 'update'])->name('routes.update');
+        Route::delete('routes/{route}', [RouteController::class, 'destroy'])->name('routes.destroy');
+        Route::patch('routes/{route}/toggle-active', [RouteController::class, 'toggleActive'])->name('routes.toggleActive');
+    });
       
     // Módulo de Horarios
-    Route::resource('schedules', ScheduleController::class)
-         ->only(['index', 'store', 'update', 'destroy']);
-    Route::patch('schedules/{schedule}/toggle-active', [ScheduleController::class, 'toggleActive'])
-         ->name('schedules.toggleActive');
+    Route::middleware('permission:horarios.ver')->group(function () {
+        Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');
+        Route::get('schedules/{schedule}', [ScheduleController::class, 'show'])->name('schedules.show');
+    });
+    Route::middleware('permission:horarios.admin')->group(function () {
+        Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
+        Route::put('schedules/{schedule}', [ScheduleController::class, 'update'])->name('schedules.update');
+        Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
+        Route::patch('schedules/{schedule}/toggle-active', [ScheduleController::class, 'toggleActive'])->name('schedules.toggleActive');
+    });
 
-    // ── CORRECCIONES APLICADAS DESDE AQUÍ ──
-
-    // Módulo de Pasajeros
-    Route::resource('passengers', PassengerController::class)
-         ->only(['index', 'store', 'update', 'destroy']);
-    // Agregamos la ruta de búsqueda por DNI en lugar de toggle-active
-    Route::post('passengers/search-by-dni', [PassengerController::class, 'searchByDni'])
-         ->name('passengers.searchByDni');
+    // Módulo de Clientes
+    Route::middleware('permission:clientes.ver')->group(function () {
+        Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
+        Route::get('clients/{client}', [ClientController::class, 'show'])->name('clients.show');
+    });
+    Route::middleware('permission:clientes.admin')->group(function () {
+        Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
+        Route::put('clients/{client}', [ClientController::class, 'update'])->name('clients.update');
+        Route::delete('clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
+        Route::post('clients/search-by-document', [ClientController::class, 'searchByDocument'])->name('clients.searchByDocument');
+    });
      
     // Módulo de Viajes
-    // Usamos 'except' en lugar de 'only' para que Laravel SÍ cree la ruta trips.show
-    Route::resource('trips', TripController::class)
-         ->except(['create', 'edit']); 
-    // Usamos updateStatus en lugar de toggleActive
-    Route::patch('trips/{trip}/status', [TripController::class, 'updateStatus'])
-         ->name('trips.updateStatus');
+    Route::middleware('permission:viajes.ver')->group(function () {
+        Route::get('trips', [TripController::class, 'index'])->name('trips.index');
+        Route::get('trips/{trip}', [TripController::class, 'show'])->name('trips.show');
+    });
+    Route::middleware('permission:viajes.admin')->group(function () {
+        Route::post('trips', [TripController::class, 'store'])->name('trips.store');
+        Route::put('trips/{trip}', [TripController::class, 'update'])->name('trips.update');
+        Route::delete('trips/{trip}', [TripController::class, 'destroy'])->name('trips.destroy');
+        Route::patch('trips/{trip}/status', [TripController::class, 'updateStatus'])->name('trips.updateStatus');
+    });
          
     // Módulo de Boletos
-    Route::resource('tickets', TicketController::class)
-         ->only(['index', 'store', 'update', 'destroy']);
+    Route::middleware('permission:boletos.ver')->group(function () {
+        Route::get('tickets', [TicketController::class, 'index'])->name('tickets.index');
+        Route::get('tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
+        Route::get('trips/{trip}/seat-map', [TicketController::class, 'seatMap'])->name('trips.seatMap');
+    });
+    Route::middleware('permission:boletos.admin')->group(function () {
+        Route::post('tickets', [TicketController::class, 'store'])->name('tickets.store');
+        Route::put('tickets/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
+        Route::delete('tickets/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
+        Route::patch('tickets/{ticket}/board', [TicketController::class, 'markBoarded'])->name('tickets.markBoarded');
+    });
 
-    Route::patch('tickets/{ticket}/board', [TicketController::class, 'markBoarded'])
-         ->name('tickets.markBoarded');
+    // Módulo de Encomiendas
+    Route::middleware('permission:encomiendas.ver')->group(function () {
+        Route::get('packages', [PackageController::class, 'index'])->name('packages.index');
+        Route::get('packages/{package}', [PackageController::class, 'show'])->name('packages.show');
+        // Consulta de rastreo
+        Route::get('packages/track', [PackageController::class, 'track'])->name('packages.track');
+    });
+    Route::middleware('permission:encomiendas.admin')->group(function () {
+        Route::post('packages', [PackageController::class, 'store'])->name('packages.store');
+        Route::put('packages/{package}', [PackageController::class, 'update'])->name('packages.update');
+        Route::delete('packages/{package}', [PackageController::class, 'destroy'])->name('packages.destroy');
+    });
 
-    Route::get('trips/{trip}/seat-map', [TicketController::class, 'seatMap'])
-         ->name('trips.seatMap');
-
-    // ── MÓDULO DE ENCOMIENDAS (AQUÍ ESTÁ LA SOLUCIÓN) ──
-    Route::resource('packages', PackageController::class)
-         ->only(['index', 'store', 'update', 'destroy']);
-
-    // Consulta de rastreo (puede exponerse sin auth si se desea)
-    Route::get('packages/track', [PackageController::class, 'track'])
-         ->name('packages.track');
+    // ── MÓDULO DE ROLES Y USUARIOS (Solo Administrador) ──
+    Route::middleware('role:administrador')->group(function () {
+        // Roles
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+        Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+        Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+        
+        // Usuarios
+        Route::resource('users', App\Http\Controllers\UserController::class)
+             ->except(['create', 'edit', 'destroy', 'show']);
+        Route::patch('users/{user}/status', [App\Http\Controllers\UserController::class, 'updateStatus'])
+             ->name('users.updateStatus');
+    });
          
 });
 

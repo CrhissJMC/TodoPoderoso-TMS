@@ -35,7 +35,9 @@ function StatCard({ label, value, accent }: { label: string, value: number | str
 // ── Página principal ────────────────────────────────────────────────────────
 
 export default function VehiclesIndex({ vehicles, counts, filters, types, statuses }: any) {
-    const { flash } = usePage().props as any;
+    const { flash, auth } = usePage().props as any;
+    const permissions = auth.permissions || [];
+    const hasAdmin = permissions.includes('vehiculos.admin');
 
     const [search, setSearch] = useState(filters?.search ?? '');
     const [statusFilter, setStatus] = useState(filters?.status ?? '');
@@ -158,12 +160,14 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
                         )}
                     </div>
 
-                    <button onClick={() => setModalOpen(true)} className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">
-                        <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
-                            <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                        Nuevo vehículo
-                    </button>
+                    {hasAdmin && (
+                        <button onClick={() => setModalOpen(true)} className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">
+                            <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+                                <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                            Nuevo vehículo
+                        </button>
+                    )}
                 </div>
 
                 {/* Tabla */}
@@ -211,7 +215,8 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
                                             <select
                                                 value={v.status}
                                                 onChange={e => changeStatus(v, e.target.value)}
-                                                className={`text-xs font-bold px-3 py-1.5 rounded-full border outline-none cursor-pointer appearance-none text-center ${STATUS_STYLES[v.status]?.classes ?? 'bg-gray-100 text-gray-800 border-gray-200'}`}
+                                                disabled={!hasAdmin}
+                                                className={`text-xs font-bold px-3 py-1.5 rounded-full border outline-none cursor-pointer appearance-none text-center disabled:opacity-75 disabled:cursor-not-allowed ${STATUS_STYLES[v.status]?.classes ?? 'bg-gray-100 text-gray-800 border-gray-200'}`}
                                             >
                                                 {statuses.map((s: string) => (
                                                     <option key={s} value={s}>{STATUS_STYLES[s]?.label ?? s}</option>
@@ -219,19 +224,21 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
                                             </select>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => openEdit(v)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Editar">
-                                                    <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
-                                                        <path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                                                    </svg>
-                                                </button>
-                                                <button onClick={() => setDelete(v)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Eliminar">
-                                                    <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
-                                                        <path d="M6 4h8M4 4h12M5 4l1 12h8l1-12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                                        <path d="M8 8v5M12 8v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                                    </svg>
-                                                </button>
-                                            </div>
+                                            {hasAdmin && (
+                                                <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => openEdit(v)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Editar">
+                                                        <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+                                                            <path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                                                        </svg>
+                                                    </button>
+                                                    <button onClick={() => setDelete(v)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Eliminar">
+                                                        <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+                                                            <path d="M6 4h8M4 4h12M5 4l1 12h8l1-12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                            <path d="M8 8v5M12 8v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

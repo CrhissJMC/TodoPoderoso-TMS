@@ -14,10 +14,12 @@ interface AvailableTrip {
 interface TicketItem {
     id: number; trip_id: number;
     trip: { route: { name: string }; vehicle: { plate: string } | null };
-    passenger: { full_name: string; dni: string; phone: string | null };
+    client: { name: string; document_type: string; document_number: string; phone: string | null };
     seat_number: number; boarding_stop: string; dropoff_stop: string; fare: string;
     ticket_status: string; payment_status: string; payment_method: string;
     ticket_code: string; sold_by: { name: string }; created_at: string;
+    voided_by?: { name: string } | null;
+    voided_at?: string | null;
 }
 
 interface Paginated<T> {
@@ -119,7 +121,7 @@ export default function TicketsIndex({ tickets, counts, availableTrips, filters,
                     <div className="flex flex-1 items-center gap-2 flex-wrap">
                         <div className="relative flex-1 min-w-[180px] max-w-xs">
                             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" strokeLinecap="round" /></svg>
-                            <input type="text" placeholder="Código, pasajero, DNI…"
+                            <input type="text" placeholder="Código, cliente, documento…"
                                 value={search} onChange={e => setSearch(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && applyFilters({ search: e.currentTarget.value })}
                                 className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300" />
@@ -147,7 +149,7 @@ export default function TicketsIndex({ tickets, counts, availableTrips, filters,
                         <thead>
                             <tr className="border-b border-gray-100 bg-gray-50">
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Código</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Pasajero</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Cliente</th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Viaje</th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Asiento / Tramo</th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Pago</th>
@@ -171,8 +173,8 @@ export default function TicketsIndex({ tickets, counts, availableTrips, filters,
                                         <p className="text-xs text-gray-400 mt-1">{formatDateTime(t.created_at)}</p>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <p className="font-medium text-gray-900">{t.passenger.full_name}</p>
-                                        <p className="text-xs text-gray-400">DNI: {t.passenger.dni}</p>
+                                        <p className="font-medium text-gray-900">{t.client?.name}</p>
+                                        <p className="text-xs text-gray-400">{t.client?.document_type}: {t.client?.document_number}</p>
                                     </td>
                                     <td className="px-4 py-3 hidden md:table-cell">
                                         <p className="text-gray-700">{t.trip.route.name}</p>
@@ -193,6 +195,14 @@ export default function TicketsIndex({ tickets, counts, availableTrips, filters,
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ${STATUS_CONFIG[t.ticket_status]?.badge ?? 'bg-gray-100 text-gray-600 ring-gray-200'}`}>
                                             {STATUS_CONFIG[t.ticket_status]?.label ?? t.ticket_status}
                                         </span>
+                                        <div className="mt-1 flex flex-col gap-0.5">
+                                            {t.sold_by && (
+                                                <span className="text-[10px] text-gray-500">Vendido por: {t.sold_by.name}</span>
+                                            )}
+                                            {t.ticket_status === 'anulado' && t.voided_by && (
+                                                <span className="text-[10px] text-red-500">Anulado por: {t.voided_by.name}</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center justify-end gap-1">

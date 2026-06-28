@@ -4,22 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PackageRequest;
 use App\Models\Package;
-use App\Models\Route;
+use App\Models\Client;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class PackageController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Package::with(['trip.route', 'receivedBy']);
+        $query = Package::with(['trip.route', 'receivedBy', 'sender', 'receiver']);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('sender_name',   'ilike', "%{$search}%")
-                  ->orWhere('receiver_name','ilike', "%{$search}%")
+                $q->whereHas('sender', fn($s) => $s->where('name', 'ilike', "%{$search}%")->orWhere('document_number', 'ilike', "%{$search}%"))
+                  ->orWhereHas('receiver', fn($r) => $r->where('name', 'ilike', "%{$search}%")->orWhere('document_number', 'ilike', "%{$search}%"))
                   ->orWhere('tracking_code','ilike', "%{$search}%")
                   ->orWhere('origin',       'ilike', "%{$search}%")
                   ->orWhere('destination',  'ilike', "%{$search}%");
@@ -76,21 +77,48 @@ class PackageController extends Controller
     {
         $data = $request->validated();
 
-        // Determinar estado inicial según el viaje asignado
-        $status = 'recibido';
-        if (! empty($data['trip_id'])) {
-            $trip = Trip::find($data['trip_id']);
-            if ($trip && $trip->status === 'en_ruta') {
-                $status = 'en_ruta';
+        DB::transaction(function () use (&$data) {
+            $sender = Client::where('document_number', $data['sender_document_number'])->first();
+            if (!$sender) {
+                $sender = Client::create([
+                    'name'            => $data['sender_name'],
+                    'document_type'   => $data['sender_document_type'],
+                    'document_number' => $data['sender_document_number'],
+                    'phone'           => $data['sender_phone'],
+                ]);
             }
-        }
+            $receiver = Client::where('document_number', $data['receiver_document_number'])->first();
+            if (!$receiver) {
+                $receiver = Client::create([
+                    'name'            => $data['receiver_name'],
+                    'document_type'   => $data['receiver_document_type'],
+                    'document_number' => $data['receiver_document_number'],
+                    'phone'           => $data['receiver_phone'],
+                ]);
+            }
 
-        Package::create([
-            ...$data,
-            'received_by'   => Auth::id(),
-            'status'        => $status,
-            'tracking_code' => Package::generateTrackingCode(),
-        ]);
+            unset($data['sender_name'], $data['sender_document_type'], $data['sender_document_number'], $data['sender_phone']);
+            unset($data['receiver_name'], $data['receiver_document_type'], $data['receiver_document_number'], $data['receiver_phone']);
+
+            $data['sender_id'] = $sender->id;
+            $data['receiver_id'] = $receiver->id;
+
+            // Determinar estado inicial según el viaje asignado
+            $status = 'recibido';
+            if (! empty($data['trip_id'])) {
+                $trip = Trip::find($data['trip_id']);
+                if ($trip && $trip->status === 'en_ruta') {
+                    $status = 'en_ruta';
+                }
+            }
+
+            Package::create([
+                ...$data,
+                'received_by'   => Auth::id(),
+                'status'        => $status,
+                'tracking_code' => Package::generateTrackingCode(),
+            ]);
+        });
 
         return redirect()
             ->route('packages.index')
@@ -103,7 +131,36 @@ class PackageController extends Controller
             return back()->with('error', 'No se puede editar una encomienda ya entregada.');
         }
 
-        $package->update($request->validated());
+        $data = $request->validated();
+
+        DB::transaction(function () use (&$data, $package) {
+            $sender = Client::where('document_number', $data['sender_document_number'])->first();
+            if (!$sender) {
+                $sender = Client::create([
+                    'name'            => $data['sender_name'],
+                    'document_type'   => $data['sender_document_type'],
+                    'document_number' => $data['sender_document_number'],
+                    'phone'           => $data['sender_phone'],
+                ]);
+            }
+            $receiver = Client::where('document_number', $data['receiver_document_number'])->first();
+            if (!$receiver) {
+                $receiver = Client::create([
+                    'name'            => $data['receiver_name'],
+                    'document_type'   => $data['receiver_document_type'],
+                    'document_number' => $data['receiver_document_number'],
+                    'phone'           => $data['receiver_phone'],
+                ]);
+            }
+
+            unset($data['sender_name'], $data['sender_document_type'], $data['sender_document_number'], $data['sender_phone']);
+            unset($data['receiver_name'], $data['receiver_document_type'], $data['receiver_document_number'], $data['receiver_phone']);
+
+            $data['sender_id'] = $sender->id;
+            $data['receiver_id'] = $receiver->id;
+
+            $package->update($data);
+        });
 
         return redirect()
             ->route('packages.index')
@@ -140,7 +197,7 @@ class PackageController extends Controller
     {
         $request->validate(['code' => 'required|string']);
 
-        $package = Package::with(['trip.route', 'trip.vehicle', 'trip.driver'])
+        $package = Package::with(['trip.route', 'trip.vehicle', 'trip.driver', 'sender', 'receiver'])
             ->where('tracking_code', strtoupper($request->code))
             ->first();
 
@@ -152,8 +209,8 @@ class PackageController extends Controller
             'found'   => true,
             'package' => [
                 'tracking_code'  => $package->tracking_code,
-                'sender_name'    => $package->sender_name,
-                'receiver_name'  => $package->receiver_name,
+                'sender_name'    => $package->sender->name,
+                'receiver_name'  => $package->receiver->name,
                 'origin'         => $package->origin,
                 'destination'    => $package->destination,
                 'package_type'   => $package->package_type,

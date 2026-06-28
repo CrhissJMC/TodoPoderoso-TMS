@@ -1,17 +1,19 @@
 import { useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
 
-interface Passenger {
+interface Client {
     id: number;
-    full_name: string;
-    dni: string;
+    name: string;
+    document_type: string;
+    document_number: string;
     phone: string | null;
-    // Eliminado: email: string | null;
+    email: string | null;
+    address: string | null;
 }
 
 interface Props {
     isOpen: boolean;
-    passenger: Passenger | null;
+    client: Client | null;
     onClose: () => void;
 }
 
@@ -33,38 +35,42 @@ const inputCls = (error?: string) =>
     `w-full px-3 py-2 text-sm border rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-colors ${error ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-gray-300 focus:border-gray-400'
     }`;
 
-export default function PassengerModal({ isOpen, passenger, onClose }: Props) {
-    const isEditing = !!passenger;
+export default function ClientModal({ isOpen, client, onClose }: Props) {
+    const isEditing = !!client;
 
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
-        full_name: '',
-        dni: '',
+        name: '',
+        document_type: 'DNI',
+        document_number: '',
         phone: '',
-        // Eliminado: email: ''
+        email: '',
+        address: ''
     });
 
     useEffect(() => {
-        if (isOpen && passenger) {
+        if (isOpen && client) {
             setData({
-                full_name: passenger.full_name,
-                dni: passenger.dni,
-                phone: passenger.phone ?? '',
-                // Eliminado: email: passenger.email ?? ''
+                name: client.name,
+                document_type: client.document_type,
+                document_number: client.document_number,
+                phone: client.phone ?? '',
+                email: client.email ?? '',
+                address: client.address ?? ''
             });
         } else if (isOpen) {
             reset();
             clearErrors();
         }
-    }, [isOpen, passenger]);
+    }, [isOpen, client]);
 
     function handleClose() { reset(); clearErrors(); onClose(); }
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (isEditing) {
-            put(route('passengers.update', passenger!.id), { onSuccess: handleClose });
+            put(route('clients.update', client!.id), { onSuccess: handleClose });
         } else {
-            post(route('passengers.store'), { onSuccess: handleClose });
+            post(route('clients.store'), { onSuccess: handleClose });
         }
     }
 
@@ -75,18 +81,18 @@ export default function PassengerModal({ isOpen, passenger, onClose }: Props) {
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
             onClick={e => e.target === e.currentTarget && handleClose()}
         >
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
                     <div>
                         <h3 className="text-base font-semibold text-gray-900">
-                            {isEditing ? 'Editar pasajero' : 'Nuevo pasajero'}
+                            {isEditing ? 'Editar cliente' : 'Nuevo cliente'}
                         </h3>
                         <p className="text-xs text-gray-500 mt-0.5">
                             {isEditing
-                                ? 'Actualiza los datos del pasajero.'
-                                : 'El DNI es el identificador único del pasajero.'}
+                                ? 'Actualiza los datos del cliente.'
+                                : 'Ingresa los datos para registrar un nuevo cliente.'}
                         </p>
                     </div>
                     <button onClick={handleClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
@@ -99,27 +105,41 @@ export default function PassengerModal({ isOpen, passenger, onClose }: Props) {
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
 
-                    <Field label="Nombre completo" required error={errors.full_name}>
+                    <Field label="Nombre Completo / Razón Social" required error={errors.name}>
                         <input
-                            value={data.full_name}
-                            onChange={e => setData('full_name', e.target.value)}
-                            placeholder="Ej. María Elena Torres"
-                            className={inputCls(errors.full_name)}
+                            value={data.name}
+                            onChange={e => setData('name', e.target.value)}
+                            placeholder="Ej. Juan Pérez / Empresa SAC"
+                            className={inputCls(errors.name)}
                             autoFocus
                         />
                     </Field>
 
                     <div className="grid grid-cols-2 gap-3">
-                        <Field label="DNI" required error={errors.dni}>
-                            <input
-                                value={data.dni}
-                                onChange={e => setData('dni', e.target.value.replace(/\D/g, '').slice(0, 8))}
-                                placeholder="12345678"
-                                maxLength={8}
-                                className={inputCls(errors.dni)}
-                            />
+                        <Field label="Tipo Doc." required error={errors.document_type}>
+                            <select
+                                value={data.document_type}
+                                onChange={e => setData('document_type', e.target.value)}
+                                className={inputCls(errors.document_type)}
+                            >
+                                <option value="DNI">DNI</option>
+                                <option value="RUC">RUC</option>
+                                <option value="CE">CE</option>
+                                <option value="PASAPORTE">PASAPORTE</option>
+                            </select>
                         </Field>
 
+                        <Field label="Número de Doc." required error={errors.document_number}>
+                            <input
+                                value={data.document_number}
+                                onChange={e => setData('document_number', e.target.value.replace(/\D/g, '').slice(0, 20))}
+                                placeholder="12345678"
+                                className={inputCls(errors.document_number)}
+                            />
+                        </Field>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
                         <Field label="Teléfono" error={errors.phone}>
                             <input
                                 value={data.phone}
@@ -128,19 +148,27 @@ export default function PassengerModal({ isOpen, passenger, onClose }: Props) {
                                 className={inputCls(errors.phone)}
                             />
                         </Field>
+
+                        <Field label="Email" error={errors.email}>
+                            <input
+                                type="email"
+                                value={data.email}
+                                onChange={e => setData('email', e.target.value)}
+                                placeholder="correo@ejemplo.com"
+                                className={inputCls(errors.email)}
+                            />
+                        </Field>
                     </div>
 
-                    {/* Info extra en modo crear */}
-                    {!isEditing && (
-                        <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                            <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
-                            </svg>
-                            <p className="text-xs text-blue-700">
-                                Al vender un boleto puedes buscar al pasajero por su DNI para autocompletar sus datos sin necesidad de registrarlo nuevamente.
-                            </p>
-                        </div>
-                    )}
+                    <Field label="Dirección" error={errors.address}>
+                        <textarea
+                            value={data.address}
+                            onChange={e => setData('address', e.target.value)}
+                            placeholder="Ej. Av. Principal 123"
+                            rows={2}
+                            className={inputCls(errors.address)}
+                        />
+                    </Field>
 
                     {/* Footer */}
                     <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
@@ -152,7 +180,7 @@ export default function PassengerModal({ isOpen, passenger, onClose }: Props) {
                             className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                             {processing
                                 ? (isEditing ? 'Guardando…' : 'Registrando…')
-                                : (isEditing ? 'Guardar cambios' : 'Registrar pasajero')}
+                                : (isEditing ? 'Guardar cambios' : 'Registrar cliente')}
                         </button>
                     </div>
                 </form>

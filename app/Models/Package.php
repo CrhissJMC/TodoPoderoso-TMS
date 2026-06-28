@@ -10,8 +10,8 @@ class Package extends Model
     use HasFactory;
 
     protected $fillable = [
-        'sender_name',
-        'receiver_name',
+        'sender_id',
+        'receiver_id',
         'origin',
         'destination',
         'trip_id',
@@ -67,5 +67,15 @@ class Package extends Model
     public function receivedBy()
     {
         return $this->belongsTo(User::class, 'received_by');
+    }
+
+    public function sender()
+    {
+        return $this->belongsTo(Client::class, 'sender_id');
+    }
+
+    public function receiver()
+    {
+        return $this->belongsTo(Client::class, 'receiver_id');
     }
 }

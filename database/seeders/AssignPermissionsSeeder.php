@@ -19,9 +19,7 @@ class AssignPermissionsSeeder extends Seeder
         // Get all permissions
         $permissions = Permission::all();
 
-        // Attach all permissions to admin role
-        foreach ($permissions as $permission) {
-            $adminRole->permissions()->attach($permission->id);
-        }
+        // Sync all permissions to admin role
+        $adminRole->permissions()->sync($permissions->pluck('id'));
     }
 }

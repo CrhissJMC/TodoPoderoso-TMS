@@ -8,12 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('passengers', function (Blueprint $table) {
+        Schema::create('clients', function (Blueprint $table) {
             $table->id();
-            $table->string('full_name', 150);
-            $table->string('dni', 20)->unique();
+            $table->string('name', 150);
+            $table->string('document_type', 20)->default('DNI'); // DNI, RUC, CE, PASAPORTE
+            $table->string('document_number', 20)->unique();
             $table->string('phone', 30)->nullable();
-            // Columna de email eliminada
+            $table->string('email', 150)->nullable();
+            $table->text('address')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
@@ -21,6 +23,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('passengers');
+        Schema::dropIfExists('clients');
     }
 };

@@ -1,7 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
 
-interface PackageItem { id: number; tracking_code: string; sender_name: string; receiver_name: string; }
+interface PackageItem { id: number; tracking_code: string; sender: { name: string }; receiver: { name: string }; }
 interface Props { pkg: PackageItem | null; onClose: () => void; }
 
 export default function DeleteConfirmModal({ pkg, onClose }: Props) {
@@ -32,7 +32,7 @@ export default function DeleteConfirmModal({ pkg, onClose }: Props) {
                         ¿Confirmas eliminar la encomienda{' '}
                         <span className="font-mono font-semibold text-gray-700">{pkg.tracking_code}</span>?
                         <br />
-                        <span className="text-xs">{pkg.sender_name} → {pkg.receiver_name}</span>
+                        <span className="text-xs">{pkg.sender?.name} → {pkg.receiver?.name}</span>
                     </p>
                 </div>
                 <div className="flex gap-2">

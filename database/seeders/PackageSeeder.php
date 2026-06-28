@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Package;
 use App\Models\Trip;
 use App\Models\User;
+use App\Models\Client;
 use Illuminate\Database\Seeder;
 
 class PackageSeeder extends Seeder
@@ -13,13 +14,14 @@ class PackageSeeder extends Seeder
     {
         $user    = User::first();
         $trip    = Trip::whereIn('status', ['programado', 'en_ruta'])->first();
+        $clients = Client::take(4)->get();
 
-        if (! $user) return;
+        if (! $user || $clients->count() < 4) return;
 
         $packages = [
             [
-                'sender_name'    => 'Luis Paredes',
-                'receiver_name'  => 'Carmen Díaz',
+                'sender_id'      => $clients[0]->id,
+                'receiver_id'    => $clients[1]->id,
                 'origin'         => 'Chachapoyas',
                 'destination'    => 'Bagua Grande',
                 'trip_id'        => $trip?->id,
@@ -35,8 +37,8 @@ class PackageSeeder extends Seeder
                 'observations'   => 'Documentos legales. Entregar en mano.',
             ],
             [
-                'sender_name'    => 'Roberto Quispe',
-                'receiver_name'  => 'Sofía Huanca',
+                'sender_id'      => $clients[2]->id,
+                'receiver_id'    => $clients[3]->id,
                 'origin'         => 'Chachapoyas',
                 'destination'    => 'Pedro Ruiz',
                 'trip_id'        => $trip?->id,
@@ -52,8 +54,8 @@ class PackageSeeder extends Seeder
                 'observations'   => 'Frágil — contiene artesanías.',
             ],
             [
-                'sender_name'    => 'Ana Torres',
-                'receiver_name'  => 'Miguel Vega',
+                'sender_id'      => $clients[3]->id,
+                'receiver_id'    => $clients[0]->id,
                 'origin'         => 'Bagua Grande',
                 'destination'    => 'Chachapoyas',
                 'trip_id'        => null,

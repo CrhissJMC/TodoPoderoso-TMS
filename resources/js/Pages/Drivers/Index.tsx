@@ -72,7 +72,9 @@ export default function DriversIndex({
     vehicleTypes,
     vehicleStatuses
 }: Props) {
-    const { flash } = usePage().props as any;
+    const { flash, auth } = usePage().props as any;
+    const permissions = auth.permissions || [];
+    const hasAdmin = permissions.includes('conductores.admin');
 
     const [search, setSearch] = useState(filters?.search ?? '');
     const [statusFilter, setStatusFilter] = useState(filters?.status ?? '');
@@ -189,15 +191,17 @@ export default function DriversIndex({
                         )}
                     </div>
 
-                    <button
-                        onClick={() => setModalOpen(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors whitespace-nowrap w-full sm:w-auto shadow-sm"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                        Nuevo conductor
-                    </button>
+                    {hasAdmin && (
+                        <button
+                            onClick={() => setModalOpen(true)}
+                            className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors whitespace-nowrap w-full sm:w-auto shadow-sm"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Nuevo conductor
+                        </button>
+                    )}
                 </div>
 
                 {/* Tabla de Conductores */}
@@ -255,14 +259,16 @@ export default function DriversIndex({
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4.5 text-right">
-                                                <div className="flex items-center justify-end gap-3">
-                                                    <button onClick={() => openEdit(d)} className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
-                                                        Editar
-                                                    </button>
-                                                    <button onClick={() => setDeleteTarget(d)} className="text-sm font-medium text-red-600 hover:text-red-800 transition-colors">
-                                                        Eliminar
-                                                    </button>
-                                                </div>
+                                                {hasAdmin && (
+                                                    <div className="flex items-center justify-end gap-3">
+                                                        <button onClick={() => openEdit(d)} className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                                                            Editar
+                                                        </button>
+                                                        <button onClick={() => setDeleteTarget(d)} className="text-sm font-medium text-red-600 hover:text-red-800 transition-colors">
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     ))

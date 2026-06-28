@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TicketRequest;
-use App\Models\Passenger;
+use App\Models\Client;
 use App\Models\Ticket;
 use App\Models\Trip;
 use Illuminate\Http\Request;
@@ -15,14 +15,14 @@ class TicketController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Ticket::with(['trip.route', 'trip.vehicle', 'passenger', 'soldBy']);
+        $query = Ticket::with(['trip.route', 'trip.vehicle', 'client', 'soldBy', 'voidedBy']);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('ticket_code', 'ilike', "%{$search}%")
-                  ->orWhereHas('passenger', fn ($p) =>
-                      $p->where('full_name', 'ilike', "%{$search}%")
-                        ->orWhere('dni', 'ilike', "%{$search}%")
+                  ->orWhereHas('client', fn ($c) =>
+                      $c->where('name', 'ilike', "%{$search}%")
+                        ->orWhere('document_number', 'ilike', "%{$search}%")
                   );
             });
         }
@@ -79,21 +79,22 @@ class TicketController extends Controller
 
     public function store(TicketRequest $request)
     {
-        $passenger = DB::transaction(function () use ($request) {
-            // Buscar o crear pasajero por DNI
-            $passenger = Passenger::where('dni', $request->passenger_dni)->first();
+        $client = DB::transaction(function () use ($request) {
+            // Buscar o crear cliente por documento
+            $client = Client::where('document_number', $request->client_document_number)->first();
 
-            if (! $passenger) {
-                $passenger = Passenger::create([
-                    'full_name' => $request->passenger_name,
-                    'dni'       => $request->passenger_dni,
-                    'phone'     => $request->passenger_phone,
+            if (! $client) {
+                $client = Client::create([
+                    'name'            => $request->client_name,
+                    'document_type'   => $request->client_document_type,
+                    'document_number' => $request->client_document_number,
+                    'phone'           => $request->client_phone,
                 ]);
             }
 
             Ticket::create([
                 'trip_id'        => $request->trip_id,
-                'passenger_id'   => $passenger->id,
+                'client_id'      => $client->id,
                 'sold_by'        => Auth::id(),
                 'seat_number'    => $request->seat_number,
                 'boarding_stop'  => $request->boarding_stop,
@@ -105,12 +106,12 @@ class TicketController extends Controller
                 'ticket_code'    => Ticket::generateTicketCode(),
             ]);
 
-            return $passenger;
+            return $client;
         });
 
         return redirect()
             ->route('tickets.index')
-            ->with('success', "Boleto emitido para {$passenger->full_name}.");
+            ->with('success', "Boleto emitido para {$client->name}.");
     }
 
     public function update(TicketRequest $request, Ticket $ticket)
@@ -119,17 +120,18 @@ class TicketController extends Controller
             return back()->with('error', 'No se puede editar un boleto anulado.');
         }
 
-        $passenger = Passenger::where('dni', $request->passenger_dni)->first();
-        if (! $passenger) {
-            $passenger = Passenger::create([
-                'full_name' => $request->passenger_name,
-                'dni'       => $request->passenger_dni,
-                'phone'     => $request->passenger_phone,
+        $client = Client::where('document_number', $request->client_document_number)->first();
+        if (! $client) {
+            $client = Client::create([
+                'name'            => $request->client_name,
+                'document_type'   => $request->client_document_type,
+                'document_number' => $request->client_document_number,
+                'phone'           => $request->client_phone,
             ]);
         }
 
         $ticket->update([
-            'passenger_id'   => $passenger->id,
+            'client_id'      => $client->id,
             'seat_number'    => $request->seat_number,
             'boarding_stop'  => $request->boarding_stop,
             'dropoff_stop'   => $request->dropoff_stop,
@@ -146,7 +148,11 @@ class TicketController extends Controller
     public function destroy(Ticket $ticket)
     {
         // Anular en lugar de eliminar físicamente (libera el asiento)
-        $ticket->update(['ticket_status' => 'anulado']);
+        $ticket->update([
+            'ticket_status' => 'anulado',
+            'voided_by'     => Auth::id(),
+            'voided_at'     => now(),
+        ]);
         $ticket->delete();
 
         return redirect()

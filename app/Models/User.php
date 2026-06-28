@@ -67,6 +67,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Get all permission names for the user.
+     */
+    public function getAllPermissions(): array
+    {
+        if (!$this->role || !$this->relationLoaded('role')) {
+            $this->load('role.permissions');
+        } elseif (!$this->role->relationLoaded('permissions')) {
+            $this->role->load('permissions');
+        }
+
+        if (!$this->role) {
+            return [];
+        }
+
+        return $this->role->permissions->pluck('name')->toArray();
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

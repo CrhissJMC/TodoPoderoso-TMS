@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('packages', function (Blueprint $table) {
             $table->id();
-            $table->string('sender_name', 150);
-            $table->string('receiver_name', 150);
+            $table->foreignId('sender_id')->constrained('clients')->restrictOnDelete();
+            $table->foreignId('receiver_id')->constrained('clients')->restrictOnDelete();
             $table->string('origin', 100);
             $table->string('destination', 100);
             $table->foreignId('trip_id')->nullable()->constrained('trips')->nullOnDelete();

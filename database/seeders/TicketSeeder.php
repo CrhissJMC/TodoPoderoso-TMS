@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Passenger;
+use App\Models\Client;
 use App\Models\Ticket;
 use App\Models\Trip;
 use App\Models\User;
@@ -14,17 +14,17 @@ class TicketSeeder extends Seeder
     {
         $user = User::first();
         $trip = Trip::whereIn('status', ['programado', 'en_ruta'])->first();
-        $passengers = Passenger::take(3)->get();
+        $clients = Client::take(3)->get();
 
-        if (! $user || ! $trip || $passengers->isEmpty()) return;
+        if (! $user || ! $trip || $clients->isEmpty()) return;
 
         $seats = [1, 2, 3];
 
-        foreach ($passengers as $i => $passenger) {
+        foreach ($clients as $i => $client) {
             Ticket::firstOrCreate(
                 ['trip_id' => $trip->id, 'seat_number' => $seats[$i]],
                 [
-                    'passenger_id'   => $passenger->id,
+                    'client_id'      => $client->id,
                     'sold_by'        => $user->id,
                     'boarding_stop'  => $trip->route->origin,
                     'dropoff_stop'   => $trip->route->destination,

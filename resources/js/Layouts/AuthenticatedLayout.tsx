@@ -8,7 +8,11 @@ export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
-    const user = usePage().props.auth.user;
+    const { user, role, permissions = [] } = (usePage().props as any).auth;
+
+    const hasAccess = (module: string) => {
+        return permissions.includes(`${module}.ver`) || permissions.includes(`${module}.admin`);
+    };
     const [showingMobileDrawer, setShowingMobileDrawer] = useState(false);
 
     return (
@@ -26,30 +30,56 @@ export default function Authenticated({
                     <SidebarNavLink href={route('dashboard')} active={route().current('dashboard')}>
                         Panel de Control
                     </SidebarNavLink>
-                    <SidebarNavLink href={route('vehicles.index')} active={route().current('vehicles.index')}>
-                        Vehículos
-                    </SidebarNavLink>
-                    <SidebarNavLink href={route('drivers.index')} active={route().current('drivers.index')}>
-                        Conductores
-                    </SidebarNavLink>
-                    <SidebarNavLink href={route('routes.index')} active={route().current('routes.index')}>
-                        Rutas
-                    </SidebarNavLink>
-                    <SidebarNavLink href={route('schedules.index')} active={route().current('schedules.index')}>
-                        Horarios
-                    </SidebarNavLink>
-                    <SidebarNavLink href={route('passengers.index')} active={route().current('passengers.index')}>
-                        Pasajeros
-                    </SidebarNavLink>
-                    <SidebarNavLink href={route('trips.index')} active={route().current('trips.index')}>
-                        Viajes
-                    </SidebarNavLink>
-                    <SidebarNavLink href={route('tickets.index')} active={route().current('tickets.index')}>
-                        Boletos
-                    </SidebarNavLink>
-                    <SidebarNavLink href={route('packages.index')} active={route().current('packages.index')}>
-                        Encomiendas
-                    </SidebarNavLink>
+                    {hasAccess('vehiculos') && (
+                        <SidebarNavLink href={route('vehicles.index')} active={route().current('vehicles.index')}>
+                            Vehículos
+                        </SidebarNavLink>
+                    )}
+                    {hasAccess('conductores') && (
+                        <SidebarNavLink href={route('drivers.index')} active={route().current('drivers.index')}>
+                            Conductores
+                        </SidebarNavLink>
+                    )}
+                    {hasAccess('rutas') && (
+                        <SidebarNavLink href={route('routes.index')} active={route().current('routes.index')}>
+                            Rutas
+                        </SidebarNavLink>
+                    )}
+                    {hasAccess('horarios') && (
+                        <SidebarNavLink href={route('schedules.index')} active={route().current('schedules.index')}>
+                            Horarios
+                        </SidebarNavLink>
+                    )}
+                    {hasAccess('clientes') && (
+                        <SidebarNavLink href={route('clients.index')} active={route().current('clients.index')}>
+                            Clientes
+                        </SidebarNavLink>
+                    )}
+                    {hasAccess('viajes') && (
+                        <SidebarNavLink href={route('trips.index')} active={route().current('trips.index')}>
+                            Viajes
+                        </SidebarNavLink>
+                    )}
+                    {hasAccess('boletos') && (
+                        <SidebarNavLink href={route('tickets.index')} active={route().current('tickets.index')}>
+                            Boletos
+                        </SidebarNavLink>
+                    )}
+                    {hasAccess('encomiendas') && (
+                        <SidebarNavLink href={route('packages.index')} active={route().current('packages.index')}>
+                            Encomiendas
+                        </SidebarNavLink>
+                    )}
+                    {role === 'administrador' && (
+                        <div className="pt-4 mt-4 border-t border-gray-800">
+                            <SidebarNavLink href={route('users.index')} active={route().current('users.index')}>
+                                Usuarios
+                            </SidebarNavLink>
+                            <SidebarNavLink href={route('roles.index')} active={route().current('roles.index')}>
+                                Roles y Permisos
+                            </SidebarNavLink>
+                        </div>
+                    )}
 
                 </div>
             </aside>
@@ -75,31 +105,57 @@ export default function Authenticated({
                     <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')}>
                         Panel de Control
                     </ResponsiveNavLink>
-                    <ResponsiveNavLink href={route('vehicles.index')} active={route().current('vehicles.index')}>
-                        Vehículos
-                    </ResponsiveNavLink>
-                    <ResponsiveNavLink href={route('drivers.index')} active={route().current('drivers.index')}>
-                        Conductores
-                    </ResponsiveNavLink>
+                    {hasAccess('vehiculos') && (
+                        <ResponsiveNavLink href={route('vehicles.index')} active={route().current('vehicles.index')}>
+                            Vehículos
+                        </ResponsiveNavLink>
+                    )}
+                    {hasAccess('conductores') && (
+                        <ResponsiveNavLink href={route('drivers.index')} active={route().current('drivers.index')}>
+                            Conductores
+                        </ResponsiveNavLink>
+                    )}
                     {/* ENLACES MÓVILES AGREGADOS AQUÍ */}
-                    <ResponsiveNavLink href={route('routes.index')} active={route().current('routes.index')}>
-                        Rutas
-                    </ResponsiveNavLink>
-                    <ResponsiveNavLink href={route('schedules.index')} active={route().current('schedules.index')}>
-                        Horarios
-                    </ResponsiveNavLink>
-                    <ResponsiveNavLink href={route('passengers.index')} active={route().current('passengers.index')}>
-                        Pasajeros
-                    </ResponsiveNavLink>
-                    <ResponsiveNavLink href={route('trips.index')} active={route().current('trips.index')}>
-                        Viajes
-                    </ResponsiveNavLink>
-                    <ResponsiveNavLink href={route('tickets.index')} active={route().current('tickets.index')}>
-                        Boletos
-                    </ResponsiveNavLink>
-                    <SidebarNavLink href={route('packages.index')} active={route().current('packages.index')}>
-                        Encomiendas
-                    </SidebarNavLink>
+                    {hasAccess('rutas') && (
+                        <ResponsiveNavLink href={route('routes.index')} active={route().current('routes.index')}>
+                            Rutas
+                        </ResponsiveNavLink>
+                    )}
+                    {hasAccess('horarios') && (
+                        <ResponsiveNavLink href={route('schedules.index')} active={route().current('schedules.index')}>
+                            Horarios
+                        </ResponsiveNavLink>
+                    )}
+                    {hasAccess('clientes') && (
+                        <ResponsiveNavLink href={route('clients.index')} active={route().current('clients.index')}>
+                            Clientes
+                        </ResponsiveNavLink>
+                    )}
+                    {hasAccess('viajes') && (
+                        <ResponsiveNavLink href={route('trips.index')} active={route().current('trips.index')}>
+                            Viajes
+                        </ResponsiveNavLink>
+                    )}
+                    {hasAccess('boletos') && (
+                        <ResponsiveNavLink href={route('tickets.index')} active={route().current('tickets.index')}>
+                            Boletos
+                        </ResponsiveNavLink>
+                    )}
+                    {hasAccess('encomiendas') && (
+                        <ResponsiveNavLink href={route('packages.index')} active={route().current('packages.index')}>
+                            Encomiendas
+                        </ResponsiveNavLink>
+                    )}
+                    {role === 'administrador' && (
+                        <div className="pt-2 mt-2 border-t border-gray-800">
+                            <ResponsiveNavLink href={route('users.index')} active={route().current('users.index')}>
+                                Usuarios
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink href={route('roles.index')} active={route().current('roles.index')}>
+                                Roles y Permisos
+                            </ResponsiveNavLink>
+                        </div>
+                    )}
 
                 </div>
 

@@ -10,7 +10,7 @@ interface AvailableTrip {
 }
 
 interface Ticket {
-    id: number; trip_id: number; passenger: { full_name: string; dni: string; phone: string | null };
+    id: number; trip_id: number; client: { name: string; document_type: string; document_number: string; phone: string | null };
     seat_number: number; boarding_stop: string; dropoff_stop: string; fare: string;
     payment_method: string; payment_status: string;
 }
@@ -45,15 +45,16 @@ const inputCls = (error?: string) =>
 export default function TicketModal({ isOpen, ticket, availableTrips, paymentMethods, paymentStatuses, onClose }: Props) {
     const isEditing = !!ticket;
 
-    const [dniLookup, setDniLookup] = useState<'idle' | 'searching' | 'found' | 'new'>('idle');
+    const [docLookup, setDocLookup] = useState<'idle' | 'searching' | 'found' | 'new'>('idle');
     const [step, setStep] = useState<1 | 2>(1); // 1: viaje+asiento, 2: pasajero+pago
 
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
         trip_id: '',
-        passenger_id: '',
-        passenger_name: '',
-        passenger_dni: '',
-        passenger_phone: '',
+        client_id: '',
+        client_name: '',
+        client_document_type: 'DNI',
+        client_document_number: '',
+        client_phone: '',
         seat_number: '' as string | number,
         boarding_stop: '',
         dropoff_stop: '',
@@ -68,10 +69,11 @@ export default function TicketModal({ isOpen, ticket, availableTrips, paymentMet
         if (isOpen && ticket) {
             setData({
                 trip_id: ticket.trip_id.toString(),
-                passenger_id: '',
-                passenger_name: ticket.passenger.full_name,
-                passenger_dni: ticket.passenger.dni,
-                passenger_phone: ticket.passenger.phone ?? '',
+                client_id: '',
+                client_name: ticket.client.name,
+                client_document_type: ticket.client.document_type,
+                client_document_number: ticket.client.document_number,
+                client_phone: ticket.client.phone ?? '',
                 seat_number: ticket.seat_number,
                 boarding_stop: ticket.boarding_stop,
                 dropoff_stop: ticket.dropoff_stop,
@@ -80,12 +82,12 @@ export default function TicketModal({ isOpen, ticket, availableTrips, paymentMet
                 payment_status: ticket.payment_status,
             });
             setStep(2);
-            setDniLookup('found');
+            setDocLookup('found');
         } else if (isOpen) {
             reset();
             clearErrors();
             setStep(1);
-            setDniLookup('idle');
+            setDocLookup('idle');
         }
     }, [isOpen, ticket]);
 
@@ -114,32 +116,40 @@ export default function TicketModal({ isOpen, ticket, availableTrips, paymentMet
         setData(d => ({ ...d, dropoff_stop: stopName, fare }));
     }
 
-    // Búsqueda por DNI con debounce simple
-    async function handleDniBlur() {
-        if (data.passenger_dni.length < 6) return;
-        setDniLookup('searching');
+    // Búsqueda por Documento
+    async function handleDocBlur() {
+        if (data.client_document_number.length < 5) return;
+        setDocLookup('searching');
         try {
-            const res = await fetch(route('passengers.searchDni') + '?dni=' + encodeURIComponent(data.passenger_dni));
+            const res = await fetch(route('clients.searchByDocument'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                },
+                body: JSON.stringify({ document_number: data.client_document_number })
+            });
             const json = await res.json();
-            if (json.found) {
+            if (json.success && json.client) {
                 setData(d => ({
                     ...d,
-                    passenger_id: json.passenger.id,
-                    passenger_name: json.passenger.full_name,
-                    passenger_phone: json.passenger.phone ?? '',
+                    client_id: json.client.id,
+                    client_name: json.client.name,
+                    client_document_type: json.client.document_type,
+                    client_phone: json.client.phone ?? '',
                 }));
-                setDniLookup('found');
+                setDocLookup('found');
             } else {
-                setData(d => ({ ...d, passenger_id: '' }));
-                setDniLookup('new');
+                setData(d => ({ ...d, client_id: '' }));
+                setDocLookup('new');
             }
         } catch {
-            setDniLookup('idle');
+            setDocLookup('idle');
         }
     }
 
     function handleClose() {
-        reset(); clearErrors(); setStep(1); setDniLookup('idle');
+        reset(); clearErrors(); setStep(1); setDocLookup('idle');
         onClose();
     }
 
@@ -244,38 +254,51 @@ export default function TicketModal({ isOpen, ticket, availableTrips, paymentMet
                                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Pasajero</p>
                                 </div>
 
-                                <Field label="DNI" required error={errors.passenger_dni}>
-                                    <div className="relative">
-                                        <input value={data.passenger_dni}
-                                            onChange={e => setData('passenger_dni', e.target.value.replace(/\D/g, '').slice(0, 8))}
-                                            onBlur={handleDniBlur}
-                                            placeholder="12345678" maxLength={8}
-                                            className={inputCls(errors.passenger_dni)} />
-                                        {dniLookup === 'searching' && (
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Buscando…</span>
-                                        )}
-                                        {dniLookup === 'found' && (
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-600 flex items-center gap-1">
-                                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
-                                                Registrado
-                                            </span>
-                                        )}
-                                        {dniLookup === 'new' && (
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-500">Nuevo pasajero</span>
-                                        )}
+                                <div className="grid grid-cols-3 gap-3">
+                                    <Field label="Tipo Doc." required error={errors.client_document_type}>
+                                        <select value={data.client_document_type} onChange={e => setData('client_document_type', e.target.value)} className={inputCls(errors.client_document_type)}>
+                                            <option value="DNI">DNI</option>
+                                            <option value="RUC">RUC</option>
+                                            <option value="CE">CE</option>
+                                            <option value="PASAPORTE">PASAPORTE</option>
+                                        </select>
+                                    </Field>
+
+                                    <div className="col-span-2">
+                                        <Field label="Número de Doc." required error={errors.client_document_number}>
+                                            <div className="relative">
+                                                <input value={data.client_document_number}
+                                                    onChange={e => setData('client_document_number', e.target.value.replace(/\D/g, '').slice(0, 20))}
+                                                    onBlur={handleDocBlur}
+                                                    placeholder="12345678"
+                                                    className={inputCls(errors.client_document_number)} />
+                                                {docLookup === 'searching' && (
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Buscando…</span>
+                                                )}
+                                                {docLookup === 'found' && (
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-600 flex items-center gap-1">
+                                                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
+                                                        Registrado
+                                                    </span>
+                                                )}
+                                                {docLookup === 'new' && (
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-500">Nuevo</span>
+                                                )}
+                                            </div>
+                                        </Field>
                                     </div>
-                                </Field>
+                                </div>
 
-                                <Field label="Nombre completo" required error={errors.passenger_name}>
-                                    <input value={data.passenger_name} onChange={e => setData('passenger_name', e.target.value)}
+                                <Field label="Nombre completo" required error={errors.client_name}>
+                                    <input value={data.client_name} onChange={e => setData('client_name', e.target.value)}
                                         placeholder="Nombre del pasajero"
-                                        disabled={dniLookup === 'found'}
-                                        className={`${inputCls(errors.passenger_name)} ${dniLookup === 'found' ? 'bg-gray-50 text-gray-500' : ''}`} />
+                                        disabled={docLookup === 'found'}
+                                        className={`${inputCls(errors.client_name)} ${docLookup === 'found' ? 'bg-gray-50 text-gray-500' : ''}`} />
                                 </Field>
 
-                                <Field label="Teléfono" error={errors.passenger_phone}>
-                                    <input value={data.passenger_phone} onChange={e => setData('passenger_phone', e.target.value)}
-                                        placeholder="987 654 321" className={inputCls(errors.passenger_phone)} />
+                                <Field label="Teléfono" error={errors.client_phone}>
+                                    <input value={data.client_phone} onChange={e => setData('client_phone', e.target.value)}
+                                        placeholder="987 654 321" className={inputCls(errors.client_phone)} />
                                 </Field>
 
                                 <div className="border-t border-gray-100 pt-4">

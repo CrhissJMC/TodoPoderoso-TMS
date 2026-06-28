@@ -3,7 +3,10 @@ import { useForm } from '@inertiajs/react';
 
 interface ActiveTrip { id: number; label: string; status: string; route_name: string; }
 interface PackageItem {
-    id: number; sender_name: string; receiver_name: string; origin: string; destination: string;
+    id: number;
+    sender: { name: string; document_number: string; document_type: string; phone: string | null };
+    receiver: { name: string; document_number: string; document_type: string; phone: string | null };
+    origin: string; destination: string;
     trip_id: number | null; package_type: string; weight: string | null; dimensions: string | null;
     price: string; payment_method: string; payment_status: string; observations: string | null;
 }
@@ -40,9 +43,22 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
     const isEditing = !!pkg;
     const [showBoxFields, setShowBoxFields] = useState(false);
 
+    const [senderLookup, setSenderLookup] = useState<'idle' | 'searching' | 'found' | 'new'>('idle');
+    const [receiverLookup, setReceiverLookup] = useState<'idle' | 'searching' | 'found' | 'new'>('idle');
+
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
-        sender_name:    '',
-        receiver_name:  '',
+        sender_id:              '',
+        sender_document_type:   'DNI',
+        sender_document_number: '',
+        sender_name:            '',
+        sender_phone:           '',
+
+        receiver_id:              '',
+        receiver_document_type:   'DNI',
+        receiver_document_number: '',
+        receiver_name:            '',
+        receiver_phone:           '',
+
         origin:         '',
         destination:    '',
         trip_id:        '',
@@ -58,8 +74,18 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
     useEffect(() => {
         if (isOpen && pkg) {
             const d = {
-                sender_name:    pkg.sender_name,
-                receiver_name:  pkg.receiver_name,
+                sender_id:              '',
+                sender_document_type:   pkg.sender.document_type,
+                sender_document_number: pkg.sender.document_number,
+                sender_name:            pkg.sender.name,
+                sender_phone:           pkg.sender.phone ?? '',
+
+                receiver_id:              '',
+                receiver_document_type:   pkg.receiver.document_type,
+                receiver_document_number: pkg.receiver.document_number,
+                receiver_name:            pkg.receiver.name,
+                receiver_phone:           pkg.receiver.phone ?? '',
+
                 origin:         pkg.origin,
                 destination:    pkg.destination,
                 trip_id:        pkg.trip_id?.toString() ?? '',
@@ -73,10 +99,14 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
             };
             setData(d);
             setShowBoxFields(pkg.package_type === 'caja');
+            setSenderLookup('found');
+            setReceiverLookup('found');
         } else if (isOpen) {
             reset();
             clearErrors();
             setShowBoxFields(false);
+            setSenderLookup('idle');
+            setReceiverLookup('idle');
         }
     }, [isOpen, pkg]);
 
@@ -90,7 +120,56 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
         }
     }
 
-    function handleClose() { reset(); clearErrors(); setShowBoxFields(false); onClose(); }
+    async function handleDocBlur(type: 'sender' | 'receiver') {
+        const docNumber = type === 'sender' ? data.sender_document_number : data.receiver_document_number;
+        const setLookup = type === 'sender' ? setSenderLookup : setReceiverLookup;
+
+        if (docNumber.length < 5) return;
+        setLookup('searching');
+        try {
+            const res = await fetch(route('clients.searchByDocument'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                },
+                body: JSON.stringify({ document_number: docNumber })
+            });
+            const json = await res.json();
+            if (json.success && json.client) {
+                if (type === 'sender') {
+                    setData(d => ({
+                        ...d,
+                        sender_id: json.client.id,
+                        sender_name: json.client.name,
+                        sender_document_type: json.client.document_type,
+                        sender_phone: json.client.phone ?? '',
+                    }));
+                } else {
+                    setData(d => ({
+                        ...d,
+                        receiver_id: json.client.id,
+                        receiver_name: json.client.name,
+                        receiver_document_type: json.client.document_type,
+                        receiver_phone: json.client.phone ?? '',
+                    }));
+                }
+                setLookup('found');
+            } else {
+                if (type === 'sender') setData(d => ({ ...d, sender_id: '' }));
+                else setData(d => ({ ...d, receiver_id: '' }));
+                setLookup('new');
+            }
+        } catch {
+            setLookup('idle');
+        }
+    }
+
+    function handleClose() {
+        reset(); clearErrors(); setShowBoxFields(false);
+        setSenderLookup('idle'); setReceiverLookup('idle');
+        onClose();
+    }
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -106,7 +185,7 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
             onClick={e => e.target === e.currentTarget && handleClose()}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 flex-shrink-0">
@@ -126,8 +205,102 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
                     <div className="px-6 py-5 space-y-4">
 
+                        {/* Remitente / Destinatario */}
+                        <div className="grid md:grid-cols-2 gap-6">
+
+                            {/* REMITENTE */}
+                            <div className="space-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-2">Remitente</p>
+
+                                <div className="grid grid-cols-3 gap-2">
+                                    <Field label="Doc." required error={errors.sender_document_type}>
+                                        <select value={data.sender_document_type} onChange={e => setData('sender_document_type', e.target.value)} className={inputCls(errors.sender_document_type)}>
+                                            <option value="DNI">DNI</option>
+                                            <option value="RUC">RUC</option>
+                                            <option value="CE">CE</option>
+                                            <option value="PASAPORTE">PASAPORTE</option>
+                                        </select>
+                                    </Field>
+                                    <div className="col-span-2">
+                                        <Field label="Número" required error={errors.sender_document_number}>
+                                            <div className="relative">
+                                                <input value={data.sender_document_number}
+                                                    onChange={e => setData('sender_document_number', e.target.value.replace(/\D/g, '').slice(0, 20))}
+                                                    onBlur={() => handleDocBlur('sender')}
+                                                    placeholder="12345678"
+                                                    className={inputCls(errors.sender_document_number)} />
+                                                {senderLookup === 'searching' && (
+                                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">…</span>
+                                                )}
+                                                {senderLookup === 'found' && (
+                                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-green-500">
+                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </Field>
+                                    </div>
+                                </div>
+                                <Field label="Nombre" required error={errors.sender_name}>
+                                    <input value={data.sender_name} onChange={e => setData('sender_name', e.target.value)}
+                                        disabled={senderLookup === 'found'}
+                                        placeholder="Nombre remitente"
+                                        className={`${inputCls(errors.sender_name)} ${senderLookup === 'found' ? 'bg-gray-100 text-gray-500' : ''}`} />
+                                </Field>
+                                <Field label="Teléfono" error={errors.sender_phone}>
+                                    <input value={data.sender_phone} onChange={e => setData('sender_phone', e.target.value)}
+                                        placeholder="987 654 321" className={inputCls(errors.sender_phone)} />
+                                </Field>
+                            </div>
+
+                            {/* DESTINATARIO */}
+                            <div className="space-y-3 p-4 bg-blue-50/50 rounded-xl border border-blue-100/50">
+                                <p className="text-xs font-semibold text-blue-400 uppercase tracking-widest border-b border-blue-200/50 pb-2">Destinatario</p>
+
+                                <div className="grid grid-cols-3 gap-2">
+                                    <Field label="Doc." required error={errors.receiver_document_type}>
+                                        <select value={data.receiver_document_type} onChange={e => setData('receiver_document_type', e.target.value)} className={inputCls(errors.receiver_document_type)}>
+                                            <option value="DNI">DNI</option>
+                                            <option value="RUC">RUC</option>
+                                            <option value="CE">CE</option>
+                                            <option value="PASAPORTE">PASAPORTE</option>
+                                        </select>
+                                    </Field>
+                                    <div className="col-span-2">
+                                        <Field label="Número" required error={errors.receiver_document_number}>
+                                            <div className="relative">
+                                                <input value={data.receiver_document_number}
+                                                    onChange={e => setData('receiver_document_number', e.target.value.replace(/\D/g, '').slice(0, 20))}
+                                                    onBlur={() => handleDocBlur('receiver')}
+                                                    placeholder="12345678"
+                                                    className={inputCls(errors.receiver_document_number)} />
+                                                {receiverLookup === 'searching' && (
+                                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">…</span>
+                                                )}
+                                                {receiverLookup === 'found' && (
+                                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-green-500">
+                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </Field>
+                                    </div>
+                                </div>
+                                <Field label="Nombre" required error={errors.receiver_name}>
+                                    <input value={data.receiver_name} onChange={e => setData('receiver_name', e.target.value)}
+                                        disabled={receiverLookup === 'found'}
+                                        placeholder="Nombre destinatario"
+                                        className={`${inputCls(errors.receiver_name)} ${receiverLookup === 'found' ? 'bg-gray-100 text-gray-500' : ''}`} />
+                                </Field>
+                                <Field label="Teléfono" error={errors.receiver_phone}>
+                                    <input value={data.receiver_phone} onChange={e => setData('receiver_phone', e.target.value)}
+                                        placeholder="987 654 321" className={inputCls(errors.receiver_phone)} />
+                                </Field>
+                            </div>
+                        </div>
+
                         {/* Tipo de paquete */}
-                        <div>
+                        <div className="border-t border-gray-100 pt-4 mt-2">
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Tipo de paquete<span className="text-red-500 ml-0.5">*</span></p>
                             <div className="grid grid-cols-2 gap-3">
                                 {packageTypes.map(t => (
@@ -163,24 +336,8 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                             </div>
                         )}
 
-                        {/* Remitente / Destinatario */}
-                        <div className="border-t border-gray-100 pt-4">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Personas</p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="Remitente" required error={errors.sender_name}>
-                                <input value={data.sender_name} onChange={e => setData('sender_name', e.target.value)}
-                                    placeholder="Quien envía" className={inputCls(errors.sender_name)} />
-                            </Field>
-                            <Field label="Destinatario" required error={errors.receiver_name}>
-                                <input value={data.receiver_name} onChange={e => setData('receiver_name', e.target.value)}
-                                    placeholder="Quien recibe" className={inputCls(errors.receiver_name)} />
-                            </Field>
-                        </div>
-
                         {/* Ruta */}
-                        <div className="border-t border-gray-100 pt-4">
+                        <div className="border-t border-gray-100 pt-4 mt-2">
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Ruta</p>
                         </div>
 
@@ -207,7 +364,7 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                         </Field>
 
                         {/* Cobro */}
-                        <div className="border-t border-gray-100 pt-4">
+                        <div className="border-t border-gray-100 pt-4 mt-2">
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Cobro</p>
                         </div>
 

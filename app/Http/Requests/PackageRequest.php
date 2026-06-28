@@ -13,8 +13,17 @@ class PackageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'sender_name'    => ['required', 'string', 'max:150'],
-            'receiver_name'  => ['required', 'string', 'max:150'],
+            'sender_id'              => ['nullable', 'exists:clients,id'],
+            'sender_name'            => ['required_without:sender_id', 'string', 'max:150'],
+            'sender_document_type'   => ['required', 'string', 'in:DNI,RUC,CE,PASAPORTE'],
+            'sender_document_number' => ['required', 'string', 'max:20'],
+            'sender_phone'           => ['nullable', 'string', 'max:30'],
+
+            'receiver_id'              => ['nullable', 'exists:clients,id'],
+            'receiver_name'            => ['required_without:receiver_id', 'string', 'max:150'],
+            'receiver_document_type'   => ['required', 'string', 'in:DNI,RUC,CE,PASAPORTE'],
+            'receiver_document_number' => ['required', 'string', 'max:20'],
+            'receiver_phone'           => ['nullable', 'string', 'max:30'],
             'origin'         => ['required', 'string', 'max:100'],
             'destination'    => ['required', 'string', 'max:100'],
             'trip_id'        => ['nullable', 'exists:trips,id'],
@@ -31,8 +40,12 @@ class PackageRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'sender_name.required'   => 'El nombre del remitente es obligatorio.',
-            'receiver_name.required' => 'El nombre del destinatario es obligatorio.',
+            'sender_document_type.required'   => 'El tipo de documento del remitente es obligatorio.',
+            'sender_document_number.required' => 'El número de documento del remitente es obligatorio.',
+            'sender_name.required_without'    => 'El nombre del remitente es obligatorio.',
+            'receiver_document_type.required'   => 'El tipo de documento del destinatario es obligatorio.',
+            'receiver_document_number.required' => 'El número de documento del destinatario es obligatorio.',
+            'receiver_name.required_without'    => 'El nombre del destinatario es obligatorio.',
             'origin.required'        => 'El origen es obligatorio.',
             'destination.required'   => 'El destino es obligatorio.',
             'package_type.required'  => 'El tipo de paquete es obligatorio.',
