@@ -1,0 +1,99 @@
+# ============================================================
+# CI - Integración Continua
+# Se ejecuta automáticamente en cada Pull Request hacia 'main'.
+# Valida la sintaxis PHP y construye los assets del frontend.
+# ============================================================
+name: CI - Integración Continua
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # ----------------------------------------------------------
+  # JOB 1: Linter de PHP (PHP CLI)
+  # Provisiona un contenedor Ubuntu y valida la sintaxis de
+  # todos los archivos .php del proyecto sin necesidad de BD.
+  # ----------------------------------------------------------
+  lint-php:
+    name: 🔍 PHP Lint (Sintaxis)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+          coverage: none
+
+      - name: Caché de dependencias Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Instalar dependencias PHP
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+
+      - name: "🔍 Verificación de sintaxis PHP (php -l)"
+        run: |
+          echo "Escaneando archivos PHP en app/, config/, routes/, database/..."
+          ERROR_COUNT=0
+          while IFS= read -r file; do
+            result=$(php -l "$file" 2>&1)
+            if echo "$result" | grep -q "Parse error"; then
+              echo "❌ Error en: $file"
+              echo "$result"
+              ERROR_COUNT=$((ERROR_COUNT + 1))
+            fi
+          done < <(find app config routes database -name "*.php" -type f)
+
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            echo ""
+            echo "❌ Se encontraron $ERROR_COUNT error(es) de sintaxis."
+            exit 1
+          else
+            echo "✅ Sin errores de sintaxis PHP detectados."
+          fi
+
+      - name: "🎨 Estilo de código (Laravel Pint - modo verificación)"
+        run: ./vendor/bin/pint --test
+        continue-on-error: false
+
+  # ----------------------------------------------------------
+  # JOB 2: Build del Frontend con Vite
+  # Compila y empaqueta los assets de React + TailwindCSS v4.
+  # Corre en paralelo al lint de PHP para mayor velocidad.
+  # ----------------------------------------------------------
+  build-frontend:
+    name: ⚡ Vite Build (React + TailwindCSS)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Instalar dependencias NPM
+        run: npm ci
+
+      - name: "⚡ Compilar assets con Vite (npm run build)"
+        run: npm run build
+
+      - name: Subir artifacts del build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: public/build/
+          retention-days: 3
