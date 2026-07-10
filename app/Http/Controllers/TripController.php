@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\TripRequest;
 use App\Models\Driver;
 use App\Models\Route;
-use App\Models\Schedule;
 use App\Models\Trip;
 use App\Models\TripStatusLog;
 use App\Models\Vehicle;
@@ -23,10 +22,9 @@ class TripController extends Controller
 
         // Filtros
         if ($search = $request->get('search')) {
-            $query->whereHas('route', fn ($q) =>
-                $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('origin', 'ilike', "%{$search}%")
-                  ->orWhere('destination', 'ilike', "%{$search}%")
+            $query->whereHas('route', fn ($q) => $q->where('name', 'ilike', "%{$search}%")
+                ->orWhere('origin', 'ilike', "%{$search}%")
+                ->orWhere('destination', 'ilike', "%{$search}%")
             );
         }
 
@@ -48,21 +46,21 @@ class TripController extends Controller
         $trips = $query->paginate(12)->withQueryString();
 
         $counts = [
-            'total'      => Trip::count(),
+            'total' => Trip::count(),
             'programado' => Trip::where('status', 'programado')->count(),
-            'abordando'  => Trip::where('status', 'abordando')->count(),
-            'en_ruta'    => Trip::where('status', 'en_ruta')->count(),
+            'abordando' => Trip::where('status', 'abordando')->count(),
+            'en_ruta' => Trip::where('status', 'en_ruta')->count(),
             'completado' => Trip::whereDate('trip_date', today())->where('status', 'completado')->count(),
-            'cancelado'  => Trip::whereDate('trip_date', today())->where('status', 'cancelado')->count(),
+            'cancelado' => Trip::whereDate('trip_date', today())->where('status', 'cancelado')->count(),
         ];
 
         return Inertia::render('Trips/Index', [
-            'trips'    => $trips,
-            'counts'   => $counts,
-            'routes'   => Route::active()->orderBy('name')->get(['id', 'name', 'origin', 'destination', 'base_fare', 'estimated_minutes']),
+            'trips' => $trips,
+            'counts' => $counts,
+            'routes' => Route::active()->orderBy('name')->get(['id', 'name', 'origin', 'destination', 'base_fare', 'estimated_minutes']),
             'vehicles' => Vehicle::where('status', '!=', 'inactivo')->orderBy('plate')->get(['id', 'plate', 'brand', 'model', 'sellable_seats']),
-            'drivers'  => Driver::where('status', 'activo')->orderBy('name')->get(['id', 'name', 'license_number']),
-            'filters'  => $request->only(['search', 'status', 'date', 'route_id']),
+            'drivers' => Driver::where('status', 'activo')->orderBy('name')->get(['id', 'name', 'license_number']),
+            'filters' => $request->only(['search', 'status', 'date', 'route_id']),
             'statuses' => Trip::statuses(),
         ]);
     }
@@ -73,16 +71,16 @@ class TripController extends Controller
             $trip = Trip::create([
                 ...$request->validated(),
                 'created_by' => Auth::id(),
-                'status'     => 'programado',
+                'status' => 'programado',
             ]);
 
             // Log inicial
             TripStatusLog::create([
-                'trip_id'         => $trip->id,
-                'changed_by'      => Auth::id(),
+                'trip_id' => $trip->id,
+                'changed_by' => Auth::id(),
                 'previous_status' => '—',
-                'new_status'      => 'programado',
-                'changed_at'      => now(),
+                'new_status' => 'programado',
+                'changed_at' => now(),
             ]);
         });
 
@@ -121,7 +119,7 @@ class TripController extends Controller
     public function updateStatus(Request $request, Trip $trip)
     {
         $request->validate([
-            'status'       => ['required', 'string', 'in:' . implode(',', Trip::statuses())],
+            'status' => ['required', 'string', 'in:'.implode(',', Trip::statuses())],
             'observations' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -135,16 +133,16 @@ class TripController extends Controller
             $oldStatus = $trip->status;
 
             $trip->update([
-                'status'       => $newStatus,
+                'status' => $newStatus,
                 'observations' => $request->observations ?? $trip->observations,
             ]);
 
             TripStatusLog::create([
-                'trip_id'         => $trip->id,
-                'changed_by'      => Auth::id(),
+                'trip_id' => $trip->id,
+                'changed_by' => Auth::id(),
                 'previous_status' => $oldStatus,
-                'new_status'      => $newStatus,
-                'changed_at'      => now(),
+                'new_status' => $newStatus,
+                'changed_at' => now(),
             ]);
 
             // Si el viaje pasa a en_ruta, actualizar encomiendas vinculadas
@@ -176,8 +174,8 @@ class TripController extends Controller
         ]);
 
         return Inertia::render('Trips/Show', [
-            'trip'      => $trip,
-            'statuses'  => Trip::statuses(),
+            'trip' => $trip,
+            'statuses' => Trip::statuses(),
             'statusConfig' => Trip::statusConfig(),
             'allowedTransitions' => Trip::allowedTransitions()[$trip->status] ?? [],
         ]);

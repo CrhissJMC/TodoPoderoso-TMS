@@ -11,12 +11,12 @@ class RouteSeeder extends Seeder
     {
         $routes = [
             [
-                'name'              => 'Chachapoyas - Bagua Grande',
-                'origin'            => 'Chachapoyas',
-                'destination'       => 'Bagua Grande',
+                'name' => 'Chachapoyas - Bagua Grande',
+                'origin' => 'Chachapoyas',
+                'destination' => 'Bagua Grande',
                 'estimated_minutes' => 120,
-                'base_fare'         => 20.00,
-                'active'            => true,
+                'base_fare' => 20.00,
+                'active' => true,
                 'stops' => [
                     ['stop_name' => 'Pedro Ruiz',  'stop_order' => 1, 'minutes_from_origin' => 60,  'fare_from_origin' => 12.00],
                     ['stop_name' => 'Pomacochas',  'stop_order' => 2, 'minutes_from_origin' => 75,  'fare_from_origin' => 14.00],
@@ -24,24 +24,24 @@ class RouteSeeder extends Seeder
                 ],
             ],
             [
-                'name'              => 'Chachapoyas - Jaén',
-                'origin'            => 'Chachapoyas',
-                'destination'       => 'Jaén',
+                'name' => 'Chachapoyas - Jaén',
+                'origin' => 'Chachapoyas',
+                'destination' => 'Jaén',
                 'estimated_minutes' => 210,
-                'base_fare'         => 35.00,
-                'active'            => true,
+                'base_fare' => 35.00,
+                'active' => true,
                 'stops' => [
                     ['stop_name' => 'Pedro Ruiz', 'stop_order' => 1, 'minutes_from_origin' => 60,  'fare_from_origin' => 12.00],
-                    ['stop_name' => 'Bagua Grande','stop_order' => 2, 'minutes_from_origin' => 120, 'fare_from_origin' => 20.00],
+                    ['stop_name' => 'Bagua Grande', 'stop_order' => 2, 'minutes_from_origin' => 120, 'fare_from_origin' => 20.00],
                 ],
             ],
             [
-                'name'              => 'Chachapoyas - Leymebamba',
-                'origin'            => 'Chachapoyas',
-                'destination'       => 'Leymebamba',
+                'name' => 'Chachapoyas - Leymebamba',
+                'origin' => 'Chachapoyas',
+                'destination' => 'Leymebamba',
                 'estimated_minutes' => 90,
-                'base_fare'         => 15.00,
-                'active'            => true,
+                'base_fare' => 15.00,
+                'active' => true,
                 'stops' => [],
             ],
         ];

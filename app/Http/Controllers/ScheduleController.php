@@ -7,9 +7,9 @@ use App\Models\Driver;
 use App\Models\Route;
 use App\Models\Schedule;
 use App\Models\Vehicle;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Carbon\Carbon; // Importamos Carbon para formatear la hora
+use Inertia\Inertia; // Importamos Carbon para formatear la hora
 
 class ScheduleController extends Controller
 {
@@ -18,10 +18,9 @@ class ScheduleController extends Controller
         $query = Schedule::with(['route', 'vehicle', 'driver']);
 
         if ($search = $request->get('search')) {
-            $query->whereHas('route', fn ($q) =>
-                $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('origin', 'ilike', "%{$search}%")
-                  ->orWhere('destination', 'ilike', "%{$search}%")
+            $query->whereHas('route', fn ($q) => $q->where('name', 'ilike', "%{$search}%")
+                ->orWhere('origin', 'ilike', "%{$search}%")
+                ->orWhere('destination', 'ilike', "%{$search}%")
             );
         }
 
@@ -39,44 +38,45 @@ class ScheduleController extends Controller
             ->withQueryString()
             // 🔴 AQUI ENVIAMOS LOS DATOS EXACTOS QUE REACT NECESITA
             ->through(fn ($schedule) => [
-                'id'             => $schedule->id,
-                'route_id'       => $schedule->route_id,
-                'vehicle_id'     => $schedule->vehicle_id,
-                'driver_id'      => $schedule->driver_id,
+                'id' => $schedule->id,
+                'route_id' => $schedule->route_id,
+                'vehicle_id' => $schedule->vehicle_id,
+                'driver_id' => $schedule->driver_id,
                 'departure_time' => $schedule->departure_time,
-                'days_of_week'   => $schedule->days_of_week,
-                'active'         => $schedule->active,
-                'route'          => $schedule->route,
-                'vehicle'        => $schedule->vehicle,
-                'driver'         => $schedule->driver,
-                
+                'days_of_week' => $schedule->days_of_week,
+                'active' => $schedule->active,
+                'route' => $schedule->route,
+                'vehicle' => $schedule->vehicle,
+                'driver' => $schedule->driver,
+
                 // Convertimos "1,3,5" en un arreglo real [1, 3, 5] para evitar el error "includes"
-                'days_array'     => array_map('intval', explode(',', $schedule->days_of_week)),
-                
+                'days_array' => array_map('intval', explode(',', $schedule->days_of_week)),
+
                 // Formateamos la hora para que se vea bonita (ej: 08:30 AM)
                 'formatted_time' => Carbon::parse($schedule->departure_time)->format('h:i A'),
             ]);
 
         $counts = [
-            'total'  => Schedule::count(),
+            'total' => Schedule::count(),
             'active' => Schedule::where('active', true)->count(),
-            
+
             // Calculamos los que operan hoy de forma segura
-            'today'  => Schedule::where('active', true)->get()
-                            ->filter(function ($s) {
-                                $today = now()->dayOfWeekIso; // 1=Lunes, 7=Domingo
-                                $days = array_map('intval', explode(',', $s->days_of_week));
-                                return in_array($today, $days);
-                            })->count(),
+            'today' => Schedule::where('active', true)->get()
+                ->filter(function ($s) {
+                    $today = now()->dayOfWeekIso; // 1=Lunes, 7=Domingo
+                    $days = array_map('intval', explode(',', $s->days_of_week));
+
+                    return in_array($today, $days);
+                })->count(),
         ];
 
         return Inertia::render('Schedules/Index', [
             'schedules' => $schedules,
-            'counts'    => $counts,
-            'routes'    => Route::active()->orderBy('name')->get(['id', 'name', 'origin', 'destination', 'base_fare']),
-            'vehicles'  => Vehicle::where('status', '!=', 'inactivo')->orderBy('plate')->get(['id', 'plate', 'brand', 'model', 'sellable_seats']),
-            'drivers'   => Driver::where('status', 'activo')->orderBy('name')->get(['id', 'name', 'license_number']),
-            'filters'   => $request->only(['search', 'route_id', 'active']),
+            'counts' => $counts,
+            'routes' => Route::active()->orderBy('name')->get(['id', 'name', 'origin', 'destination', 'base_fare']),
+            'vehicles' => Vehicle::where('status', '!=', 'inactivo')->orderBy('plate')->get(['id', 'plate', 'brand', 'model', 'sellable_seats']),
+            'drivers' => Driver::where('status', 'activo')->orderBy('name')->get(['id', 'name', 'license_number']),
+            'filters' => $request->only(['search', 'route_id', 'active']),
         ]);
     }
 
@@ -123,6 +123,7 @@ class ScheduleController extends Controller
     {
         $schedule->update(['active' => ! $schedule->active]);
         $label = $schedule->active ? 'activado' : 'desactivado';
+
         return back()->with('success', "Horario {$label} correctamente.");
     }
 }

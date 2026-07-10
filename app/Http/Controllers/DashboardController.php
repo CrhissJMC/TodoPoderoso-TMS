@@ -19,7 +19,7 @@ class DashboardController extends Controller
 
         $fleet = [
             'available' => Vehicle::available()->count(),
-            'total'     => Vehicle::count(),
+            'total' => Vehicle::count(),
         ];
 
         $recentTrips = Trip::with(['route', 'vehicle', 'driver'])
@@ -29,21 +29,21 @@ class DashboardController extends Controller
             ->take(5)
             ->get()
             ->map(fn (Trip $trip) => [
-                'id'             => $trip->id,
-                'route_name'     => $trip->route->name,
-                'vehicle_plate'  => $trip->vehicle?->plate,
-                'driver_name'    => $trip->driver?->name,
-                'status'         => $trip->status,
+                'id' => $trip->id,
+                'route_name' => $trip->route->name,
+                'vehicle_plate' => $trip->vehicle?->plate,
+                'driver_name' => $trip->driver?->name,
+                'status' => $trip->status,
                 'occupied_seats' => $trip->tickets_count,
                 'sellable_seats' => $trip->vehicle?->sellable_seats,
             ]);
 
         return Inertia::render('Dashboard', [
-            'tripsInProgress'  => $tripsInProgress,
-            'passengersToday'  => $passengersToday,
-            'fleet'            => $fleet,
-            'recentTrips'      => $recentTrips,
-            'statusConfig'     => Trip::statusConfig(),
+            'tripsInProgress' => $tripsInProgress,
+            'passengersToday' => $passengersToday,
+            'fleet' => $fleet,
+            'recentTrips' => $recentTrips,
+            'statusConfig' => Trip::statusConfig(),
         ]);
     }
 }

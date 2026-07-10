@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -14,16 +14,16 @@ class RoleController extends Controller
         $roles = Role::with(['permissions', 'users' => function ($query) {
             $query->select('id', 'name', 'email', 'estado', 'role_id');
         }])->get();
-        
+
         $modules = [
-            'usuarios'    => 'Usuarios',
-            'vehiculos'   => 'Vehículos',
+            'usuarios' => 'Usuarios',
+            'vehiculos' => 'Vehículos',
             'conductores' => 'Conductores',
-            'rutas'       => 'Rutas',
-            'horarios'    => 'Horarios',
-            'clientes'    => 'Clientes',
-            'viajes'      => 'Viajes',
-            'boletos'     => 'Boletos',
+            'rutas' => 'Rutas',
+            'horarios' => 'Horarios',
+            'clientes' => 'Clientes',
+            'viajes' => 'Viajes',
+            'boletos' => 'Boletos',
             'encomiendas' => 'Encomiendas',
         ];
 
@@ -52,12 +52,18 @@ class RoleController extends Controller
         foreach ($moduleConfig as $module => $accessLevel) {
             if ($accessLevel === 'ver') {
                 $perm = Permission::where('name', "{$module}.ver")->first();
-                if ($perm) $permissionsToAttach[] = $perm->id;
+                if ($perm) {
+                    $permissionsToAttach[] = $perm->id;
+                }
             } elseif ($accessLevel === 'admin') {
                 $permVer = Permission::where('name', "{$module}.ver")->first();
                 $permAdmin = Permission::where('name', "{$module}.admin")->first();
-                if ($permVer) $permissionsToAttach[] = $permVer->id;
-                if ($permAdmin) $permissionsToAttach[] = $permAdmin->id;
+                if ($permVer) {
+                    $permissionsToAttach[] = $permVer->id;
+                }
+                if ($permAdmin) {
+                    $permissionsToAttach[] = $permAdmin->id;
+                }
             }
         }
 
@@ -84,12 +90,18 @@ class RoleController extends Controller
         foreach ($moduleConfig as $module => $accessLevel) {
             if ($accessLevel === 'ver') {
                 $perm = Permission::where('name', "{$module}.ver")->first();
-                if ($perm) $permissionsToAttach[] = $perm->id;
+                if ($perm) {
+                    $permissionsToAttach[] = $perm->id;
+                }
             } elseif ($accessLevel === 'admin') {
                 $permVer = Permission::where('name', "{$module}.ver")->first();
                 $permAdmin = Permission::where('name', "{$module}.admin")->first();
-                if ($permVer) $permissionsToAttach[] = $permVer->id;
-                if ($permAdmin) $permissionsToAttach[] = $permAdmin->id;
+                if ($permVer) {
+                    $permissionsToAttach[] = $permVer->id;
+                }
+                if ($permAdmin) {
+                    $permissionsToAttach[] = $permAdmin->id;
+                }
             }
         }
 

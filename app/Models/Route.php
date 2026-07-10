@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Route extends Model
 {
@@ -19,17 +19,20 @@ class Route extends Model
     ];
 
     protected $casts = [
-        'active'            => 'boolean',
+        'active' => 'boolean',
         'estimated_minutes' => 'integer',
-        'base_fare'         => 'decimal:2',
+        'base_fare' => 'decimal:2',
     ];
 
     // Duración formateada: 90 → "1h 30m"
     public function getDurationLabelAttribute(): string
     {
-        if (! $this->estimated_minutes) return '—';
+        if (! $this->estimated_minutes) {
+            return '—';
+        }
         $h = intdiv($this->estimated_minutes, 60);
         $m = $this->estimated_minutes % 60;
+
         return $h > 0
             ? ($m > 0 ? "{$h}h {$m}m" : "{$h}h")
             : "{$m}m";

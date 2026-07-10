@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
 
 class Driver extends Model
 {
@@ -28,7 +27,7 @@ class Driver extends Model
 
     protected $casts = [
         'license_expiry' => 'date',
-        'rental_fee'     => 'decimal:2',
+        'rental_fee' => 'decimal:2',
     ];
 
     public static function statuses(): array
@@ -49,13 +48,19 @@ class Driver extends Model
 
     public function isLicenseExpiringSoon(): bool
     {
-        if (! $this->license_expiry) return false;
+        if (! $this->license_expiry) {
+            return false;
+        }
+
         return $this->license_expiry->diffInDays(now(), false) >= -30;
     }
 
     public function isLicenseExpired(): bool
     {
-        if (! $this->license_expiry) return false;
+        if (! $this->license_expiry) {
+            return false;
+        }
+
         return $this->license_expiry->isPast();
     }
 

@@ -27,9 +27,9 @@ class Ticket extends Model
     ];
 
     protected $casts = [
-        'fare'        => 'decimal:2',
+        'fare' => 'decimal:2',
         'seat_number' => 'integer',
-        'voided_at'   => 'datetime',
+        'voided_at' => 'datetime',
     ];
 
     public static function ticketStatuses(): array
@@ -51,11 +51,27 @@ class Ticket extends Model
     public static function generateTicketCode(): string
     {
         $last = self::withTrashed()->latest('id')->value('id') ?? 0;
-        return 'TKT-' . str_pad($last + 1, 5, '0', STR_PAD_LEFT);
+
+        return 'TKT-'.str_pad($last + 1, 5, '0', STR_PAD_LEFT);
     }
 
-    public function trip()      { return $this->belongsTo(Trip::class); }
-    public function client() { return $this->belongsTo(Client::class); }
-    public function soldBy()    { return $this->belongsTo(User::class, 'sold_by'); }
-    public function voidedBy()  { return $this->belongsTo(User::class, 'voided_by'); }
+    public function trip()
+    {
+        return $this->belongsTo(Trip::class);
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function soldBy()
+    {
+        return $this->belongsTo(User::class, 'sold_by');
+    }
+
+    public function voidedBy()
+    {
+        return $this->belongsTo(User::class, 'voided_by');
+    }
 }

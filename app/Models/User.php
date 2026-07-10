@@ -31,7 +31,7 @@ class User extends Authenticatable
      */
     public function hasPermission(string $permission): bool
     {
-        if (!$this->role) {
+        if (! $this->role) {
             return false;
         }
 
@@ -44,7 +44,7 @@ class User extends Authenticatable
     public function hasAllPermissions(array $permissions): bool
     {
         foreach ($permissions as $permission) {
-            if (!$this->hasPermission($permission)) {
+            if (! $this->hasPermission($permission)) {
                 return false;
             }
         }
@@ -71,13 +71,13 @@ class User extends Authenticatable
      */
     public function getAllPermissions(): array
     {
-        if (!$this->role || !$this->relationLoaded('role')) {
+        if (! $this->role || ! $this->relationLoaded('role')) {
             $this->load('role.permissions');
-        } elseif (!$this->role->relationLoaded('permissions')) {
+        } elseif (! $this->role->relationLoaded('permissions')) {
             $this->role->load('permissions');
         }
 
-        if (!$this->role) {
+        if (! $this->role) {
             return [];
         }
 

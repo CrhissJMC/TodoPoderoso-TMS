@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\PackageRequest;
-use App\Models\Package;
 use App\Models\Client;
+use App\Models\Package;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,11 +19,11 @@ class PackageController extends Controller
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
-                $q->whereHas('sender', fn($s) => $s->where('name', 'ilike', "%{$search}%")->orWhere('document_number', 'ilike', "%{$search}%"))
-                  ->orWhereHas('receiver', fn($r) => $r->where('name', 'ilike', "%{$search}%")->orWhere('document_number', 'ilike', "%{$search}%"))
-                  ->orWhere('tracking_code','ilike', "%{$search}%")
-                  ->orWhere('origin',       'ilike', "%{$search}%")
-                  ->orWhere('destination',  'ilike', "%{$search}%");
+                $q->whereHas('sender', fn ($s) => $s->where('name', 'ilike', "%{$search}%")->orWhere('document_number', 'ilike', "%{$search}%"))
+                    ->orWhereHas('receiver', fn ($r) => $r->where('name', 'ilike', "%{$search}%")->orWhere('document_number', 'ilike', "%{$search}%"))
+                    ->orWhere('tracking_code', 'ilike', "%{$search}%")
+                    ->orWhere('origin', 'ilike', "%{$search}%")
+                    ->orWhere('destination', 'ilike', "%{$search}%");
             });
         }
 
@@ -41,9 +41,9 @@ class PackageController extends Controller
             ->withQueryString();
 
         $counts = [
-            'total'     => Package::count(),
-            'recibido'  => Package::where('status', 'recibido')->count(),
-            'en_ruta'   => Package::where('status', 'en_ruta')->count(),
+            'total' => Package::count(),
+            'recibido' => Package::where('status', 'recibido')->count(),
+            'en_ruta' => Package::where('status', 'en_ruta')->count(),
             'entregado' => Package::where('status', 'entregado')->count(),
         ];
 
@@ -54,22 +54,22 @@ class PackageController extends Controller
             ->orderBy('trip_date')
             ->get(['id', 'trip_date', 'status', 'route_id'])
             ->map(fn ($t) => [
-                'id'         => $t->id,
-                'label'      => $t->route->name . ' — ' . $t->trip_date->format('d/m/Y'),
-                'status'     => $t->status,
-                'trip_date'  => $t->trip_date->toDateString(),
+                'id' => $t->id,
+                'label' => $t->route->name.' — '.$t->trip_date->format('d/m/Y'),
+                'status' => $t->status,
+                'trip_date' => $t->trip_date->toDateString(),
                 'route_name' => $t->route->name,
             ]);
 
         return Inertia::render('Packages/Index', [
-            'packages'    => $packages,
-            'counts'      => $counts,
+            'packages' => $packages,
+            'counts' => $counts,
             'activeTrips' => $activeTrips,
-            'filters'     => $request->only(['search', 'status', 'package_type']),
-            'packageTypes'   => Package::packageTypes(),
+            'filters' => $request->only(['search', 'status', 'package_type']),
+            'packageTypes' => Package::packageTypes(),
             'paymentMethods' => Package::paymentMethods(),
-            'paymentStatuses'=> Package::paymentStatuses(),
-            'statuses'       => Package::statuses(),
+            'paymentStatuses' => Package::paymentStatuses(),
+            'statuses' => Package::statuses(),
         ]);
     }
 
@@ -87,21 +87,21 @@ class PackageController extends Controller
 
         DB::transaction(function () use (&$data) {
             $sender = Client::where('document_number', $data['sender_document_number'])->first();
-            if (!$sender) {
+            if (! $sender) {
                 $sender = Client::create([
-                    'name'            => $data['sender_name'],
-                    'document_type'   => $data['sender_document_type'],
+                    'name' => $data['sender_name'],
+                    'document_type' => $data['sender_document_type'],
                     'document_number' => $data['sender_document_number'],
-                    'phone'           => $data['sender_phone'],
+                    'phone' => $data['sender_phone'],
                 ]);
             }
             $receiver = Client::where('document_number', $data['receiver_document_number'])->first();
-            if (!$receiver) {
+            if (! $receiver) {
                 $receiver = Client::create([
-                    'name'            => $data['receiver_name'],
-                    'document_type'   => $data['receiver_document_type'],
+                    'name' => $data['receiver_name'],
+                    'document_type' => $data['receiver_document_type'],
                     'document_number' => $data['receiver_document_number'],
-                    'phone'           => $data['receiver_phone'],
+                    'phone' => $data['receiver_phone'],
                 ]);
             }
 
@@ -122,8 +122,8 @@ class PackageController extends Controller
 
             Package::create([
                 ...$data,
-                'received_by'   => Auth::id(),
-                'status'        => $status,
+                'received_by' => Auth::id(),
+                'status' => $status,
                 'tracking_code' => Package::generateTrackingCode(),
             ]);
         });
@@ -143,21 +143,21 @@ class PackageController extends Controller
 
         DB::transaction(function () use (&$data, $package) {
             $sender = Client::where('document_number', $data['sender_document_number'])->first();
-            if (!$sender) {
+            if (! $sender) {
                 $sender = Client::create([
-                    'name'            => $data['sender_name'],
-                    'document_type'   => $data['sender_document_type'],
+                    'name' => $data['sender_name'],
+                    'document_type' => $data['sender_document_type'],
                     'document_number' => $data['sender_document_number'],
-                    'phone'           => $data['sender_phone'],
+                    'phone' => $data['sender_phone'],
                 ]);
             }
             $receiver = Client::where('document_number', $data['receiver_document_number'])->first();
-            if (!$receiver) {
+            if (! $receiver) {
                 $receiver = Client::create([
-                    'name'            => $data['receiver_name'],
-                    'document_type'   => $data['receiver_document_type'],
+                    'name' => $data['receiver_name'],
+                    'document_type' => $data['receiver_document_type'],
                     'document_number' => $data['receiver_document_number'],
-                    'phone'           => $data['receiver_phone'],
+                    'phone' => $data['receiver_phone'],
                 ]);
             }
 
@@ -214,21 +214,21 @@ class PackageController extends Controller
         }
 
         return response()->json([
-            'found'   => true,
+            'found' => true,
             'package' => [
-                'tracking_code'  => $package->tracking_code,
-                'sender_name'    => $package->sender->name,
-                'receiver_name'  => $package->receiver->name,
-                'origin'         => $package->origin,
-                'destination'    => $package->destination,
-                'package_type'   => $package->package_type,
-                'status'         => $package->status,
-                'trip'           => $package->trip ? [
-                    'route'   => $package->trip->route->name,
-                    'date'    => $package->trip->trip_date->format('d/m/Y'),
-                    'status'  => $package->trip->status,
+                'tracking_code' => $package->tracking_code,
+                'sender_name' => $package->sender->name,
+                'receiver_name' => $package->receiver->name,
+                'origin' => $package->origin,
+                'destination' => $package->destination,
+                'package_type' => $package->package_type,
+                'status' => $package->status,
+                'trip' => $package->trip ? [
+                    'route' => $package->trip->route->name,
+                    'date' => $package->trip->trip_date->format('d/m/Y'),
+                    'status' => $package->trip->status,
                     'vehicle' => $package->trip->vehicle?->plate,
-                    'driver'  => $package->trip->driver?->name,
+                    'driver' => $package->trip->driver?->name,
                 ] : null,
             ],
         ]);

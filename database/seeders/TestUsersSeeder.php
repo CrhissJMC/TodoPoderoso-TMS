@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -18,7 +18,7 @@ class TestUsersSeeder extends Seeder
             'operador ventas',
             'operador encomiendas',
             'agente',
-            'cliente'
+            'cliente',
         ];
 
         foreach ($roles as $roleName) {
@@ -32,7 +32,7 @@ class TestUsersSeeder extends Seeder
                 User::firstOrCreate(
                     ['email' => $email],
                     [
-                        'name' => ucfirst($roleName) . " Test {$i}",
+                        'name' => ucfirst($roleName)." Test {$i}",
                         'password' => Hash::make('password123'),
                         'role_id' => $role->id,
                         'estado' => 'activo',

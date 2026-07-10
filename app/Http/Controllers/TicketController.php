@@ -20,10 +20,9 @@ class TicketController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('ticket_code', 'ilike', "%{$search}%")
-                  ->orWhereHas('client', fn ($c) =>
-                      $c->where('name', 'ilike', "%{$search}%")
+                    ->orWhereHas('client', fn ($c) => $c->where('name', 'ilike', "%{$search}%")
                         ->orWhere('document_number', 'ilike', "%{$search}%")
-                  );
+                    );
             });
         }
 
@@ -38,10 +37,10 @@ class TicketController extends Controller
         $tickets = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
         $counts = [
-            'total'    => Ticket::count(),
-            'emitido'  => Ticket::where('ticket_status', 'emitido')->count(),
+            'total' => Ticket::count(),
+            'emitido' => Ticket::where('ticket_status', 'emitido')->count(),
             'abordado' => Ticket::where('ticket_status', 'abordado')->count(),
-            'anulado'  => Ticket::where('ticket_status', 'anulado')->count(),
+            'anulado' => Ticket::where('ticket_status', 'anulado')->count(),
         ];
 
         // Viajes disponibles para vender (no completados/cancelados, desde ayer)
@@ -51,28 +50,28 @@ class TicketController extends Controller
             ->orderBy('trip_date')
             ->get()
             ->map(fn ($t) => [
-                'id'              => $t->id,
-                'label'           => $t->route->name . ' — ' . $t->trip_date->format('d/m/Y'),
-                'status'          => $t->status,
-                'route_name'      => $t->route->name,
-                'origin'          => $t->route->origin,
-                'destination'     => $t->route->destination,
-                'base_fare'       => $t->route->base_fare,
-                'sellable_seats'  => $t->vehicle?->sellable_seats ?? 0,
-                'stops'           => $t->route->stops->map(fn ($s) => [
+                'id' => $t->id,
+                'label' => $t->route->name.' — '.$t->trip_date->format('d/m/Y'),
+                'status' => $t->status,
+                'route_name' => $t->route->name,
+                'origin' => $t->route->origin,
+                'destination' => $t->route->destination,
+                'base_fare' => $t->route->base_fare,
+                'sellable_seats' => $t->vehicle?->sellable_seats ?? 0,
+                'stops' => $t->route->stops->map(fn ($s) => [
                     'name' => $s->stop_name,
                     'fare' => $s->fare_from_origin,
                 ]),
-                'occupied_seats'  => $t->occupiedSeats(),
+                'occupied_seats' => $t->occupiedSeats(),
             ]);
 
         return Inertia::render('Tickets/Index', [
-            'tickets'         => $tickets,
-            'counts'          => $counts,
-            'availableTrips'  => $availableTrips,
-            'filters'         => $request->only(['search', 'status', 'trip_id']),
-            'ticketStatuses'  => Ticket::ticketStatuses(),
-            'paymentMethods'  => Ticket::paymentMethods(),
+            'tickets' => $tickets,
+            'counts' => $counts,
+            'availableTrips' => $availableTrips,
+            'filters' => $request->only(['search', 'status', 'trip_id']),
+            'ticketStatuses' => Ticket::ticketStatuses(),
+            'paymentMethods' => Ticket::paymentMethods(),
             'paymentStatuses' => Ticket::paymentStatuses(),
         ]);
     }
@@ -93,25 +92,25 @@ class TicketController extends Controller
 
             if (! $client) {
                 $client = Client::create([
-                    'name'            => $request->client_name,
-                    'document_type'   => $request->client_document_type,
+                    'name' => $request->client_name,
+                    'document_type' => $request->client_document_type,
                     'document_number' => $request->client_document_number,
-                    'phone'           => $request->client_phone,
+                    'phone' => $request->client_phone,
                 ]);
             }
 
             Ticket::create([
-                'trip_id'        => $request->trip_id,
-                'client_id'      => $client->id,
-                'sold_by'        => Auth::id(),
-                'seat_number'    => $request->seat_number,
-                'boarding_stop'  => $request->boarding_stop,
-                'dropoff_stop'   => $request->dropoff_stop,
-                'fare'           => $request->fare,
-                'ticket_status'  => 'emitido',
+                'trip_id' => $request->trip_id,
+                'client_id' => $client->id,
+                'sold_by' => Auth::id(),
+                'seat_number' => $request->seat_number,
+                'boarding_stop' => $request->boarding_stop,
+                'dropoff_stop' => $request->dropoff_stop,
+                'fare' => $request->fare,
+                'ticket_status' => 'emitido',
                 'payment_status' => $request->payment_status,
                 'payment_method' => $request->payment_method,
-                'ticket_code'    => Ticket::generateTicketCode(),
+                'ticket_code' => Ticket::generateTicketCode(),
             ]);
 
             return $client;
@@ -131,19 +130,19 @@ class TicketController extends Controller
         $client = Client::where('document_number', $request->client_document_number)->first();
         if (! $client) {
             $client = Client::create([
-                'name'            => $request->client_name,
-                'document_type'   => $request->client_document_type,
+                'name' => $request->client_name,
+                'document_type' => $request->client_document_type,
                 'document_number' => $request->client_document_number,
-                'phone'           => $request->client_phone,
+                'phone' => $request->client_phone,
             ]);
         }
 
         $ticket->update([
-            'client_id'      => $client->id,
-            'seat_number'    => $request->seat_number,
-            'boarding_stop'  => $request->boarding_stop,
-            'dropoff_stop'   => $request->dropoff_stop,
-            'fare'           => $request->fare,
+            'client_id' => $client->id,
+            'seat_number' => $request->seat_number,
+            'boarding_stop' => $request->boarding_stop,
+            'dropoff_stop' => $request->dropoff_stop,
+            'fare' => $request->fare,
             'payment_method' => $request->payment_method,
             'payment_status' => $request->payment_status,
         ]);
@@ -158,8 +157,8 @@ class TicketController extends Controller
         // Anular en lugar de eliminar físicamente (libera el asiento)
         $ticket->update([
             'ticket_status' => 'anulado',
-            'voided_by'     => Auth::id(),
-            'voided_at'     => now(),
+            'voided_by' => Auth::id(),
+            'voided_at' => now(),
         ]);
         $ticket->delete();
 
@@ -188,8 +187,8 @@ class TicketController extends Controller
         return response()->json([
             'sellable_seats' => $trip->vehicle?->sellable_seats ?? 0,
             'occupied_seats' => $trip->occupiedSeats(),
-            'base_fare'      => $trip->route->base_fare,
-            'stops'          => $trip->route->stops->map(fn ($s) => [
+            'base_fare' => $trip->route->base_fare,
+            'stops' => $trip->route->stops->map(fn ($s) => [
                 'name' => $s->stop_name,
                 'fare' => $s->fare_from_origin,
             ]),
