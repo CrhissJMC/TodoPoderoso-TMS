@@ -29,7 +29,7 @@ class Package extends Model
 
     protected $casts = [
         'weight' => 'decimal:2',
-        'price'  => 'decimal:2',
+        'price' => 'decimal:2',
     ];
 
     public static function packageTypes(): array
@@ -56,7 +56,8 @@ class Package extends Model
     public static function generateTrackingCode(): string
     {
         $last = self::withTrashed()->latest('id')->value('id') ?? 0;
-        return 'PKG-' . str_pad($last + 1, 5, '0', STR_PAD_LEFT);
+
+        return 'PKG-'.str_pad($last + 1, 5, '0', STR_PAD_LEFT);
     }
 
     public function trip()

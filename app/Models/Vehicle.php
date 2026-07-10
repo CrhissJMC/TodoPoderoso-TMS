@@ -24,7 +24,7 @@ class Vehicle extends Model
     ];
 
     protected $casts = [
-        'year'           => 'integer',
+        'year' => 'integer',
         'capacity_seats' => 'integer',
         'sellable_seats' => 'integer',
     ];
@@ -44,11 +44,11 @@ class Vehicle extends Model
     public function statusLabel(): string
     {
         return match ($this->status) {
-            'disponible'    => 'Disponible',
-            'en_ruta'       => 'En ruta',
+            'disponible' => 'Disponible',
+            'en_ruta' => 'En ruta',
             'mantenimiento' => 'Mantenimiento',
-            'inactivo'      => 'Inactivo',
-            default         => ucfirst($this->status),
+            'inactivo' => 'Inactivo',
+            default => ucfirst($this->status),
         };
     }
 

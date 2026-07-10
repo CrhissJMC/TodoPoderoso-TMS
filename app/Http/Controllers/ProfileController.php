@@ -20,7 +20,7 @@ class ProfileController extends Controller
     {
         // Eager load role to avoid N+1 queries
         $user = $request->user();
-        if ($user && !$user->relationLoaded('role')) {
+        if ($user && ! $user->relationLoaded('role')) {
             $user->load('role');
         }
 

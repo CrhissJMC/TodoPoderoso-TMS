@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -79,6 +79,7 @@ class UserController extends Controller
         $user->save();
 
         $action = $user->estado === 'activo' ? 'reactivado' : 'dado de baja';
+
         return back()->with('success', "El usuario ha sido {$action} exitosamente.");
     }
 }

@@ -17,9 +17,9 @@ class RouteStop extends Model
     ];
 
     protected $casts = [
-        'stop_order'          => 'integer',
+        'stop_order' => 'integer',
         'minutes_from_origin' => 'integer',
-        'fare_from_origin'    => 'decimal:2',
+        'fare_from_origin' => 'decimal:2',
     ];
 
     public function route()

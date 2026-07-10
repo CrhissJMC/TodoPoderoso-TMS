@@ -16,8 +16,8 @@ class VehicleController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('plate', 'ilike', "%{$search}%")
-                  ->orWhere('brand', 'ilike', "%{$search}%")
-                  ->orWhere('model', 'ilike', "%{$search}%");
+                    ->orWhere('brand', 'ilike', "%{$search}%")
+                    ->orWhere('model', 'ilike', "%{$search}%");
             });
         }
 
@@ -36,20 +36,29 @@ class VehicleController extends Controller
 
         // Contadores actualizados con los nuevos estados
         $counts = [
-            'total'         => Vehicle::count(),
-            'disponible'    => Vehicle::where('status', 'disponible')->count(),
-            'en_ruta'       => Vehicle::where('status', 'en_ruta')->count(),
+            'total' => Vehicle::count(),
+            'disponible' => Vehicle::where('status', 'disponible')->count(),
+            'en_ruta' => Vehicle::where('status', 'en_ruta')->count(),
             'mantenimiento' => Vehicle::where('status', 'mantenimiento')->count(),
-            'inactivo'      => Vehicle::where('status', 'inactivo')->count(),
+            'inactivo' => Vehicle::where('status', 'inactivo')->count(),
         ];
 
         return Inertia::render('Vehicles/Index', [
             'vehicles' => $vehicles,
-            'counts'   => $counts,
-            'filters'  => $request->only(['search', 'status', 'type']),
-            'types'    => Vehicle::types(),
+            'counts' => $counts,
+            'filters' => $request->only(['search', 'status', 'type']),
+            'types' => Vehicle::types(),
             'statuses' => Vehicle::statuses(),
         ]);
+    }
+
+    // Detalle del vehículo (endpoint JSON)
+    public function show(Vehicle $vehicle)
+    {
+        $vehicle->load('drivers');
+        $vehicle->loadCount('trips');
+
+        return response()->json($vehicle);
     }
 
     public function store(VehicleRequest $request)

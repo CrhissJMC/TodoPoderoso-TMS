@@ -14,30 +14,38 @@ class ClientController extends Controller
         $query = Client::withCount([
             'tickets',
             'packagesAsSender',
-            'packagesAsReceiver'
+            'packagesAsReceiver',
         ]);
 
         if ($search = $request->get('search')) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('document_number', 'ilike', "%{$search}%")
-                  ->orWhere('phone', 'ilike', "%{$search}%");
+                    ->orWhere('document_number', 'ilike', "%{$search}%")
+                    ->orWhere('phone', 'ilike', "%{$search}%");
             });
         }
 
         $clients = $query->orderBy('name')->paginate(10)->withQueryString();
 
         $counts = [
-            'total'               => Client::count(),
-            'with_tickets'        => Client::has('tickets')->count(),
-            'with_packages'       => Client::whereHas('packagesAsSender')->orWhereHas('packagesAsReceiver')->count(),
+            'total' => Client::count(),
+            'with_tickets' => Client::has('tickets')->count(),
+            'with_packages' => Client::whereHas('packagesAsSender')->orWhereHas('packagesAsReceiver')->count(),
         ];
 
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
-            'counts'  => $counts,
+            'counts' => $counts,
             'filters' => $request->only(['search']),
         ]);
+    }
+
+    // Detalle del cliente (endpoint JSON)
+    public function show(Client $client)
+    {
+        $client->load(['tickets.trip.route', 'packagesAsSender', 'packagesAsReceiver']);
+
+        return response()->json($client);
     }
 
     public function store(ClientRequest $request)

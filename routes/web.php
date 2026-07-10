@@ -1,17 +1,18 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
+use App\Http\Controllers\PackageController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\ScheduleController;
-use App\Http\Controllers\ClientController;
-use App\Http\Controllers\TripController;
 use App\Http\Controllers\TicketController;
-use App\Http\Controllers\PackageController;
-use App\Http\Controllers\RoleController;
+use App\Http\Controllers\TripController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\VehicleController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // Redirigir la raíz al Login
 Route::get('/', function () {
@@ -19,13 +20,13 @@ Route::get('/', function () {
 });
 
 // Dashboard protegido
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 // ── GRUPO SEGURO: Solo usuarios logueados pueden acceder aquí ──
 Route::middleware(['auth', 'verified'])->group(function () {
-    
+
     // Perfil de Usuario
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -66,7 +67,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('routes/{route}', [RouteController::class, 'destroy'])->name('routes.destroy');
         Route::patch('routes/{route}/toggle-active', [RouteController::class, 'toggleActive'])->name('routes.toggleActive');
     });
-      
+
     // Módulo de Horarios
     Route::middleware('permission:horarios.ver')->group(function () {
         Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');
@@ -90,7 +91,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
         Route::post('clients/search-by-document', [ClientController::class, 'searchByDocument'])->name('clients.searchByDocument');
     });
-     
+
     // Módulo de Viajes
     Route::middleware('permission:viajes.ver')->group(function () {
         Route::get('trips', [TripController::class, 'index'])->name('trips.index');
@@ -102,7 +103,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('trips/{trip}', [TripController::class, 'destroy'])->name('trips.destroy');
         Route::patch('trips/{trip}/status', [TripController::class, 'updateStatus'])->name('trips.updateStatus');
     });
-         
+
     // Módulo de Boletos
     Route::middleware('permission:boletos.ver')->group(function () {
         Route::get('tickets', [TicketController::class, 'index'])->name('tickets.index');
@@ -119,14 +120,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Módulo de Encomiendas
     Route::middleware('permission:encomiendas.ver')->group(function () {
         Route::get('packages', [PackageController::class, 'index'])->name('packages.index');
-        Route::get('packages/{package}', [PackageController::class, 'show'])->name('packages.show');
-        // Consulta de rastreo
+        // Consulta de rastreo — debe registrarse antes de packages/{package} para no ser
+        // capturada por el parámetro genérico {package}.
         Route::get('packages/track', [PackageController::class, 'track'])->name('packages.track');
+        Route::get('packages/{package}', [PackageController::class, 'show'])->name('packages.show');
     });
     Route::middleware('permission:encomiendas.admin')->group(function () {
         Route::post('packages', [PackageController::class, 'store'])->name('packages.store');
         Route::put('packages/{package}', [PackageController::class, 'update'])->name('packages.update');
         Route::delete('packages/{package}', [PackageController::class, 'destroy'])->name('packages.destroy');
+        Route::patch('packages/{package}/status', [PackageController::class, 'updateStatus'])->name('packages.updateStatus');
     });
 
     // ── MÓDULO DE ROLES Y USUARIOS (Solo Administrador) ──
@@ -135,14 +138,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
         Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
         Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
-        
+
         // Usuarios
-        Route::resource('users', App\Http\Controllers\UserController::class)
-             ->except(['create', 'edit', 'destroy', 'show']);
-        Route::patch('users/{user}/status', [App\Http\Controllers\UserController::class, 'updateStatus'])
-             ->name('users.updateStatus');
+        Route::resource('users', UserController::class)
+            ->except(['create', 'edit', 'destroy', 'show']);
+        Route::patch('users/{user}/status', [UserController::class, 'updateStatus'])
+            ->name('users.updateStatus');
     });
-         
+
 });
 
 require __DIR__.'/auth.php';

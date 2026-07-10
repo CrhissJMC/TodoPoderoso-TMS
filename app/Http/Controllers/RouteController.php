@@ -18,8 +18,8 @@ class RouteController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('origin', 'ilike', "%{$search}%")
-                  ->orWhere('destination', 'ilike', "%{$search}%");
+                    ->orWhere('origin', 'ilike', "%{$search}%")
+                    ->orWhere('destination', 'ilike', "%{$search}%");
             });
         }
 
@@ -30,16 +30,24 @@ class RouteController extends Controller
         $routes = $query->orderBy('name')->paginate(10)->withQueryString();
 
         $counts = [
-            'total'    => Route::count(),
-            'active'   => Route::where('active', true)->count(),
+            'total' => Route::count(),
+            'active' => Route::where('active', true)->count(),
             'inactive' => Route::where('active', false)->count(),
         ];
 
         return Inertia::render('Routes/Index', [
-            'routes'  => $routes,
-            'counts'  => $counts,
+            'routes' => $routes,
+            'counts' => $counts,
             'filters' => $request->only(['search', 'active']),
         ]);
+    }
+
+    // Detalle de la ruta (endpoint JSON)
+    public function show(Route $route)
+    {
+        $route->load(['stops' => fn ($q) => $q->orderBy('stop_order'), 'schedules']);
+
+        return response()->json($route);
     }
 
     public function store(RouteRequest $request)
@@ -105,13 +113,15 @@ class RouteController extends Controller
     private function syncStops(Route $route, array $stops): void
     {
         foreach ($stops as $index => $stop) {
-            if (empty(trim($stop['stop_name'] ?? ''))) continue;
+            if (empty(trim($stop['stop_name'] ?? ''))) {
+                continue;
+            }
 
             $route->stops()->create([
-                'stop_name'           => $stop['stop_name'],
-                'stop_order'          => $index + 1,
+                'stop_name' => $stop['stop_name'],
+                'stop_order' => $index + 1,
                 'minutes_from_origin' => $stop['minutes_from_origin'] ?? null,
-                'fare_from_origin'    => $stop['fare_from_origin'] ?? null,
+                'fare_from_origin' => $stop['fare_from_origin'] ?? null,
             ]);
         }
     }

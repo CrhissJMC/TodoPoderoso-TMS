@@ -20,6 +20,13 @@ class TripStatusLog extends Model
         'changed_at' => 'datetime',
     ];
 
-    public function trip()      { return $this->belongsTo(Trip::class); }
-    public function changedBy() { return $this->belongsTo(User::class, 'changed_by'); }
+    public function trip()
+    {
+        return $this->belongsTo(Trip::class);
+    }
+
+    public function changedBy()
+    {
+        return $this->belongsTo(User::class, 'changed_by');
+    }
 }

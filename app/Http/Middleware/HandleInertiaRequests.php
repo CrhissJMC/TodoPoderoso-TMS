@@ -30,9 +30,9 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        
+
         // Eager load role to avoid N+1 queries
-        if ($user && !$user->relationLoaded('role')) {
+        if ($user && ! $user->relationLoaded('role')) {
             $user->load('role');
         }
 

@@ -19,14 +19,14 @@ return new class extends Migration
             $table->string('dni', 20)->nullable()->unique();
             $table->enum('status', ['activo', 'inactivo', 'en_viaje'])->default('activo');
             $table->foreignId('vehicle_id')
-                  ->nullable()
-                  ->constrained('vehicles')
-                  ->nullOnDelete();
-                  
+                ->nullable()
+                ->constrained('vehicles')
+                ->nullOnDelete();
+
             // --- AQUÍ ESTÁN LOS CAMPOS NUEVOS ---
             $table->enum('contract_type', ['empleado', 'propietario', 'alquiler'])->default('empleado');
             $table->decimal('rental_fee', 10, 2)->nullable();
-            
+
             $table->text('observations')->nullable();
             $table->timestamps();
             $table->softDeletes();

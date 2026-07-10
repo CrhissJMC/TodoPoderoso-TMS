@@ -17,9 +17,9 @@ class DriverController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('license_number', 'ilike', "%{$search}%")
-                  ->orWhere('dni', 'ilike', "%{$search}%")
-                  ->orWhere('phone', 'ilike', "%{$search}%");
+                    ->orWhere('license_number', 'ilike', "%{$search}%")
+                    ->orWhere('dni', 'ilike', "%{$search}%")
+                    ->orWhere('phone', 'ilike', "%{$search}%");
             });
         }
 
@@ -33,28 +33,37 @@ class DriverController extends Controller
             ->withQueryString();
 
         $availableVehicles = Vehicle::whereIn('status', ['disponible'])
-            ->orWhereHas('drivers', fn($q) => $q->whereIn('status', ['activo', 'inactivo']))
+            ->orWhereHas('drivers', fn ($q) => $q->whereIn('status', ['activo', 'inactivo']))
             ->get(['id', 'plate', 'brand', 'model', 'status']);
 
         $counts = [
-            'total'    => Driver::count(),
-            'activo'   => Driver::where('status', 'activo')->count(),
+            'total' => Driver::count(),
+            'activo' => Driver::where('status', 'activo')->count(),
             'en_viaje' => Driver::where('status', 'en_viaje')->count(),
             'inactivo' => Driver::where('status', 'inactivo')->count(),
         ];
 
         return Inertia::render('Drivers/Index', [
-            'drivers'           => $drivers,
-            'counts'            => $counts,
+            'drivers' => $drivers,
+            'counts' => $counts,
             'availableVehicles' => $availableVehicles,
-            'filters'           => $request->only(['search', 'status']),
-            'statuses'          => Driver::statuses() ?? ['activo', 'inactivo', 'en_viaje'],
-            'licenseTypes'      => Driver::licenseTypes() ?? ['A-I', 'A-IIa', 'A-IIb', 'A-IIIa', 'A-IIIb', 'A-IIIc'],
-            'contractTypes'     => Driver::contractTypes() ?? ['Propietario', 'Tercero', 'Planilla'], 
+            'filters' => $request->only(['search', 'status']),
+            'statuses' => Driver::statuses() ?? ['activo', 'inactivo', 'en_viaje'],
+            'licenseTypes' => Driver::licenseTypes() ?? ['A-I', 'A-IIa', 'A-IIb', 'A-IIIa', 'A-IIIb', 'A-IIIc'],
+            'contractTypes' => Driver::contractTypes() ?? ['Propietario', 'Tercero', 'Planilla'],
             // NUEVO: Agregamos esto para el modal de Vehículos
-            'vehicleTypes'      => ['Auto', 'Minivan', 'Bus', 'Otro'],
-            'vehicleStatuses'   => ['disponible', 'en_ruta', 'mantenimiento', 'inactivo'],
+            'vehicleTypes' => ['Auto', 'Minivan', 'Bus', 'Otro'],
+            'vehicleStatuses' => ['disponible', 'en_ruta', 'mantenimiento', 'inactivo'],
         ]);
+    }
+
+    // Detalle del conductor (endpoint JSON)
+    public function show(Driver $driver)
+    {
+        $driver->load('vehicle');
+        $driver->loadCount('trips');
+
+        return response()->json($driver);
     }
 
     public function store(DriverRequest $request)
@@ -107,7 +116,7 @@ class DriverController extends Controller
         ]);
 
         $driver->update(['status' => $request->status]);
-        
+
         $this->syncVehicleStatus($driver);
 
         return back()->with('success', 'Estado actualizado.');
@@ -128,7 +137,7 @@ class DriverController extends Controller
     {
         if ($driver->vehicle_id) {
             $vehicle = Vehicle::find($driver->vehicle_id);
-            
+
             if ($vehicle && $vehicle->status !== 'mantenimiento') {
                 if ($driver->status === 'en_viaje') {
                     $vehicle->update(['status' => 'en_ruta']);

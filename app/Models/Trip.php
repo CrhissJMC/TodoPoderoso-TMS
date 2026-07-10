@@ -34,10 +34,10 @@ class Trip extends Model
     {
         return [
             'programado' => ['label' => 'Programado', 'color' => 'gray'],
-            'abordando'  => ['label' => 'Abordando',  'color' => 'blue'],
-            'en_ruta'    => ['label' => 'En ruta',    'color' => 'amber'],
+            'abordando' => ['label' => 'Abordando',  'color' => 'blue'],
+            'en_ruta' => ['label' => 'En ruta',    'color' => 'amber'],
             'completado' => ['label' => 'Completado', 'color' => 'green'],
-            'cancelado'  => ['label' => 'Cancelado',  'color' => 'red'],
+            'cancelado' => ['label' => 'Cancelado',  'color' => 'red'],
         ];
     }
 
@@ -46,10 +46,10 @@ class Trip extends Model
     {
         return [
             'programado' => ['abordando', 'cancelado'],
-            'abordando'  => ['en_ruta',   'cancelado'],
-            'en_ruta'    => ['completado','cancelado'],
+            'abordando' => ['en_ruta',   'cancelado'],
+            'en_ruta' => ['completado', 'cancelado'],
             'completado' => [],
-            'cancelado'  => [],
+            'cancelado' => [],
         ];
     }
 
@@ -68,12 +68,43 @@ class Trip extends Model
     }
 
     // Relaciones
-    public function schedule()  { return $this->belongsTo(Schedule::class); }
-    public function route()     { return $this->belongsTo(Route::class); }
-    public function vehicle()   { return $this->belongsTo(Vehicle::class)->withTrashed(); }
-    public function driver()    { return $this->belongsTo(Driver::class)->withTrashed(); }
-    public function creator()   { return $this->belongsTo(User::class, 'created_by'); }
-    public function tickets()   { return $this->hasMany(Ticket::class); }
-    public function packages()  { return $this->hasMany(Package::class); }
-    public function statusLogs(){ return $this->hasMany(TripStatusLog::class)->orderByDesc('changed_at'); }
+    public function schedule()
+    {
+        return $this->belongsTo(Schedule::class);
+    }
+
+    public function route()
+    {
+        return $this->belongsTo(Route::class);
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class)->withTrashed();
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(Driver::class)->withTrashed();
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
+    public function packages()
+    {
+        return $this->hasMany(Package::class);
+    }
+
+    public function statusLogs()
+    {
+        return $this->hasMany(TripStatusLog::class)->orderByDesc('changed_at');
+    }
 }
