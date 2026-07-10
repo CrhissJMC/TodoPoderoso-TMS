@@ -42,6 +42,14 @@ class RouteController extends Controller
         ]);
     }
 
+    // Detalle de la ruta (endpoint JSON)
+    public function show(Route $route)
+    {
+        $route->load(['stops' => fn ($q) => $q->orderBy('stop_order'), 'schedules']);
+
+        return response()->json($route);
+    }
+
     public function store(RouteRequest $request)
     {
         DB::transaction(function () use ($request) {

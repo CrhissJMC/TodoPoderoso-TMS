@@ -1,3 +1,5 @@
+[![CI](https://github.com/CrhissJMC/TodoPoderoso-TMS/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CrhissJMC/TodoPoderoso-TMS/actions/workflows/ci.yml)
+
 # Sistema Web de Gestión de Transporte y Encomiendas (TMS) - Todo Poderoso
 
 [cite_start]Este repositorio contiene el código fuente del nuevo sistema web de gestión de transporte y encomiendas desarrollado para la EMPRESA DE TRANSPORTES “TODO PODEROSO”[cite: 3, 6]. [cite_start]El sistema tiene como objetivo automatizar los procesos críticos de la empresa, reemplazando el seguimiento manual por una solución digital centralizada y de alta fiabilidad de datos[cite: 6, 7].

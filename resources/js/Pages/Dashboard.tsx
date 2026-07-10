@@ -1,7 +1,35 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
-export default function Dashboard() {
+interface RecentTrip {
+    id: number;
+    route_name: string;
+    vehicle_plate: string | null;
+    driver_name: string | null;
+    status: string;
+    occupied_seats: number;
+    sellable_seats: number | null;
+}
+
+interface Props {
+    tripsInProgress: number;
+    passengersToday: number;
+    fleet: { available: number; total: number };
+    recentTrips: RecentTrip[];
+    statusConfig: Record<string, { label: string; color: string }>;
+}
+
+const STATUS_BADGE: Record<string, string> = {
+    gray: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+    blue: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+    amber: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+    green: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    red: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+};
+
+export default function Dashboard({ tripsInProgress, passengersToday, fleet, recentTrips, statusConfig }: Props) {
+    const fleetPercent = fleet.total > 0 ? Math.round((fleet.available / fleet.total) * 100) : 0;
+
     return (
         <AuthenticatedLayout>
             <Head title="Panel de Control - Transporte" />
@@ -24,10 +52,10 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* Tarjetas de visualización de ejemplo */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Tarjetas con datos reales */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                        {/* Tarjeta 1 - Viajes Activos */}
+                        {/* Tarjeta 1 - Viajes en curso */}
                         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700 hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-gray-500 text-sm font-medium dark:text-gray-400">Viajes en Curso</h3>
@@ -35,14 +63,8 @@ export default function Dashboard() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                             </div>
-                            <p className="text-3xl font-bold text-gray-800 mt-4 dark:text-white">42</p>
-                            <p className="text-sm text-gray-500 mt-2 flex items-center">
-                                <span className="text-green-500 font-medium flex items-center">
-                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-                                    12%
-                                </span>
-                                <span className="ml-2">vs ayer</span>
-                            </p>
+                            <p className="text-3xl font-bold text-gray-800 mt-4 dark:text-white">{tripsInProgress}</p>
+                            <p className="text-sm text-gray-500 mt-2">Abordando o en ruta ahora</p>
                         </div>
 
                         {/* Tarjeta 2 - Pasajeros Transportados */}
@@ -53,14 +75,8 @@ export default function Dashboard() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                             </div>
-                            <p className="text-3xl font-bold text-gray-800 mt-4 dark:text-white">1,250</p>
-                            <p className="text-sm text-gray-500 mt-2 flex items-center">
-                                <span className="text-green-500 font-medium flex items-center">
-                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-                                    5.4%
-                                </span>
-                                <span className="ml-2">vs ayer</span>
-                            </p>
+                            <p className="text-3xl font-bold text-gray-800 mt-4 dark:text-white">{passengersToday.toLocaleString('es-PE')}</p>
+                            <p className="text-sm text-gray-500 mt-2">Boletos emitidos o abordados hoy</p>
                         </div>
 
                         {/* Tarjeta 3 - Vehículos Disponibles */}
@@ -71,116 +87,57 @@ export default function Dashboard() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                                 </svg>
                             </div>
-                            <p className="text-3xl font-bold text-gray-800 mt-4 dark:text-white">18 <span className="text-lg text-gray-400">/ 60</span></p>
+                            <p className="text-3xl font-bold text-gray-800 mt-4 dark:text-white">{fleet.available} <span className="text-lg text-gray-400">/ {fleet.total}</span></p>
                             <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3 dark:bg-gray-700">
-                                <div className="bg-amber-500 h-2.5 rounded-full" style={{ width: '30%' }}></div>
+                                <div className="bg-amber-500 h-2.5 rounded-full" style={{ width: `${fleetPercent}%` }}></div>
                             </div>
-                            <p className="text-xs text-gray-500 mt-2">30% de disponibilidad actual</p>
-                        </div>
-
-                        {/* Tarjeta 4 - Puntualidad */}
-                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700 hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-gray-500 text-sm font-medium dark:text-gray-400">Índice de Puntualidad</h3>
-                                <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <p className="text-3xl font-bold text-gray-800 mt-4 dark:text-white">94%</p>
-                            <p className="text-sm text-gray-500 mt-2 flex items-center">
-                                <span className="text-red-500 font-medium flex items-center">
-                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
-                                    1.2%
-                                </span>
-                                <span className="ml-2">vs semana pasada</span>
-                            </p>
+                            <p className="text-xs text-gray-500 mt-2">{fleetPercent}% de disponibilidad actual</p>
                         </div>
 
                     </div>
-                    
-                    {/* Tabla de Rutas Recientes */}
+
+                    {/* Tabla de Viajes Activos Recientes */}
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
                         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Rutas Activas Recientes</h3>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Viajes Activos Recientes</h3>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead className="bg-gray-50 dark:bg-gray-900/50">
-                                    <tr>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Ruta / Vehículo</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Conductor</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Estado</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Ocupación</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">ETA</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                                    <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">Centro - Norte</div>
-                                            <div className="text-sm text-gray-500 dark:text-gray-400">Bus #402</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-xs font-bold text-indigo-700 dark:text-indigo-300">CM</div>
-                                                <div className="ml-3 text-sm text-gray-900 dark:text-white">Carlos Mendoza</div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">En Ruta</span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            38 / 40 (95%)
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            14 mins
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">Terminal - Sur</div>
-                                            <div className="text-sm text-gray-500 dark:text-gray-400">Van #118</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-300">LP</div>
-                                                <div className="ml-3 text-sm text-gray-900 dark:text-white">Laura Pérez</div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">Retraso Leve</span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            12 / 15 (80%)
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            22 mins
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">Aeropuerto Express</div>
-                                            <div className="text-sm text-gray-500 dark:text-gray-400">Bus #505</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-xs font-bold text-emerald-700 dark:text-emerald-300">RG</div>
-                                                <div className="ml-3 text-sm text-gray-900 dark:text-white">Roberto Gómez</div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Abordando</span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            45 / 50 (90%)
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            --
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        {recentTrips.length === 0 ? (
+                            <p className="text-sm text-gray-400 text-center py-10">No hay viajes en curso o programados en este momento.</p>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                    <thead className="bg-gray-50 dark:bg-gray-900/50">
+                                        <tr>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Ruta / Vehículo</th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Conductor</th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Estado</th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Ocupación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                                        {recentTrips.map(trip => (
+                                            <tr key={trip.id}>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="text-sm font-medium text-gray-900 dark:text-white">{trip.route_name}</div>
+                                                    <div className="text-sm text-gray-500 dark:text-gray-400">{trip.vehicle_plate ?? 'Sin vehículo asignado'}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                                    {trip.driver_name ?? '—'}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${STATUS_BADGE[statusConfig[trip.status]?.color] ?? STATUS_BADGE.gray}`}>
+                                                        {statusConfig[trip.status]?.label ?? trip.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                    {trip.occupied_seats} / {trip.sellable_seats ?? '?'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
 
                 </div>

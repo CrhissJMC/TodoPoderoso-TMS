@@ -80,6 +80,14 @@ class ScheduleController extends Controller
         ]);
     }
 
+    // Detalle del horario (endpoint JSON)
+    public function show(Schedule $schedule)
+    {
+        $schedule->load(['route', 'vehicle', 'driver']);
+
+        return response()->json($schedule);
+    }
+
     public function store(ScheduleRequest $request)
     {
         Schedule::create($request->validated());

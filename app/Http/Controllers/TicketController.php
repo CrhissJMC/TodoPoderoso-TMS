@@ -77,6 +77,14 @@ class TicketController extends Controller
         ]);
     }
 
+    // Detalle del boleto (endpoint JSON)
+    public function show(Ticket $ticket)
+    {
+        $ticket->load(['trip.route', 'client', 'soldBy', 'voidedBy']);
+
+        return response()->json($ticket);
+    }
+
     public function store(TicketRequest $request)
     {
         $client = DB::transaction(function () use ($request) {

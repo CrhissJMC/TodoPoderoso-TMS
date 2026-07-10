@@ -37,7 +37,7 @@ export default function StatusChangeModal({ trip, onClose }: Props) {
     function handleSubmit() {
         if (!selected) return;
         setProcessing(true);
-        router.patch(route('trips.changeStatus', trip!.id),
+        router.patch(route('trips.updateStatus', trip!.id),
             { status: selected, observations: observations || undefined },
             {
                 onSuccess: () => { setSelected(''); setObs(''); onClose(); },

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\DriverController;
@@ -11,7 +12,6 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // Redirigir la raíz al Login
 Route::get('/', function () {
@@ -19,9 +19,9 @@ Route::get('/', function () {
 });
 
 // Dashboard protegido
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 // ── GRUPO SEGURO: Solo usuarios logueados pueden acceder aquí ──
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -119,14 +119,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Módulo de Encomiendas
     Route::middleware('permission:encomiendas.ver')->group(function () {
         Route::get('packages', [PackageController::class, 'index'])->name('packages.index');
-        Route::get('packages/{package}', [PackageController::class, 'show'])->name('packages.show');
-        // Consulta de rastreo
+        // Consulta de rastreo — debe registrarse antes de packages/{package} para no ser
+        // capturada por el parámetro genérico {package}.
         Route::get('packages/track', [PackageController::class, 'track'])->name('packages.track');
+        Route::get('packages/{package}', [PackageController::class, 'show'])->name('packages.show');
     });
     Route::middleware('permission:encomiendas.admin')->group(function () {
         Route::post('packages', [PackageController::class, 'store'])->name('packages.store');
         Route::put('packages/{package}', [PackageController::class, 'update'])->name('packages.update');
         Route::delete('packages/{package}', [PackageController::class, 'destroy'])->name('packages.destroy');
+        Route::patch('packages/{package}/status', [PackageController::class, 'updateStatus'])->name('packages.updateStatus');
     });
 
     // ── MÓDULO DE ROLES Y USUARIOS (Solo Administrador) ──

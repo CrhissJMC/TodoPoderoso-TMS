@@ -57,6 +57,15 @@ class DriverController extends Controller
         ]);
     }
 
+    // Detalle del conductor (endpoint JSON)
+    public function show(Driver $driver)
+    {
+        $driver->load('vehicle');
+        $driver->loadCount('trips');
+
+        return response()->json($driver);
+    }
+
     public function store(DriverRequest $request)
     {
         $driver = Driver::create($request->validated());

@@ -6,8 +6,8 @@ interface Route { id: number; name: string; origin: string; destination: string;
 interface Vehicle { id: number; plate: string; brand: string; model: string; sellable_seats: number; }
 interface Driver { id: number; name: string; license_number: string; }
 interface User { id: number; name: string; }
-interface Passenger { id: number; full_name: string; dni: string; }
-interface Ticket { id: number; seat_number: number; fare: string; ticket_status: string; payment_method: string; boarding_stop: string; dropoff_stop: string; passenger: Passenger; ticket_code: string; }
+interface Client { id: number; name: string; document_number: string; }
+interface Ticket { id: number; seat_number: number; fare: string; ticket_status: string; payment_method: string; boarding_stop: string; dropoff_stop: string; client: Client; ticket_code: string; }
 interface Package { id: number; sender_name: string; receiver_name: string; origin: string; destination: string; package_type: string; price: string; status: string; tracking_code: string; }
 interface Log { id: number; previous_status: string; new_status: string; changed_at: string; changed_by: User; }
 
@@ -33,8 +33,8 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 const TICKET_STATUS: Record<string, string> = {
-    valido: 'bg-green-50 text-green-700',
-    utilizado: 'bg-gray-100 text-gray-600',
+    emitido: 'bg-blue-50 text-blue-700',
+    abordado: 'bg-green-50 text-green-700',
     anulado: 'bg-red-50 text-red-500'
 };
 const PKG_STATUS: Record<string, string> = { recibido: 'bg-gray-100 text-gray-600', en_ruta: 'bg-amber-50 text-amber-700', entregado: 'bg-green-50 text-green-700' };
@@ -135,8 +135,8 @@ export default function TripShow({ trip, statusConfig }: Props) {
                                 {trip.tickets.map(t => (
                                     <tr key={t.id} className="hover:bg-gray-50">
                                         <td className="px-4 py-2.5">
-                                            <p className="font-medium text-gray-900">{t.passenger.full_name}</p>
-                                            <p className="text-xs text-gray-400">DNI: {t.passenger.dni} · {t.ticket_code}</p>
+                                            <p className="font-medium text-gray-900">{t.client.name}</p>
+                                            <p className="text-xs text-gray-400">Doc: {t.client.document_number} · {t.ticket_code}</p>
                                         </td>
                                         <td className="px-4 py-2.5 hidden md:table-cell">
                                             <span className="w-7 h-7 rounded-lg bg-gray-100 text-gray-700 font-semibold text-xs inline-flex items-center justify-center">{t.seat_number}</span>

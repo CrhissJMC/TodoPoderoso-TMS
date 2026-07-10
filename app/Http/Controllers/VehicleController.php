@@ -52,6 +52,15 @@ class VehicleController extends Controller
         ]);
     }
 
+    // Detalle del vehículo (endpoint JSON)
+    public function show(Vehicle $vehicle)
+    {
+        $vehicle->load('drivers');
+        $vehicle->loadCount('trips');
+
+        return response()->json($vehicle);
+    }
+
     public function store(VehicleRequest $request)
     {
         Vehicle::create($request->validated());

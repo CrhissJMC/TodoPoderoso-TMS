@@ -73,6 +73,14 @@ class PackageController extends Controller
         ]);
     }
 
+    // Detalle de la encomienda (endpoint JSON)
+    public function show(Package $package)
+    {
+        $package->load(['trip.route', 'sender', 'receiver', 'receivedBy']);
+
+        return response()->json($package);
+    }
+
     public function store(PackageRequest $request)
     {
         $data = $request->validated();

@@ -40,6 +40,14 @@ class ClientController extends Controller
         ]);
     }
 
+    // Detalle del cliente (endpoint JSON)
+    public function show(Client $client)
+    {
+        $client->load(['tickets.trip.route', 'packagesAsSender', 'packagesAsReceiver']);
+
+        return response()->json($client);
+    }
+
     public function store(ClientRequest $request)
     {
         Client::create($request->validated());

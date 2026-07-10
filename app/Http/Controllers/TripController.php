@@ -118,7 +118,7 @@ class TripController extends Controller
     }
 
     // Cambiar estado con validación de transición
-    public function changeStatus(Request $request, Trip $trip)
+    public function updateStatus(Request $request, Trip $trip)
     {
         $request->validate([
             'status'       => ['required', 'string', 'in:' . implode(',', Trip::statuses())],
@@ -171,7 +171,7 @@ class TripController extends Controller
             'schedule',
             'creator',
             'statusLogs.changedBy',
-            'tickets.passenger',
+            'tickets.client',
             'packages',
         ]);
 
