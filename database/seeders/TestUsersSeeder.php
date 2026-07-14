@@ -15,8 +15,8 @@ class TestUsersSeeder extends Seeder
         $roles = [
             'administrador',
             'chofer',
-            'operador ventas',
-            'operador encomiendas',
+            'operador_ventas',
+            'operador_encomiendas',
             'agente',
             'cliente',
         ];
