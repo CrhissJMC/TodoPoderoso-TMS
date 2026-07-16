@@ -28,8 +28,8 @@ class ScheduleController extends Controller
             $query->where('route_id', $routeId);
         }
 
-        if ($request->has('active') && $request->get('active') !== '') {
-            $query->where('active', $request->boolean('active'));
+        if ($request->filled('active') || $request->input('active') === '0') {
+            $query->where('active', $request->input('active') === '1');
         }
 
         $schedules = $query

@@ -179,6 +179,7 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Vehículo</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Tipo</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Asientos (Vendibles)</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Cat. MTC</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">Estado</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs text-right">Acciones</th>
                             </tr>
@@ -209,6 +210,10 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
                                         {/* NUEVO: Asientos Vendibles vs Totales */}
                                         <td className="px-6 py-4 text-gray-900 dark:text-gray-100 font-medium">
                                             {v.sellable_seats} <span className="text-xs text-gray-500 font-normal">/ {v.capacity_seats} totales</span>
+                                        </td>
+
+                                        <td className="px-6 py-4 font-mono font-medium text-gray-700 dark:text-gray-300">
+                                            {v.mtc_category ?? '—'}
                                         </td>
 
                                         <td className="px-6 py-4">

@@ -14,6 +14,7 @@ class Vehicle extends Model
         'plate',
         'brand',
         'model',
+        'mtc_category',
         'year',
         'capacity_seats', // NUEVO
         'sellable_seats', // NUEVO

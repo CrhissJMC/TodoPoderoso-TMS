@@ -28,6 +28,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the driver associated with the user.
+     */
+    public function driver()
+    {
+        return $this->hasOne(Driver::class);
+    }
+
+    public function ticketsSold()
+    {
+        return $this->hasMany(Ticket::class, 'sold_by');
+    }
+
+    public function packagesReceived()
+    {
+        return $this->hasMany(Package::class, 'received_by');
+    }
+
+    /**
      * Check if the user has a specific permission.
      */
     public function hasPermission(string $permission): bool

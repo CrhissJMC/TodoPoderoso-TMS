@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 interface RecentTrip {
@@ -21,29 +21,359 @@ interface Package {
     package_type: string;
 }
 
+interface TopSeller {
+    id: number;
+    name: string;
+    email: string;
+    tickets_sold_count?: number;
+    packages_received_count?: number;
+}
+
 interface Props {
-    tripsInProgress: number;
-    passengersToday: number;
-    revenueToday: number;
-    occupancyRate: number;
-    revenueChart: { date: string; boletos: number; encomiendas: number }[];
-    topRoutes: { name: string; tickets_count: number }[];
-    recentTrips: RecentTrip[];
-    pendingPackages: Package[];
+    tripsInProgress?: number;
+    passengersToday?: number;
+    revenueToday?: number;
+    occupancyRate?: number;
+    revenueChart?: { date: string; boletos: number; encomiendas: number }[];
+    packagesCountChart?: { date: string; recibidas: number; enviadas: number; devueltas: number }[];
+    topRoutes?: { name: string; tickets_count: number }[];
+    recentTrips?: RecentTrip[];
+    pendingPackages?: Package[];
+    topTicketSellers?: TopSeller[];
+    topPackageSellers?: TopSeller[];
+    driverTrips?: any[];
+    driverTotalTrips?: number;
+    driverFrequentRoutes?: { name: string; trips_count: number }[];
+    driverUpcomingPackages?: { id: number; tracking_code: string; destination: string; package_type: string }[];
+    driverRanking?: number;
+    operatorTotalPackages?: number;
+    operatorPendingPackages?: number;
+    operatorRecentPackages?: any[];
+    operatorRanking?: number;
+    sellerTotalTickets?: number;
+    sellerTodayTickets?: number;
+    sellerRecentTickets?: any[];
+    sellerRanking?: number;
     statusConfig: Record<string, { label: string; color: string }>;
 }
 
 const STATUS_BADGE: Record<string, string> = {
-    gray: 'bg-gray-100 text-gray-800',
-    blue: 'bg-blue-100 text-blue-800',
-    amber: 'bg-amber-100 text-amber-800',
     green: 'bg-green-100 text-green-800',
+    blue: 'bg-blue-100 text-blue-800',
+    yellow: 'bg-yellow-100 text-yellow-800',
     red: 'bg-red-100 text-red-800',
+    gray: 'bg-gray-100 text-gray-800',
 };
 
 const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-export default function Dashboard({ tripsInProgress, passengersToday, revenueToday, occupancyRate, revenueChart, topRoutes, recentTrips, pendingPackages, statusConfig }: Props) {
+export default function Dashboard({ tripsInProgress = 0, passengersToday = 0, revenueToday = 0, occupancyRate = 0, revenueChart = [], packagesCountChart = [], topRoutes = [], recentTrips = [], pendingPackages = [], topTicketSellers = [], topPackageSellers = [], driverTrips = [], driverTotalTrips = 0, driverFrequentRoutes = [], driverUpcomingPackages = [], driverRanking = 0, operatorTotalPackages = 0, operatorPendingPackages = 0, operatorRecentPackages = [], operatorRanking = 0, sellerTotalTickets = 0, sellerTodayTickets = 0, sellerRecentTickets = [], sellerRanking = 0, statusConfig }: Props) {
+    const { auth } = usePage().props as any;
+    const isAdmin = auth.role === 'administrador' || auth.user.role_id === 1;
+    const isChofer = auth.role === 'chofer' || auth.user.role_id === 2;
+
+    if (isChofer) {
+        const upcomingTrips = driverTrips?.filter(t => t.status !== 'completado' && t.status !== 'cancelado') || [];
+
+        return (
+            <AuthenticatedLayout>
+                <Head title="Panel de Conductor - TMS" />
+                <div className="py-6 bg-gray-50 min-h-screen">
+                    <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+                        
+                        {/* Resumen Principal */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Bienvenido, {auth.user.name}</h2>
+                                    <p className="text-sm text-gray-500 mt-1">Este es tu panel principal de conductor.</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tu Ranking</p>
+                                    <div className="inline-flex items-baseline gap-1">
+                                        <span className="text-3xl font-bold text-blue-600">#{driverRanking}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500">Viajes Completados</p>
+                                    <p className="text-3xl font-bold text-gray-900 mt-1">{driverTotalTrips}</p>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Contenido Secundario */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            
+                            {/* Próximos Viajes */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                                    <h3 className="text-base font-bold text-gray-900">Mis Próximos Viajes</h3>
+                                </div>
+                                <div className="divide-y divide-gray-100 flex-1">
+                                    {upcomingTrips.length === 0 ? (
+                                        <p className="px-6 py-8 text-sm text-gray-400 text-center">No tienes viajes programados próximamente.</p>
+                                    ) : upcomingTrips.map(trip => (
+                                        <div key={trip.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
+                                            <div className="w-14 h-14 rounded-xl bg-blue-50 text-blue-700 flex flex-col items-center justify-center flex-shrink-0">
+                                                <span className="text-xs font-semibold">{new Date(trip.trip_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}</span>
+                                                <span className="text-sm font-bold">{trip.time || '--:--'}</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-gray-900 truncate">{trip.route_name}</p>
+                                                <p className="text-xs text-gray-500 truncate">Vehículo: {trip.vehicle_plate ?? 'Sin vehículo'}</p>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <span className={`px-2 py-0.5 text-xs font-medium rounded-md ${STATUS_BADGE[statusConfig[trip.status]?.color] ?? STATUS_BADGE.gray}`}>
+                                                    {statusConfig[trip.status]?.label ?? trip.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* Rutas Frecuentes */}
+                                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                                        <h3 className="text-base font-bold text-gray-900">Rutas Frecuentes</h3>
+                                    </div>
+                                    <div className="p-6">
+                                        {driverFrequentRoutes.length === 0 ? (
+                                            <p className="text-sm text-gray-400 text-center">Aún no hay datos de rutas frecuentes.</p>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {driverFrequentRoutes.map((route, idx) => (
+                                                    <div key={idx} className="flex items-center justify-between">
+                                                        <span className="text-sm font-medium text-gray-700">{route.name}</span>
+                                                        <span className="text-xs font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded-md">{route.trips_count} viajes</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Encomiendas Asignadas */}
+                                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                                        <h3 className="text-base font-bold text-gray-900">Encomiendas que llevarás</h3>
+                                    </div>
+                                    <div className="divide-y divide-gray-100">
+                                        {driverUpcomingPackages.length === 0 ? (
+                                            <p className="px-6 py-8 text-sm text-gray-400 text-center">No hay encomiendas asignadas a tus próximos viajes.</p>
+                                        ) : driverUpcomingPackages.map(pkg => (
+                                            <div key={pkg.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-bold text-gray-900 truncate">Destino: {pkg.destination}</p>
+                                                    <p className="text-xs text-gray-500 uppercase tracking-wider">{pkg.tracking_code}</p>
+                                                </div>
+                                                <span className="text-xs font-medium text-gray-500 capitalize bg-gray-100 px-2 py-1 rounded-md">
+                                                    {pkg.package_type.replace('_', ' ')}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </AuthenticatedLayout>
+        );
+    }
+
+    const isPackageOperator = auth.role === 'operador_encomiendas' || auth.user.role_id === 4;
+
+    if (isPackageOperator) {
+        return (
+            <AuthenticatedLayout>
+                <Head title="Panel de Operador - TMS" />
+                <div className="py-6 bg-gray-50 min-h-screen">
+                    <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+                        
+                        {/* Resumen Principal */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Bienvenido, {auth.user.name}</h2>
+                                    <p className="text-sm text-gray-500 mt-1">Este es tu panel de recepción de encomiendas.</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tu Ranking</p>
+                                    <div className="inline-flex items-baseline gap-1">
+                                        <span className="text-3xl font-bold text-indigo-600">#{operatorRanking}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                                    <p className="text-sm font-medium text-gray-500">Total Registradas</p>
+                                    <p className="text-3xl font-bold text-gray-900 mt-1">{operatorTotalPackages}</p>
+                                </div>
+                                <div className="bg-white p-4 rounded-2xl shadow-sm border border-orange-100 bg-orange-50/30">
+                                    <p className="text-sm font-medium text-orange-600">Pendientes de Envío</p>
+                                    <p className="text-3xl font-bold text-orange-700 mt-1">{operatorPendingPackages}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Últimos Envíos Registrados */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                                <h3 className="text-base font-bold text-gray-900">Tus Últimos Registros</h3>
+                                <Link href={route('packages.index')} className="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                                    Ver todos →
+                                </Link>
+                            </div>
+                            <div className="divide-y divide-gray-100">
+                                {!operatorRecentPackages || operatorRecentPackages.length === 0 ? (
+                                    <p className="px-6 py-8 text-sm text-gray-400 text-center">Aún no has registrado ninguna encomienda.</p>
+                                ) : operatorRecentPackages.map((pkg, idx) => (
+                                    <div key={idx} className="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-700 flex flex-col items-center justify-center flex-shrink-0">
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                                        </div>
+                                        <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-3 gap-2">
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-900 truncate">Código: {pkg.tracking_code}</p>
+                                                <p className="text-xs text-gray-500 truncate">Destino: {pkg.destination}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-medium text-gray-700 truncate">De: {pkg.sender_name}</p>
+                                                <p className="text-xs font-medium text-gray-700 truncate">Para: {pkg.receiver_name}</p>
+                                            </div>
+                                            <div className="flex flex-col items-start md:items-end gap-1">
+                                                <span className={`px-2 py-0.5 text-xs font-medium rounded-md ${STATUS_BADGE[statusConfig[pkg.status]?.color] ?? STATUS_BADGE.gray}`}>
+                                                    {statusConfig[pkg.status]?.label ?? pkg.status}
+                                                </span>
+                                                <span className="text-xs text-gray-400">{new Date(pkg.created_at).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </AuthenticatedLayout>
+        );
+    }
+
+    const isTicketOperator = auth.role === 'operador_ventas' || auth.user.role_id === 3;
+
+    if (isTicketOperator) {
+        return (
+            <AuthenticatedLayout>
+                <Head title="Panel de Ventas - TMS" />
+                <div className="py-6 bg-gray-50 min-h-screen">
+                    <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+                        
+                        {/* Resumen Principal */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Bienvenido, {auth.user.name}</h2>
+                                    <p className="text-sm text-gray-500 mt-1">Este es tu panel de ventas de pasajes.</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tu Ranking</p>
+                                    <div className="inline-flex items-baseline gap-1">
+                                        <span className="text-3xl font-bold text-emerald-600">#{sellerRanking}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                                    <p className="text-sm font-medium text-gray-500">Total Vendidos</p>
+                                    <p className="text-3xl font-bold text-gray-900 mt-1">{sellerTotalTickets}</p>
+                                </div>
+                                <div className="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 bg-emerald-50/30">
+                                    <p className="text-sm font-medium text-emerald-600">Vendidos Hoy</p>
+                                    <p className="text-3xl font-bold text-emerald-700 mt-1">{sellerTodayTickets}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Últimas Ventas */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                                <h3 className="text-base font-bold text-gray-900">Tus Últimas Ventas</h3>
+                                <Link href={route('tickets.index')} className="text-sm font-medium text-emerald-600 hover:text-emerald-800">
+                                    Ver todos →
+                                </Link>
+                            </div>
+                            <div className="divide-y divide-gray-100">
+                                {!sellerRecentTickets || sellerRecentTickets.length === 0 ? (
+                                    <p className="px-6 py-8 text-sm text-gray-400 text-center">Aún no has vendido ningún boleto.</p>
+                                ) : sellerRecentTickets.map((ticket, idx) => (
+                                    <div key={idx} className="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex flex-col items-center justify-center flex-shrink-0">
+                                            <span className="text-xs font-semibold">Asiento</span>
+                                            <span className="text-lg font-bold">{ticket.seat_number}</span>
+                                        </div>
+                                        <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-3 gap-2">
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-900 truncate">Boleto: {ticket.ticket_code}</p>
+                                                <p className="text-xs text-gray-500 truncate">Ruta: {ticket.trip_route}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-700 truncate">{ticket.client_name}</p>
+                                                <p className="text-xs text-gray-500 truncate">Doc: {ticket.client_document}</p>
+                                            </div>
+                                            <div className="flex flex-col items-start md:items-end gap-1">
+                                                <span className={`px-2 py-0.5 text-xs font-medium rounded-md ${STATUS_BADGE[statusConfig[ticket.ticket_status]?.color] ?? STATUS_BADGE.gray}`}>
+                                                    {statusConfig[ticket.ticket_status]?.label ?? ticket.ticket_status}
+                                                </span>
+                                                <span className="text-xs font-bold text-gray-900">S/ {Number(ticket.fare).toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </AuthenticatedLayout>
+        );
+    }
+
+    if (!isAdmin && !isChofer && !isPackageOperator && !isTicketOperator) {
+        return (
+            <AuthenticatedLayout>
+                <Head title="Panel de Control - TMS" />
+                <div className="py-10 bg-gray-50 min-h-screen">
+                    <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
+                        <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
+                            <div className="p-8 text-center">
+                                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-900 mb-2">¡Hola, {auth.user.name}!</h3>
+                                <p className="text-gray-500 max-w-md mx-auto">
+                                    Has ingresado al sistema. Usa el menú lateral para acceder a las opciones de tu área de trabajo (Ventas, Encomiendas, etc).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </AuthenticatedLayout>
+        );
+    }
+
     return (
         <AuthenticatedLayout>
             <Head title="Panel de Control - TMS" />
@@ -60,7 +390,7 @@ export default function Dashboard({ tripsInProgress, passengersToday, revenueTod
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-gray-500">Ingresos del Día</p>
-                                <p className="text-2xl font-bold text-gray-900">S/ {revenueToday.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</p>
+                                <p className="text-2xl font-bold text-gray-900">S/ {(revenueToday || 0).toLocaleString('es-PE', { minimumFractionDigits: 2 })}</p>
                             </div>
                         </div>
 
@@ -177,6 +507,43 @@ export default function Dashboard({ tripsInProgress, passengersToday, revenueTod
                         </div>
                     </div>
 
+                    {/* Gráficos de Encomiendas */}
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">Estado de Encomiendas (Últimos 7 días)</h3>
+                            <div className="h-72 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={packagesCountChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="colorRecibidas" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
+                                            </linearGradient>
+                                            <linearGradient id="colorEnviadas" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                                            </linearGradient>
+                                            <linearGradient id="colorDevueltas" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} />
+                                        <CartesianGrid vertical={false} stroke="#E5E7EB" strokeDasharray="3 3" />
+                                        <Tooltip 
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                        <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                                        <Area type="monotone" name="Recibidas" dataKey="recibidas" stroke="#F59E0B" strokeWidth={3} fillOpacity={1} fill="url(#colorRecibidas)" />
+                                        <Area type="monotone" name="Enviadas/Entregadas" dataKey="enviadas" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorEnviadas)" />
+                                        <Area type="monotone" name="Devueltas" dataKey="devueltas" stroke="#EF4444" strokeWidth={3} fillOpacity={1} fill="url(#colorDevueltas)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Tablas Inferiores */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
                         
@@ -239,6 +606,61 @@ export default function Dashboard({ tripsInProgress, passengersToday, revenueTod
                         </div>
 
                     </div>
+
+                    {/* Top Operadores (Solo Administrador) */}
+                    {isAdmin && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
+                            {/* Top Vendedores */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                                    <h3 className="text-base font-bold text-gray-900">Top Operadores de Ventas</h3>
+                                </div>
+                                <div className="divide-y divide-gray-100">
+                                    {(!topTicketSellers || topTicketSellers.length === 0) ? (
+                                        <p className="px-6 py-8 text-sm text-gray-400 text-center">No hay datos de ventas registrados aún.</p>
+                                    ) : topTicketSellers.map((seller, idx) => (
+                                        <div key={seller.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                                {idx + 1}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-gray-900 truncate">{seller.name}</p>
+                                                <p className="text-xs text-gray-500 truncate">{seller.email}</p>
+                                            </div>
+                                            <div className="font-bold text-gray-900">
+                                                {seller.tickets_sold_count} <span className="text-xs font-normal text-gray-500">boletos</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Top Encomiendas */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                                    <h3 className="text-base font-bold text-gray-900">Top Operadores de Encomiendas</h3>
+                                </div>
+                                <div className="divide-y divide-gray-100">
+                                    {(!topPackageSellers || topPackageSellers.length === 0) ? (
+                                        <p className="px-6 py-8 text-sm text-gray-400 text-center">No hay encomiendas registradas aún.</p>
+                                    ) : topPackageSellers.map((seller, idx) => (
+                                        <div key={seller.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
+                                            <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                                {idx + 1}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-gray-900 truncate">{seller.name}</p>
+                                                <p className="text-xs text-gray-500 truncate">{seller.email}</p>
+                                            </div>
+                                            <div className="font-bold text-gray-900">
+                                                {seller.packages_received_count} <span className="text-xs font-normal text-gray-500">envíos</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </AuthenticatedLayout>

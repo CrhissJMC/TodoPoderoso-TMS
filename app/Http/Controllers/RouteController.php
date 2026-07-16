@@ -23,8 +23,8 @@ class RouteController extends Controller
             });
         }
 
-        if ($request->has('active') && $request->get('active') !== '') {
-            $query->where('active', $request->boolean('active'));
+        if ($request->filled('active') || $request->input('active') === '0') {
+            $query->where('active', $request->input('active') === '1');
         }
 
         $routes = $query->orderBy('name')->paginate(10)->withQueryString();

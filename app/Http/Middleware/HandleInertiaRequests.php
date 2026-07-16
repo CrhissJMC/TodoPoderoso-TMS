@@ -33,7 +33,7 @@ class HandleInertiaRequests extends Middleware
 
         // Eager load role to avoid N+1 queries
         if ($user && ! $user->relationLoaded('role')) {
-            $user->load('role');
+            $user->load(['role', 'driver']);
         }
 
         return [

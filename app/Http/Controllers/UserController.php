@@ -11,14 +11,29 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('role')->get();
+        $query = User::with('role');
+
+        if ($request->filled('search')) {
+            $search = strtolower($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('email', 'ilike', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('role_id')) {
+            $query->where('role_id', $request->role_id);
+        }
+
+        $users = $query->orderBy('name')->get();
         $roles = Role::all();
 
         return Inertia::render('Users/Index', [
             'users' => $users,
             'roles' => $roles,
+            'filters' => $request->only(['search', 'role_id']),
         ]);
     }
 
