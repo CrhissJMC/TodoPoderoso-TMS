@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Package;
 use App\Models\Ticket;
 use App\Models\Trip;
-use App\Models\Vehicle;
-use App\Models\Package;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -26,10 +25,10 @@ class DashboardController extends Controller
         $ticketRevenue = Ticket::whereDate('created_at', today())
             ->whereNotIn('ticket_status', ['anulado'])
             ->sum('fare');
-            
+
         $packageRevenue = Package::whereDate('created_at', today())
             ->sum('price');
-            
+
         $revenueToday = $ticketRevenue + $packageRevenue;
 
         // 4. Ocupación Promedio de Hoy
@@ -51,7 +50,7 @@ class DashboardController extends Controller
 
         // 5. Gráfico de Ingresos (Últimos 7 días)
         $sevenDaysAgo = Carbon::today()->subDays(6);
-        
+
         $ticketsLast7Days = Ticket::where('created_at', '>=', $sevenDaysAgo)
             ->whereNotIn('ticket_status', ['anulado'])
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(fare) as total'))
@@ -68,11 +67,11 @@ class DashboardController extends Controller
         $revenueChart = [];
         for ($i = 0; $i < 7; $i++) {
             $date = Carbon::today()->subDays(6 - $i)->format('Y-m-d');
-            
+
             // Format to show short day names, manually parsing logic if necessary
             $carbonDate = Carbon::parse($date);
             $dayName = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'][$carbonDate->dayOfWeek];
-            $label = $dayName . ' ' . $carbonDate->day;
+            $label = $dayName.' '.$carbonDate->day;
 
             $revenueChart[] = [
                 'date' => $label,
@@ -110,7 +109,7 @@ class DashboardController extends Controller
                 'occupied_seats' => $trip->tickets_count,
                 'sellable_seats' => $trip->vehicle?->sellable_seats,
             ]);
-            
+
         // 8. Encomiendas Pendientes
         $pendingPackages = Package::where('status', 'recibido')
             ->latest()

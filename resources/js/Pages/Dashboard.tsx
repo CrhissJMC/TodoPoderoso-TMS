@@ -121,7 +121,7 @@ export default function Dashboard({ tripsInProgress, passengersToday, revenueTod
                                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} tickFormatter={(val) => `S/${val}`} />
                                         <CartesianGrid vertical={false} stroke="#E5E7EB" strokeDasharray="3 3" />
                                         <Tooltip 
-                                            formatter={(value: number) => [`S/ ${value.toFixed(2)}`, '']}
+                                            formatter={(value: any) => [`S/ ${Number(value).toFixed(2)}`, '']}
                                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                         />
                                         <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
@@ -156,7 +156,7 @@ export default function Dashboard({ tripsInProgress, passengersToday, revenueTod
                                                 ))}
                                             </Pie>
                                             <Tooltip 
-                                                formatter={(value: number) => [`${value} boletos`, 'Ventas']}
+                                                formatter={(value: any) => [`${value} boletos`, 'Ventas']}
                                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                             />
                                             <Legend 
