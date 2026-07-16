@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 interface RecentTrip {
@@ -54,6 +54,15 @@ interface Props {
     sellerTodayTickets?: number;
     sellerRecentTickets?: any[];
     sellerRanking?: number;
+    allRoutes?: { id: number; name: string; origin: string; destination: string }[];
+    filters?: { route_id?: string };
+    agentTotalTickets?: number;
+    agentTodayTickets?: number;
+    agentRecentTickets?: any[];
+    agentTotalPackages?: number;
+    agentPendingPackages?: number;
+    agentRecentPackages?: any[];
+    agentRevenueToday?: number;
     statusConfig: Record<string, { label: string; color: string }>;
 }
 
@@ -67,7 +76,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-export default function Dashboard({ tripsInProgress = 0, passengersToday = 0, revenueToday = 0, occupancyRate = 0, revenueChart = [], packagesCountChart = [], topRoutes = [], recentTrips = [], pendingPackages = [], topTicketSellers = [], topPackageSellers = [], driverTrips = [], driverTotalTrips = 0, driverFrequentRoutes = [], driverUpcomingPackages = [], driverRanking = 0, operatorTotalPackages = 0, operatorPendingPackages = 0, operatorRecentPackages = [], operatorRanking = 0, sellerTotalTickets = 0, sellerTodayTickets = 0, sellerRecentTickets = [], sellerRanking = 0, statusConfig }: Props) {
+export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgress = 0, passengersToday = 0, revenueToday = 0, occupancyRate = 0, revenueChart = [], packagesCountChart = [], topRoutes = [], recentTrips = [], pendingPackages = [], topTicketSellers = [], topPackageSellers = [], driverTrips = [], driverTotalTrips = 0, driverFrequentRoutes = [], driverUpcomingPackages = [], driverRanking = 0, operatorTotalPackages = 0, operatorPendingPackages = 0, operatorRecentPackages = [], operatorRanking = 0, sellerTotalTickets = 0, sellerTodayTickets = 0, sellerRecentTickets = [], sellerRanking = 0, agentTotalTickets = 0, agentTodayTickets = 0, agentRecentTickets = [], agentTotalPackages = 0, agentPendingPackages = 0, agentRecentPackages = [], agentRevenueToday = 0, statusConfig }: Props) {
     const { auth } = usePage().props as any;
     const isAdmin = auth.role === 'administrador' || auth.user.role_id === 1;
     const isChofer = auth.role === 'chofer' || auth.user.role_id === 2;
@@ -349,7 +358,136 @@ export default function Dashboard({ tripsInProgress = 0, passengersToday = 0, re
         );
     }
 
-    if (!isAdmin && !isChofer && !isPackageOperator && !isTicketOperator) {
+    const isAgent = auth.role === 'agente' || auth.user.role_id === 5;
+
+    if (isAgent) {
+        return (
+            <AuthenticatedLayout>
+                <Head title="Panel de Agente - TMS" />
+                <div className="py-6 bg-gray-50 min-h-screen">
+                    <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+
+                        {/* Resumen Principal */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {/* Ingresos Hoy */}
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500">Ingresos Generados Hoy</p>
+                                    <p className="text-2xl font-bold text-gray-900">S/ {(agentRevenueToday || 0).toLocaleString('es-PE', { minimumFractionDigits: 2 })}</p>
+                                </div>
+                            </div>
+
+                            {/* Boletos Hoy */}
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6.75v10.5m-7.5-6.75h10.5M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500">Boletos Hoy</p>
+                                    <p className="text-2xl font-bold text-gray-900">{agentTodayTickets}</p>
+                                </div>
+                            </div>
+
+                            {/* Total Boletos */}
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500">Total Boletos</p>
+                                    <p className="text-2xl font-bold text-gray-900">{agentTotalTickets}</p>
+                                </div>
+                            </div>
+
+                            {/* Encomiendas Pendientes */}
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500">Enc. Pendientes</p>
+                                    <p className="text-2xl font-bold text-gray-900">{agentPendingPackages} <span className="text-sm font-normal text-gray-400">/ {agentTotalPackages} total</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tablas: Últimos Boletos y Encomiendas */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                            {/* Últimos Boletos Vendidos */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                                    <h3 className="text-base font-bold text-gray-900">Últimos Boletos Vendidos</h3>
+                                    <Link href={route('tickets.index')} className="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                                        Ver todos →
+                                    </Link>
+                                </div>
+                                <div className="divide-y divide-gray-100 flex-1">
+                                    {!agentRecentTickets || agentRecentTickets.length === 0 ? (
+                                        <p className="px-6 py-8 text-sm text-gray-400 text-center">Aún no has vendido ningún boleto.</p>
+                                    ) : agentRecentTickets.map((ticket: any, idx: number) => (
+                                        <div key={idx} className="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex flex-col items-center justify-center flex-shrink-0">
+                                                <span className="text-xs font-semibold">Asiento</span>
+                                                <span className="text-lg font-bold">{ticket.seat_number}</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-gray-900 truncate">{ticket.ticket_code}</p>
+                                                <p className="text-xs text-gray-500 truncate">{ticket.trip_route}</p>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <span className={`px-2 py-0.5 text-xs font-medium rounded-md ${STATUS_BADGE[statusConfig[ticket.ticket_status]?.color] ?? STATUS_BADGE.gray}`}>
+                                                    {statusConfig[ticket.ticket_status]?.label ?? ticket.ticket_status}
+                                                </span>
+                                                <span className="text-xs font-bold text-gray-900">S/ {Number(ticket.fare).toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Últimas Encomiendas */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                                    <h3 className="text-base font-bold text-gray-900">Últimas Encomiendas Recibidas</h3>
+                                    <Link href={route('packages.index')} className="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                                        Ver todas →
+                                    </Link>
+                                </div>
+                                <div className="divide-y divide-gray-100 flex-1">
+                                    {!agentRecentPackages || agentRecentPackages.length === 0 ? (
+                                        <p className="px-6 py-8 text-sm text-gray-400 text-center">Aún no has recibido ninguna encomienda.</p>
+                                    ) : agentRecentPackages.map((pkg: any, idx: number) => (
+                                        <div key={idx} className="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex flex-col items-center justify-center flex-shrink-0">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-gray-900 truncate">{pkg.tracking_code}</p>
+                                                <p className="text-xs text-gray-500 truncate">{pkg.trip_route} → {pkg.destination}</p>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <span className={`px-2 py-0.5 text-xs font-medium rounded-md ${STATUS_BADGE[statusConfig[pkg.status]?.color] ?? STATUS_BADGE.gray}`}>
+                                                    {statusConfig[pkg.status]?.label ?? pkg.status}
+                                                </span>
+                                                <span className="text-xs text-gray-500">{pkg.package_type}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </AuthenticatedLayout>
+        );
+    }
+
+    if (!isAdmin && !isChofer && !isPackageOperator && !isTicketOperator && !isAgent) {
         return (
             <AuthenticatedLayout>
                 <Head title="Panel de Control - TMS" />
@@ -380,6 +518,30 @@ export default function Dashboard({ tripsInProgress = 0, passengersToday = 0, re
 
             <div className="py-6 bg-gray-50 min-h-screen">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+
+                    {/* Filtros */}
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900">Métricas Generales</h2>
+                            <p className="text-sm text-gray-500">Vista general del desempeño de la agencia</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <label htmlFor="route_filter" className="text-sm font-medium text-gray-700">Filtrar por Ruta:</label>
+                            <select
+                                id="route_filter"
+                                value={filters?.route_id || ''}
+                                onChange={(e) => {
+                                    router.get(route('dashboard'), { route_id: e.target.value }, { preserveState: true, preserveScroll: true });
+                                }}
+                                className="block w-64 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                            >
+                                <option value="">Todas las Rutas</option>
+                                {allRoutes.map(r => (
+                                    <option key={r.id} value={r.id}>{r.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
 
                     {/* Resumen Superior */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
