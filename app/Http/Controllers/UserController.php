@@ -82,4 +82,18 @@ class UserController extends Controller
 
         return back()->with('success', "El usuario ha sido {$action} exitosamente.");
     }
+
+    public function destroy(User $user)
+    {
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'No puedes eliminarte a ti mismo.');
+        }
+        if ($user->id === 1) {
+            return back()->with('error', 'El administrador principal no puede ser eliminado.');
+        }
+
+        $user->delete();
+
+        return back()->with('success', 'Usuario eliminado correctamente.');
+    }
 }

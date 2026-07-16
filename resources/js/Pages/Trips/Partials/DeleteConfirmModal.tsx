@@ -5,7 +5,8 @@ interface Trip { id: number; route: { name: string }; trip_date: string; }
 interface Props { trip: Trip | null; onClose: () => void; }
 
 function formatDate(d: string) {
-    return new Date(d + 'T12:00:00').toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
+    const dateString = d.split('T')[0];
+    return new Date(dateString + 'T12:00:00').toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 export default function DeleteConfirmModal({ trip, onClose }: Props) {

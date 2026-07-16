@@ -141,7 +141,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Usuarios
         Route::resource('users', UserController::class)
-            ->except(['create', 'edit', 'destroy', 'show']);
+            ->except(['create', 'edit', 'show']);
         Route::patch('users/{user}/status', [UserController::class, 'updateStatus'])
             ->name('users.updateStatus');
     });

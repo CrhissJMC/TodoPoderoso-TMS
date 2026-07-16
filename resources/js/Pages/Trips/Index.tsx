@@ -84,7 +84,8 @@ const STATUS_CONFIG: Record<string, { label: string; badge: string; select: stri
 };
 
 function formatDate(d: string) {
-    return new Date(d + 'T12:00:00').toLocaleDateString('es-PE', { weekday: 'short', day: '2-digit', month: 'short' });
+    const dateString = d.split('T')[0];
+    return new Date(dateString + 'T12:00:00').toLocaleDateString('es-PE', { weekday: 'short', day: '2-digit', month: 'short' });
 }
 
 function StatusBadge({ status }: { status: string }) {

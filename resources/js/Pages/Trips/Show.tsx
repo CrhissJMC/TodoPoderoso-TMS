@@ -40,7 +40,8 @@ const TICKET_STATUS: Record<string, string> = {
 const PKG_STATUS: Record<string, string> = { recibido: 'bg-gray-100 text-gray-600', en_ruta: 'bg-amber-50 text-amber-700', entregado: 'bg-green-50 text-green-700' };
 
 function formatDate(d: string) {
-    return new Date(d + 'T12:00:00').toLocaleDateString('es-PE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+    const dateString = d.split('T')[0];
+    return new Date(dateString + 'T12:00:00').toLocaleDateString('es-PE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 }
 function formatDateTime(d: string) {
     return new Date(d).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
