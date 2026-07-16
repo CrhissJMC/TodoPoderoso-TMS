@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Head, useForm, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import UserModal from './Partials/UserModal';
+import DeleteConfirmModal from './Partials/DeleteConfirmModal';
 
 interface Role {
     id: number;
@@ -27,44 +29,21 @@ export default function UsersIndex({ users, roles }: Props) {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
-
-    const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
-        name: '',
-        email: '',
-        password: '',
-        role_id: '',
-    });
+    const [deletingUser, setDeletingUser] = useState<User | null>(null);
 
     function openCreateModal() {
-        reset();
-        clearErrors();
         setEditingUser(null);
         setIsModalOpen(true);
     }
 
     function openEditModal(user: User) {
-        clearErrors();
         setEditingUser(user);
-        setData({
-            name: user.name,
-            email: user.email,
-            password: '',
-            role_id: user.role_id.toString(),
-        });
         setIsModalOpen(true);
     }
-
-    function submit(e: React.FormEvent) {
-        e.preventDefault();
-        if (editingUser) {
-            put(route('users.update', editingUser.id), {
-                onSuccess: () => setIsModalOpen(false)
-            });
-        } else {
-            post(route('users.store'), {
-                onSuccess: () => setIsModalOpen(false)
-            });
-        }
+    
+    function closeModals() {
+        setIsModalOpen(false);
+        setEditingUser(null);
     }
 
     function toggleStatus(user: User) {
@@ -78,18 +57,17 @@ export default function UsersIndex({ users, roles }: Props) {
     }
 
     return (
-        <AuthenticatedLayout header={
-            <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-800">Cuentas de Usuarios</h2>
-                <button onClick={openCreateModal} className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
-                    + Nuevo Usuario
-                </button>
-            </div>
-        }>
+        <AuthenticatedLayout>
             <Head title="Usuarios" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-                
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-gray-900">Cuentas de Usuarios</h2>
+                    <button onClick={openCreateModal} className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
+                        + Nuevo Usuario
+                    </button>
+                </div>
+
                 {/* Flash Messages */}
                 {flash?.success && (
                     <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
@@ -134,18 +112,25 @@ export default function UsersIndex({ users, roles }: Props) {
                                                 {user.estado === 'activo' ? 'Activo' : 'Inhabilitado'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right space-x-2">
+                                        <td className="px-6 py-4 text-right space-x-1">
                                             <button onClick={() => openEditModal(user)} className="text-gray-400 hover:text-blue-600 font-medium transition-colors p-1" title="Editar">
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>
                                             </button>
-                                            {user.id !== currentUser.id && (
-                                                <button onClick={() => toggleStatus(user)} className={`font-medium transition-colors p-1 ${user.estado === 'activo' ? 'text-gray-400 hover:text-red-600' : 'text-gray-400 hover:text-green-600'}`} title={user.estado === 'activo' ? 'Dar de baja' : 'Reactivar'}>
-                                                    {user.estado === 'activo' ? (
-                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-                                                    ) : (
-                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                    )}
-                                                </button>
+                                            {user.id !== currentUser.id && user.id !== 1 && (
+                                                <>
+                                                    <button onClick={() => toggleStatus(user)} className={`font-medium transition-colors p-1 ${user.estado === 'activo' ? 'text-gray-400 hover:text-orange-600' : 'text-gray-400 hover:text-green-600'}`} title={user.estado === 'activo' ? 'Dar de baja' : 'Reactivar'}>
+                                                        {user.estado === 'activo' ? (
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                                                        ) : (
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                        )}
+                                                    </button>
+                                                    <button onClick={() => setDeletingUser(user)} className="text-gray-400 hover:text-red-600 font-medium transition-colors p-1" title="Eliminar definitivamente">
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                        </svg>
+                                                    </button>
+                                                </>
                                             )}
                                         </td>
                                     </tr>
@@ -163,54 +148,9 @@ export default function UsersIndex({ users, roles }: Props) {
                 </div>
             </div>
 
-            {/* Modal Crear/Editar */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={e => e.target === e.currentTarget && setIsModalOpen(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-                            <h3 className="text-lg font-bold text-gray-900">{editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}</h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                        </div>
-                        <form onSubmit={submit} className="flex-1 overflow-y-auto">
-                            <div className="px-6 py-5 space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-                                    <input type="text" required value={data.name} onChange={e => setData('name', e.target.value)} className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Nombre completo" />
-                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico *</label>
-                                    <input type="email" required value={data.email} onChange={e => setData('email', e.target.value)} className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="usuario@empresa.com" />
-                                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Contraseña {editingUser ? '(Opcional)' : '*'}
-                                    </label>
-                                    <input type="password" required={!editingUser} minLength={8} value={data.password} onChange={e => setData('password', e.target.value)} className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder={editingUser ? "Dejar en blanco para mantener actual" : "Mínimo 8 caracteres"} />
-                                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Rol de Acceso *</label>
-                                    <select required value={data.role_id} onChange={e => setData('role_id', e.target.value)} className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                        <option value="">Seleccione un rol...</option>
-                                        {roles.map(r => (
-                                            <option key={r.id} value={r.id}>{r.name}</option>
-                                        ))}
-                                    </select>
-                                    {errors.role_id && <p className="text-red-500 text-xs mt-1">{errors.role_id}</p>}
-                                </div>
-                            </div>
-                            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2 bg-gray-50">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
-                                <button type="submit" disabled={processing} className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">{processing ? 'Guardando...' : 'Guardar'}</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            <UserModal isOpen={isModalOpen} user={editingUser} roles={roles} onClose={closeModals} />
+            <DeleteConfirmModal user={deletingUser} onClose={() => setDeletingUser(null)} />
+
         </AuthenticatedLayout>
     );
 }

@@ -21,7 +21,8 @@ const ALLOWED: Record<string, string[]> = {
 };
 
 function formatDate(d: string) {
-    return new Date(d + 'T12:00:00').toLocaleDateString('es-PE', { weekday: 'long', day: '2-digit', month: 'long' });
+    const dateString = d.split('T')[0];
+    return new Date(dateString + 'T12:00:00').toLocaleDateString('es-PE', { weekday: 'long', day: '2-digit', month: 'long' });
 }
 
 export default function StatusChangeModal({ trip, onClose }: Props) {
