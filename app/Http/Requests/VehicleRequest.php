@@ -29,6 +29,7 @@ class VehicleRequest extends FormRequest
             ],
             'brand' => ['required', 'string', 'max:100'],
             'model' => ['required', 'string', 'max:100'],
+            'mtc_category' => ['required', 'string', 'max:10'],
             'year' => ['nullable', 'integer', 'min:1900', 'max:'.(date('Y') + 1)],
 
             // Validaciones de Asientos (CORREGIDO: 'lt' en lugar de 'lte')
@@ -52,6 +53,7 @@ class VehicleRequest extends FormRequest
 
             'brand.required' => 'La marca es obligatoria.',
             'model.required' => 'El modelo es obligatorio.',
+            'mtc_category.required' => 'La categoría MTC es obligatoria.',
 
             'capacity_seats.required' => 'La cantidad total de asientos es obligatoria.',
             'capacity_seats.min' => 'Debe tener al menos 1 asiento.',

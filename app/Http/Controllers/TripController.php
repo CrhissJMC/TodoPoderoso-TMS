@@ -20,6 +20,14 @@ class TripController extends Controller
         $query = Trip::with(['route', 'vehicle', 'driver', 'schedule'])
             ->withCount(['tickets', 'packages']);
 
+        $user = Auth::user();
+        $isDriver = $user && $user->role && $user->role->name === 'chofer' && $user->driver;
+
+        // Si el usuario es un chofer, filtrar por su conductor asignado
+        if ($isDriver) {
+            $query->where('driver_id', $user->driver->id);
+        }
+
         // Filtros
         if ($search = $request->get('search')) {
             $query->whereHas('route', fn ($q) => $q->where('name', 'ilike', "%{$search}%")
@@ -45,13 +53,18 @@ class TripController extends Controller
 
         $trips = $query->paginate(12)->withQueryString();
 
+        $tripsCountQuery = Trip::query();
+        if ($isDriver) {
+            $tripsCountQuery->where('driver_id', $user->driver->id);
+        }
+
         $counts = [
-            'total' => Trip::count(),
-            'programado' => Trip::where('status', 'programado')->count(),
-            'abordando' => Trip::where('status', 'abordando')->count(),
-            'en_ruta' => Trip::where('status', 'en_ruta')->count(),
-            'completado' => Trip::whereDate('trip_date', today())->where('status', 'completado')->count(),
-            'cancelado' => Trip::whereDate('trip_date', today())->where('status', 'cancelado')->count(),
+            'total' => (clone $tripsCountQuery)->count(),
+            'programado' => (clone $tripsCountQuery)->where('status', 'programado')->count(),
+            'abordando' => (clone $tripsCountQuery)->where('status', 'abordando')->count(),
+            'en_ruta' => (clone $tripsCountQuery)->where('status', 'en_ruta')->count(),
+            'completado' => (clone $tripsCountQuery)->whereDate('trip_date', today())->where('status', 'completado')->count(),
+            'cancelado' => (clone $tripsCountQuery)->whereDate('trip_date', today())->where('status', 'cancelado')->count(),
         ];
 
         return Inertia::render('Trips/Index', [

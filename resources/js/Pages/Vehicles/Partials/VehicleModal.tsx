@@ -16,6 +16,7 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
         plate: '',
         brand: '',
         model: '',
+        mtc_category: 'M1',
         year: '',
         capacity_seats: '',
         sellable_seats: '',
@@ -31,6 +32,7 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
                 plate: vehicle.plate ?? '',
                 brand: vehicle.brand ?? '',
                 model: vehicle.model ?? '',
+                mtc_category: vehicle.mtc_category ?? 'M1',
                 year: vehicle.year ?? '',
                 capacity_seats: vehicle.capacity_seats ?? '',
                 sellable_seats: vehicle.sellable_seats ?? '',
@@ -102,12 +104,21 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
                     </div>
 
                     {/* Fila 2 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                         <Field label="Marca *" error={errors.brand}>
                             <input value={data.brand} onChange={e => setData('brand', e.target.value)} placeholder="Ej. Toyota" className={inputClass(errors.brand)} />
                         </Field>
                         <Field label="Modelo *" error={errors.model}>
                             <input value={data.model} onChange={e => setData('model', e.target.value)} placeholder="Ej. Hiace" className={inputClass(errors.model)} />
+                        </Field>
+                        <Field label="Cat. MTC *" error={errors.mtc_category}>
+                            <select value={data.mtc_category} onChange={e => setData('mtc_category', e.target.value)} className={inputClass(errors.mtc_category)}>
+                                <option value="M1">M1 (Veh. &lt;= 8 asientos)</option>
+                                <option value="M2">M2 (Veh. &gt; 8 asientos, &lt;= 5t)</option>
+                                <option value="M3">M3 (Veh. &gt; 8 asientos, &gt; 5t)</option>
+                                <option value="N1">N1 (Carga &lt;= 3.5t)</option>
+                                <option value="N2">N2 (Carga &gt; 3.5t, &lt;= 12t)</option>
+                            </select>
                         </Field>
                     </div>
 

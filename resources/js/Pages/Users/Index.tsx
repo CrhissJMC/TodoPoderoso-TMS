@@ -21,15 +21,33 @@ interface User {
 interface Props {
     users: User[];
     roles: Role[];
+    filters: { search?: string; role_id?: string };
 }
 
-export default function UsersIndex({ users, roles }: Props) {
+export default function UsersIndex({ users, roles, filters }: Props) {
     const { flash, auth } = usePage().props as any;
     const currentUser = auth.user;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [deletingUser, setDeletingUser] = useState<User | null>(null);
+
+    const [search, setSearch] = useState(filters?.search ?? '');
+    const [roleFilter, setRoleFilter] = useState(filters?.role_id ?? '');
+
+    function applyFilters(overrides: Record<string, string> = {}) {
+        router.get(
+            route('users.index'),
+            { search, role_id: roleFilter, ...overrides },
+            { preserveState: true, replace: true }
+        );
+    }
+
+    function clearFilters() {
+        setSearch(''); setRoleFilter('');
+        router.get(route('users.index'), {}, { replace: true });
+    }
+
 
     function openCreateModal() {
         setEditingUser(null);
@@ -61,11 +79,43 @@ export default function UsersIndex({ users, roles }: Props) {
             <Head title="Usuarios" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <h2 className="text-xl font-bold text-gray-900">Cuentas de Usuarios</h2>
-                    <button onClick={openCreateModal} className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
+                    <button onClick={openCreateModal} className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors w-full sm:w-auto">
                         + Nuevo Usuario
                     </button>
+                </div>
+
+                {/* Toolbar */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1 sm:max-w-xs">
+                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre o correo..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && applyFilters({ search: e.currentTarget.value })}
+                            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                        />
+                    </div>
+                    <select
+                        value={roleFilter}
+                        onChange={e => { setRoleFilter(e.target.value); applyFilters({ role_id: e.target.value }); }}
+                        className="w-full sm:w-auto text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    >
+                        <option value="">Todos los roles</option>
+                        {roles.map(r => (
+                            <option key={r.id} value={r.id}>{r.name}</option>
+                        ))}
+                    </select>
+                    {(search || roleFilter) && (
+                        <button onClick={clearFilters} className="w-full sm:w-auto text-sm text-gray-500 hover:text-gray-700 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                            Limpiar
+                        </button>
+                    )}
                 </div>
 
                 {/* Flash Messages */}

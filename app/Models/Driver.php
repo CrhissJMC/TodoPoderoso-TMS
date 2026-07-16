@@ -20,6 +20,7 @@ class Driver extends Model
         'dni',
         'status',
         'vehicle_id',
+        'user_id',       // NUEVO
         'contract_type', // NUEVO
         'rental_fee',    // NUEVO
         'observations',
@@ -32,12 +33,12 @@ class Driver extends Model
 
     public static function statuses(): array
     {
-        return ['activo', 'inactivo', 'en_viaje'];
+        return ['activo', 'inactivo', 'en_viaje', 'en_renovacion'];
     }
 
     public static function licenseTypes(): array
     {
-        return ['A', 'A-I', 'A-II', 'A-III', 'B', 'C', 'D', 'E'];
+        return ['A-IIa', 'A-IIb'];
     }
 
     // NUEVO: Modalidades de contrato

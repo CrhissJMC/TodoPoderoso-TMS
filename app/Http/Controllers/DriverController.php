@@ -49,7 +49,7 @@ class DriverController extends Controller
             'availableVehicles' => $availableVehicles,
             'filters' => $request->only(['search', 'status']),
             'statuses' => Driver::statuses() ?? ['activo', 'inactivo', 'en_viaje'],
-            'licenseTypes' => Driver::licenseTypes() ?? ['A-I', 'A-IIa', 'A-IIb', 'A-IIIa', 'A-IIIb', 'A-IIIc'],
+            'licenseTypes' => Driver::licenseTypes() ?? ['A-IIa', 'A-IIb'],
             'contractTypes' => Driver::contractTypes() ?? ['Propietario', 'Tercero', 'Planilla'],
             // NUEVO: Agregamos esto para el modal de Vehículos
             'vehicleTypes' => ['Auto', 'Minivan', 'Bus', 'Otro'],
