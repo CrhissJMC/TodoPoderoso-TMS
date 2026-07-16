@@ -11,6 +11,7 @@ class Client extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'user_id',
         'name',
         'document_type',
         'document_number',
@@ -18,6 +19,14 @@ class Client extends Model
         'email',
         'address',
     ];
+
+    /**
+     * El cliente puede estar vinculado a un usuario del sistema.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Un cliente puede tener muchos pasajes como pasajero.

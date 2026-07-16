@@ -17,6 +17,16 @@ class TicketController extends Controller
     {
         $query = Ticket::with(['trip.route', 'trip.vehicle', 'client', 'soldBy', 'voidedBy']);
 
+        $user = Auth::user();
+        if ($user && ($user->role_id === 6 || $user->role === 'cliente')) {
+            if ($user->client) {
+                $query->where('client_id', $user->client->id);
+            } else {
+                // Si es rol cliente pero no tiene cliente vinculado, no mostrar boletos
+                $query->where('client_id', -1);
+            }
+        }
+
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('ticket_code', 'ilike', "%{$search}%")

@@ -17,6 +17,19 @@ class PackageController extends Controller
     {
         $query = Package::with(['trip.route', 'receivedBy', 'sender', 'receiver']);
 
+        $user = Auth::user();
+        if ($user && ($user->role_id === 6 || $user->role === 'cliente')) {
+            if ($user->client) {
+                $query->where(function ($q) use ($user) {
+                    $q->where('sender_id', $user->client->id)
+                        ->orWhere('receiver_id', $user->client->id);
+                });
+            } else {
+                // Si es rol cliente pero no tiene cliente vinculado, no mostrar encomiendas
+                $query->where('id', -1);
+            }
+        }
+
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->whereHas('sender', fn ($s) => $s->where('name', 'ilike', "%{$search}%")->orWhere('document_number', 'ilike', "%{$search}%"))

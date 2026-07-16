@@ -6,6 +6,7 @@ use App\Models\Package;
 use App\Models\Route;
 use App\Models\Ticket;
 use App\Models\Trip;
+use App\Models\TripStatusLog;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -440,6 +441,158 @@ class DashboardController extends Controller
                 'sellerTodayTickets' => $sellerTodayTickets,
                 'sellerRecentTickets' => $sellerRecentTickets,
                 'sellerRanking' => $sellerRanking,
+                'statusConfig' => Trip::statusConfig(),
+            ]);
+        }
+        // Dashboard para Cliente
+        if ($roleName === 'cliente' || $roleId === 6) {
+            $client = $user->client;
+
+            if (! $client) {
+                return Inertia::render('Dashboard', [
+                    'clientError' => 'Tu cuenta de usuario no está vinculada a un registro de cliente. Contacta al administrador.',
+                    'statusConfig' => Trip::statusConfig(),
+                ]);
+            }
+
+            $clientId = $client->id;
+
+            // === DASHBOARD 1: RESUMEN Y SEGUIMIENTO ===
+
+            // KPIs — Conteo de viajes por estado (via boletos del cliente)
+            $clientTripIds = Ticket::where('client_id', $clientId)
+                ->whereNotIn('ticket_status', ['anulado'])
+                ->pluck('trip_id')
+                ->unique();
+
+            $tripStatusCounts = Trip::whereIn('id', $clientTripIds)
+                ->select('status', DB::raw('COUNT(id) as count'))
+                ->groupBy('status')
+                ->pluck('count', 'status');
+
+            $clientKpis = [
+                'programados' => ($tripStatusCounts['programado'] ?? 0) + ($tripStatusCounts['abordando'] ?? 0),
+                'en_curso' => $tripStatusCounts['en_ruta'] ?? 0,
+                'completados' => $tripStatusCounts['completado'] ?? 0,
+                'cancelados' => $tripStatusCounts['cancelado'] ?? 0,
+            ];
+
+            // Seguimiento en Vivo — Viajes activos del cliente
+            $activeTrips = Trip::with(['route', 'vehicle', 'driver', 'schedule'])
+                ->whereIn('id', $clientTripIds)
+                ->whereIn('status', ['abordando', 'en_ruta'])
+                ->get()
+                ->map(fn (Trip $trip) => [
+                    'id' => $trip->id,
+                    'route_name' => $trip->route->name,
+                    'origin' => $trip->route->origin,
+                    'destination' => $trip->route->destination,
+                    'vehicle_plate' => $trip->vehicle?->plate,
+                    'driver_name' => $trip->driver?->name,
+                    'status' => $trip->status,
+                    'trip_date' => $trip->trip_date,
+                    'time' => $trip->schedule ? substr($trip->schedule->departure_time, 0, 5) : '',
+                    'estimated_minutes' => $trip->route->estimated_minutes,
+                ]);
+
+            // Próximas Entregas — Encomiendas donde el cliente es sender o receiver
+            $upcomingPackages = Package::with(['trip', 'trip.route', 'trip.schedule', 'sender', 'receiver'])
+                ->where(fn ($q) => $q->where('sender_id', $clientId)->orWhere('receiver_id', $clientId))
+                ->whereIn('status', ['recibido', 'en_ruta'])
+                ->latest()
+                ->take(10)
+                ->get()
+                ->map(fn ($pkg) => [
+                    'id' => $pkg->id,
+                    'tracking_code' => $pkg->tracking_code,
+                    'origin' => $pkg->origin,
+                    'destination' => $pkg->destination,
+                    'status' => $pkg->status,
+                    'package_type' => $pkg->package_type,
+                    'trip_route' => $pkg->trip?->route?->name ?? 'Sin asignar',
+                    'trip_date' => $pkg->trip?->trip_date,
+                    'departure_time' => $pkg->trip?->schedule ? substr($pkg->trip->schedule->departure_time, 0, 5) : null,
+                    'estimated_minutes' => $pkg->trip?->route?->estimated_minutes,
+                    'is_sender' => $pkg->sender_id === $clientId,
+                ]);
+
+            // Actividad Reciente — Cambios de estado de viajes del cliente
+            $recentActivity = [];
+
+            $tripLogs = TripStatusLog::whereIn('trip_id', $clientTripIds)
+                ->with(['trip.route'])
+                ->orderByDesc('changed_at')
+                ->take(10)
+                ->get()
+                ->map(fn ($log) => [
+                    'type' => 'viaje',
+                    'message' => 'Viaje '.($log->trip->route->name ?? '').': '.($log->previous_status ?? '—').' → '.$log->new_status,
+                    'date' => $log->changed_at,
+                    'status' => $log->new_status,
+                ]);
+
+            $packageActivity = Package::where(fn ($q) => $q->where('sender_id', $clientId)->orWhere('receiver_id', $clientId))
+                ->whereIn('status', ['en_ruta', 'entregado', 'devuelto'])
+                ->latest('updated_at')
+                ->take(10)
+                ->get()
+                ->map(fn ($pkg) => [
+                    'type' => 'encomienda',
+                    'message' => 'Encomienda '.$pkg->tracking_code.': estado actualizado a '.$pkg->status,
+                    'date' => $pkg->updated_at,
+                    'status' => $pkg->status,
+                ]);
+
+            $recentActivity = $tripLogs->merge($packageActivity)->sortByDesc('date')->take(15)->values();
+
+            // === DASHBOARD 2: HISTORIAL Y RENDIMIENTO ===
+
+            // Historial de Viajes
+            $tripHistory = Trip::with(['route', 'schedule'])
+                ->whereIn('id', $clientTripIds)
+                ->orderByDesc('trip_date')
+                ->take(20)
+                ->get()
+                ->map(fn (Trip $trip) => [
+                    'id' => $trip->id,
+                    'route_name' => $trip->route->name,
+                    'origin' => $trip->route->origin,
+                    'destination' => $trip->route->destination,
+                    'trip_date' => $trip->trip_date,
+                    'time' => $trip->schedule ? substr($trip->schedule->departure_time, 0, 5) : '',
+                    'status' => $trip->status,
+                ]);
+
+            // OTD — On-Time Delivery (encomiendas entregadas en ≤24h = a tiempo)
+            $clientPackages = Package::where(fn ($q) => $q->where('sender_id', $clientId)->orWhere('receiver_id', $clientId));
+            $totalDelivered = (clone $clientPackages)->where('status', 'entregado')->count();
+            $onTimeDelivered = (clone $clientPackages)->where('status', 'entregado')
+                ->whereRaw('EXTRACT(EPOCH FROM (updated_at - created_at)) <= 86400')
+                ->count();
+            $otdPercentage = $totalDelivered > 0 ? round(($onTimeDelivered / $totalDelivered) * 100) : 0;
+
+            // Resumen por Ruta
+            $routeSummary = DB::table('tickets')
+                ->join('trips', 'tickets.trip_id', '=', 'trips.id')
+                ->join('routes', 'trips.route_id', '=', 'routes.id')
+                ->where('tickets.client_id', $clientId)
+                ->whereNotIn('tickets.ticket_status', ['anulado'])
+                ->select('routes.name', DB::raw('COUNT(DISTINCT trips.id) as trips_count'))
+                ->groupBy('routes.name')
+                ->orderByDesc('trips_count')
+                ->limit(10)
+                ->get();
+
+            return Inertia::render('Dashboard', [
+                'clientKpis' => $clientKpis,
+                'clientActiveTrips' => $activeTrips,
+                'clientUpcomingPackages' => $upcomingPackages,
+                'clientRecentActivity' => $recentActivity,
+                'clientTripHistory' => $tripHistory,
+                'clientOtd' => $otdPercentage,
+                'clientTotalDelivered' => $totalDelivered,
+                'clientOnTimeDelivered' => $onTimeDelivered,
+                'clientRouteSummary' => $routeSummary,
                 'statusConfig' => Trip::statusConfig(),
             ]);
         }

@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ClientRequest;
 use App\Models\Client;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class ClientController extends Controller
@@ -50,7 +53,22 @@ class ClientController extends Controller
 
     public function store(ClientRequest $request)
     {
-        Client::create($request->validated());
+        $data = $request->validated();
+
+        $email = $data['email'] ?? Str::slug($data['name']).'@tms.com';
+
+        $user = User::firstOrCreate(
+            ['email' => $email],
+            [
+                'name' => $data['name'],
+                'password' => Hash::make('password123'),
+                'role_id' => 6, // cliente
+            ]
+        );
+
+        $data['user_id'] = $user->id;
+
+        Client::create($data);
 
         return redirect()
             ->route('clients.index')

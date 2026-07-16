@@ -46,6 +46,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the client record linked to this user.
+     */
+    public function client()
+    {
+        return $this->hasOne(Client::class);
+    }
+
+    /**
      * Check if the user has a specific permission.
      */
     public function hasPermission(string $permission): bool
