@@ -22,6 +22,7 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
+        'activeRoutes' => App\Models\Route::where('active', true)->orderBy('name')->get(['id', 'name', 'base_fare']),
     ]);
 });
 
