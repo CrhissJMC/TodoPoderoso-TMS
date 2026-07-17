@@ -87,9 +87,17 @@
     <div class="divider"></div>
 
     <div class="footer">
-        RASTREE SU ENCOMIENDA ONLINE CON SU CÓDIGO EN:<br>
-        <strong>www.todopoderoso.com.pe/rastreo</strong>
-        <br><br>
+        @if(isset($company) && $company->website_url)
+            RASTREE SU ENCOMIENDA ONLINE CON SU CÓDIGO EN:<br>
+            <strong>{{ $company->website_url }}</strong><br>
+            <div style="margin-top: 10px; margin-bottom: 10px;">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode($company->website_url) }}" style="width: 90px; height: 90px;">
+            </div>
+        @else
+            RASTREE SU ENCOMIENDA ONLINE CON SU CÓDIGO EN:<br>
+            <strong>www.todopoderoso.com.pe</strong>
+            <br><br>
+        @endif
         LA EMPRESA NO SE RESPONSABILIZA POR MERCADERÍA NO DECLARADA O MAL EMPACADA.
     </div>
 

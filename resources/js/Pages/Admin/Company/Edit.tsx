@@ -9,6 +9,7 @@ interface Props {
         primary_color: string;
         bg_color: string;
         accent_color: string;
+        website_url: string;
     };
     routes: any[];
 }
@@ -21,6 +22,7 @@ export default function CompanyEdit({ companySettings, routes }: Props) {
         primary_color: companySettings?.primary_color || '#4F46E5',
         bg_color: companySettings?.bg_color || '#F9FAFB',
         accent_color: companySettings?.accent_color || '#8B5CF6',
+        website_url: companySettings?.website_url || '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -51,18 +53,18 @@ export default function CompanyEdit({ companySettings, routes }: Props) {
                 )}
 
                 {/* Tabs */}
-                <div className="flex border-b border-gray-200">
+                <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-2 max-w-xl">
                     <button 
                         onClick={() => setActiveTab('theme')} 
-                        className={`py-3 px-6 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'theme' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 py-3 px-6 font-bold text-sm transition-all rounded-xl ${activeTab === 'theme' ? 'bg-white text-theme-primary shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
                     >
-                        Estilos y Colores
+                        🎨 Estilos y Colores
                     </button>
                     <button 
                         onClick={() => setActiveTab('prices')} 
-                        className={`py-3 px-6 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'prices' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 py-3 px-6 font-bold text-sm transition-all rounded-xl ${activeTab === 'prices' ? 'bg-white text-theme-primary shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
                     >
-                        Tarifas de Rutas
+                        💰 Tarifas y Rutas
                     </button>
                 </div>
 
@@ -84,6 +86,19 @@ export default function CompanyEdit({ companySettings, routes }: Props) {
                                         required
                                     />
                                     {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Página Web (URL)</label>
+                                    <input 
+                                        type="url" 
+                                        value={data.website_url} 
+                                        onChange={e => setData('website_url', e.target.value)}
+                                        placeholder="https://www.misitio.com"
+                                        className="w-full rounded-xl border-gray-300 focus:ring-theme-primary focus:border-theme-primary transition-colors text-sm"
+                                    />
+                                    {errors.website_url && <p className="text-red-500 text-xs mt-1">{errors.website_url}</p>}
+                                    <p className="text-xs text-gray-500 mt-1">Se imprimirá en los bouchers para que los clientes puedan rastrear sus envíos.</p>
                                 </div>
 
                                 <div className="space-y-4">
