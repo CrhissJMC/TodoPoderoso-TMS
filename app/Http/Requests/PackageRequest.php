@@ -40,18 +40,6 @@ class PackageRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            $type = $this->input('package_type');
-            $weight = $this->input('weight');
-            
-            if ($type === 'sobre_manila' && $weight > 1) {
-                $validator->errors()->add('weight', 'Un sobre de manila no puede pesar más de 1 kg.');
-            }
-        });
-    }
-
     public function messages(): array
     {
         return [
@@ -74,6 +62,13 @@ class PackageRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            $type = $this->input('package_type');
+            $weight = $this->input('weight');
+            
+            if ($type === 'sobre_manila' && $weight > 1) {
+                $validator->errors()->add('weight', 'Un sobre de manila no puede pesar más de 1 kg.');
+            }
+
             if ($this->trip_id) {
                 $trip = \App\Models\Trip::with('route.stops')->find($this->trip_id);
                 if ($trip) {
