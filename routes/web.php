@@ -15,10 +15,17 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use Illuminate\Support\Facades\Route;
 
-// Redirigir la raíz al Login
+use Inertia\Inertia;
+
+// Página de Bienvenida y Rastreo Público
 Route::get('/', function () {
-    return redirect()->route('login');
+    return Inertia::render('Welcome', [
+        'canLogin' => Route::has('login'),
+    ]);
 });
+
+// Rastreo Público de Encomiendas API
+Route::get('/api/track', [PackageController::class, 'track'])->name('packages.track.public');
 
 // Dashboard protegido
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -125,9 +132,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Módulo de Encomiendas
     Route::middleware('permission:encomiendas.ver')->group(function () {
         Route::get('packages', [PackageController::class, 'index'])->name('packages.index');
-        // Consulta de rastreo — debe registrarse antes de packages/{package} para no ser
-        // capturada por el parámetro genérico {package}.
-        Route::get('packages/track', [PackageController::class, 'track'])->name('packages.track');
         Route::get('packages/{package}', [PackageController::class, 'show'])->name('packages.show');
     });
     Route::middleware('permission:encomiendas.admin')->group(function () {
@@ -135,6 +139,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('packages/{package}', [PackageController::class, 'update'])->name('packages.update');
         Route::delete('packages/{package}', [PackageController::class, 'destroy'])->name('packages.destroy');
         Route::patch('packages/{package}/status', [PackageController::class, 'updateStatus'])->name('packages.updateStatus');
+        Route::patch('packages/{package}/assign-trip', [PackageController::class, 'assignTrip'])->name('packages.assignTrip');
     });
 
     // ── MÓDULO DE ROLES Y USUARIOS (Solo Administrador) ──

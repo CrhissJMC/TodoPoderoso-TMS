@@ -427,11 +427,40 @@ class DashboardController extends Controller
                 $operatorRanking = 1;
             }
 
+            // --- Nuevas Métricas Logísticas ---
+            $now = now();
+            
+            // Estancadas: Encomiendas recibidas hace más de 48h y sin despachar
+            $stagnantPackages = Package::with(['sender', 'receiver'])
+                ->where('status', 'recibido')
+                ->where('created_at', '<', $now->copy()->subHours(48))
+                ->get();
+
+            // No Recogidas: Encomiendas listas para recojo hace más de 48h
+            $uncollectedPackages = Package::with(['sender', 'receiver', 'trip.route'])
+                ->where('status', 'listo_para_recojo')
+                ->where('updated_at', '<', $now->copy()->subHours(48))
+                ->get();
+
+            // Volumen / Peso últimos 7 días
+            $volumeChart = collect();
+            for ($i = 6; $i >= 0; $i--) {
+                $date = today()->subDays($i);
+                $weight = Package::whereDate('created_at', $date)->sum('weight');
+                $volumeChart->push([
+                    'date' => $date->format('d/m'),
+                    'weight' => (float) $weight,
+                ]);
+            }
+
             return Inertia::render('Dashboard', [
                 'operatorTotalPackages' => $operatorTotalPackages,
                 'operatorPendingPackages' => $operatorPendingPackages,
                 'operatorRecentPackages' => $operatorRecentPackages,
                 'operatorRanking' => $operatorRanking,
+                'stagnantPackages' => $stagnantPackages,
+                'uncollectedPackages' => $uncollectedPackages,
+                'volumeChart' => $volumeChart,
                 'statusConfig' => Trip::statusConfig(),
             ]);
         }

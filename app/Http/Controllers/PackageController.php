@@ -205,12 +205,34 @@ class PackageController extends Controller
     public function updateStatus(Request $request, Package $package)
     {
         $request->validate([
-            'status' => ['required', 'in:recibido,en_ruta,entregado'],
+            'status' => ['required', 'in:recibido,en_ruta,listo_para_recojo,entregado'],
         ]);
 
         $package->update(['status' => $request->status]);
 
         return back()->with('success', 'Estado actualizado correctamente.');
+    }
+
+    // Asignar encomienda a un viaje
+    public function assignTrip(Request $request, Package $package)
+    {
+        $request->validate([
+            'trip_id' => 'required|exists:trips,id'
+        ]);
+
+        $trip = Trip::findOrFail($request->trip_id);
+        
+        // El viaje no puede estar completado o cancelado
+        if (in_array($trip->status, ['completado', 'cancelado'])) {
+            return back()->with('error', 'El viaje seleccionado ya no está disponible para asignación.');
+        }
+
+        $package->update([
+            'trip_id' => $trip->id,
+            'status' => $trip->status === 'en_ruta' ? 'en_ruta' : 'recibido',
+        ]);
+
+        return back()->with('success', 'Encomienda asignada al viaje exitosamente.');
     }
 
     // Búsqueda por código de rastreo (para consulta pública o front)

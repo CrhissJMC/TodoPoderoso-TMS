@@ -3,6 +3,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PackageModal from './Partials/PackageModal';
 import DeleteConfirmModal from './Partials/DeleteConfirmModal';
+import AssignTripModal from './Partials/AssignTripModal';
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -100,6 +101,7 @@ export default function PackagesIndex({
     const [modalOpen, setModalOpen]   = useState(false);
     const [editPkg, setEdit]          = useState<PackageItem | null>(null);
     const [deleteTarget, setDelete]   = useState<PackageItem | null>(null);
+    const [assignTarget, setAssign]   = useState<PackageItem | null>(null);
 
     function applyFilters(overrides: Record<string, string> = {}) {
         router.get(route('packages.index'),
@@ -311,6 +313,12 @@ export default function PackagesIndex({
                                     <td className="px-4 py-3">
                                         {hasAdmin && (
                                             <div className="flex items-center justify-end gap-1">
+                                                {p.status === 'recibido' && (
+                                                    <button onClick={() => setAssign(p)} title="Asignar a viaje"
+                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg>
+                                                    </button>
+                                                )}
                                                 {p.status !== 'entregado' && (
                                                     <button onClick={() => openEdit(p)} title="Editar"
                                                         className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
@@ -353,6 +361,7 @@ export default function PackagesIndex({
                 packageTypes={packageTypes} paymentMethods={paymentMethods} paymentStatuses={paymentStatuses}
                 onClose={closeModal} />
             <DeleteConfirmModal pkg={deleteTarget} onClose={() => setDelete(null)} />
+            <AssignTripModal pkg={assignTarget} activeTrips={activeTrips} onClose={() => setAssign(null)} />
         </AuthenticatedLayout>
     );
 }

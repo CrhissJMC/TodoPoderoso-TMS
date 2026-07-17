@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useState } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, BarChart, Bar } from 'recharts';
 
 interface RecentTrip {
     id: number;
@@ -51,6 +51,9 @@ interface Props {
     operatorPendingPackages?: number;
     operatorRecentPackages?: any[];
     operatorRanking?: number;
+    stagnantPackages?: any[];
+    uncollectedPackages?: any[];
+    volumeChart?: any[];
     sellerTotalTickets?: number;
     sellerTodayTickets?: number;
     sellerRecentTickets?: any[];
@@ -89,7 +92,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgress = 0, passengersToday = 0, revenueToday = 0, occupancyRate = 0, revenueChart = [], packagesCountChart = [], topRoutes = [], recentTrips = [], pendingPackages = [], topTicketSellers = [], topPackageSellers = [], driverTrips = [], driverTotalTrips = 0, driverFrequentRoutes = [], driverUpcomingPackages = [], driverRanking = 0, operatorTotalPackages = 0, operatorPendingPackages = 0, operatorRecentPackages = [], operatorRanking = 0, sellerTotalTickets = 0, sellerTodayTickets = 0, sellerRecentTickets = [], sellerRanking = 0, agentTotalTickets = 0, agentTodayTickets = 0, agentRecentTickets = [], agentTotalPackages = 0, agentPendingPackages = 0, agentRecentPackages = [], agentRevenueToday = 0, clientError, clientKpis, clientActiveTrips = [], clientUpcomingPackages = [], clientRecentActivity = [], clientTripHistory = [], clientOtd = 0, clientTotalDelivered = 0, clientOnTimeDelivered = 0, clientRouteSummary = [], statusConfig, complianceAlerts = [], driverLicenseStats = [] }: Props) {
+export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgress = 0, passengersToday = 0, revenueToday = 0, occupancyRate = 0, revenueChart = [], packagesCountChart = [], topRoutes = [], recentTrips = [], pendingPackages = [], topTicketSellers = [], topPackageSellers = [], driverTrips = [], driverTotalTrips = 0, driverFrequentRoutes = [], driverUpcomingPackages = [], driverRanking = 0, operatorTotalPackages = 0, operatorPendingPackages = 0, operatorRecentPackages = [], operatorRanking = 0, stagnantPackages = [], uncollectedPackages = [], volumeChart = [], sellerTotalTickets = 0, sellerTodayTickets = 0, sellerRecentTickets = [], sellerRanking = 0, agentTotalTickets = 0, agentTodayTickets = 0, agentRecentTickets = [], agentTotalPackages = 0, agentPendingPackages = 0, agentRecentPackages = [], agentRevenueToday = 0, clientError, clientKpis, clientActiveTrips = [], clientUpcomingPackages = [], clientRecentActivity = [], clientTripHistory = [], clientOtd = 0, clientTotalDelivered = 0, clientOnTimeDelivered = 0, clientRouteSummary = [], statusConfig, complianceAlerts = [], driverLicenseStats = [] }: Props) {
     const { auth } = usePage().props as any;
     const [clientTab, setClientTab] = useState<'resumen' | 'historial' | 'notificaciones'>('resumen');
     const isAdmin = auth.role === 'administrador' || auth.user.role_id === 1;
@@ -248,6 +251,88 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                     <p className="text-sm font-medium text-orange-600">Pendientes de Envío</p>
                                     <p className="text-3xl font-bold text-orange-700 mt-1">{operatorPendingPackages}</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* --- Alertas Logísticas --- */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Alerta Estancadas */}
+                            {stagnantPackages && stagnantPackages.length > 0 && (
+                                <div className="bg-red-50 p-6 rounded-2xl shadow-sm border border-red-200">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold text-red-900">Alerta: Encomiendas Estancadas</h3>
+                                            <p className="text-sm text-red-700">Más de 48 horas sin despachar</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                                        {stagnantPackages.map(pkg => (
+                                            <div key={pkg.id} className="bg-white rounded-xl p-3 border border-red-100 shadow-sm flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-bold text-sm text-gray-900">{pkg.tracking_code}</p>
+                                                    <p className="text-xs text-gray-500">Recibido: {new Date(pkg.created_at).toLocaleDateString('es-PE')}</p>
+                                                </div>
+                                                <Link href={route('packages.index', { search: pkg.tracking_code })} className="text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100">Ver</Link>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Alerta No Recogidas */}
+                            {uncollectedPackages && uncollectedPackages.length > 0 && (
+                                <div className="bg-orange-50 p-6 rounded-2xl shadow-sm border border-orange-200">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold text-orange-900">Alerta: No Recogidas</h3>
+                                            <p className="text-sm text-orange-700">Más de 48 horas en destino sin ser recogidas</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                                        {uncollectedPackages.map(pkg => (
+                                            <div key={pkg.id} className="bg-white rounded-xl p-3 border border-orange-100 shadow-sm flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-bold text-sm text-gray-900">{pkg.tracking_code}</p>
+                                                    <p className="text-xs text-gray-500">Destino: {pkg.destination}</p>
+                                                </div>
+                                                <Link href={route('packages.index', { search: pkg.tracking_code })} className="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg hover:bg-orange-100">Ver</Link>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Gráfico de Volumen (Kilos) */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">Dashboard Logístico</h3>
+                            <p className="text-xs text-gray-500 mb-6">Volumen total movilizado (kg) en los últimos 7 días</p>
+                            <div className="h-72 w-full">
+                                {volumeChart && volumeChart.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={volumeChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} />
+                                            <CartesianGrid vertical={false} stroke="#E5E7EB" strokeDasharray="3 3" />
+                                            <Tooltip 
+                                                cursor={{ fill: '#F3F4F6' }}
+                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                                formatter={(value: any) => [`${value} kg`, 'Peso']}
+                                            />
+                                            <Bar dataKey="weight" fill="#4F46E5" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                                        No hay datos de volumen
+                                    </div>
+                                )}
                             </div>
                         </div>
 

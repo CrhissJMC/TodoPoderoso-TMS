@@ -49,7 +49,7 @@ class Package extends Model
 
     public static function statuses(): array
     {
-        return ['recibido', 'en_ruta', 'entregado'];
+        return ['recibido', 'en_ruta', 'listo_para_recojo', 'entregado'];
     }
 
     // Genera un código único: PKG-00001
