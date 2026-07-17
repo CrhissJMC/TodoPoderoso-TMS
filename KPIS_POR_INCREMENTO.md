@@ -90,3 +90,28 @@ Este Dashboard no es genérico, se alimentará de los datos del propio repositor
        D --> E{Estado Final: 🟢 Óptimo}
        style D fill:#22c55e,stroke:#166534,stroke-width:2px,color:#fff
    ```
+
+---
+
+## 3. Indicadores Complementarios (Negocio y DevOps)
+
+Para robustecer la vigilancia del proyecto, se agregan submétricas específicas tanto para la empresa de transportes como para el ciclo de vida del código (SDLC):
+
+### 3.1. Indicadores del Negocio (Logística y Pasajes)
+* **Tasa de Encomiendas Estancadas (Stuck Packages Rate):** 
+  * *Definición:* Porcentaje de paquetes que exceden el SLA (Acuerdo de Nivel de Servicio) de 48 horas sin ser asignados a un viaje en curso.
+  * *Fórmula:* `(Encomiendas > 48h en estado 'Recibido' / Total de Encomiendas Activas) * 100`.
+* **Rendimiento de Flota (Fleet Utilization):**
+  * *Definición:* Capacidad operativa real de los vehículos.
+  * *Fórmula:* `(Vehículos asignados a Trips hoy / Total de vehículos registrados) * 100`.
+* **Conversión de Ocupación por Viaje (Seat Occupancy Rate):**
+  * *Definición:* Rentabilidad del espacio por viaje.
+  * *Fórmula:* `(Asientos vendidos / Capacidad total del autobús) * 100`.
+
+### 3.2. Indicadores de Ingeniería (DevOps / GitHub)
+* **Frecuencia de Despliegue (Deployment Frequency):** 
+  * *Definición:* Medida de agilidad del equipo. Cuántos PRs (Pull Requests) o Sprints se integran a `main` y pasan el CD exitosamente por semana.
+* **Tiempo de Entrega de Cambios (Lead Time for Changes):** 
+  * *Definición:* Tiempo transcurrido desde que se hace el primer `commit` de una nueva funcionalidad hasta que GitHub Actions la valida (CI) y aprueba.
+* **Control de Deuda Técnica (Clean Code Rate):** 
+  * *Definición:* Porcentaje de archivos que cumplen al 100% el estándar PSR-12, medido automáticamente por *Laravel Pint* antes de cada fusión de código.
