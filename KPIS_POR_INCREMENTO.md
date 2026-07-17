@@ -101,17 +101,65 @@ Para robustecer la vigilancia del proyecto, se agregan submétricas específicas
 * **Tasa de Encomiendas Estancadas (Stuck Packages Rate):** 
   * *Definición:* Porcentaje de paquetes que exceden el SLA (Acuerdo de Nivel de Servicio) de 48 horas sin ser asignados a un viaje en curso.
   * *Fórmula:* `(Encomiendas > 48h en estado 'Recibido' / Total de Encomiendas Activas) * 100`.
+  
+  ```mermaid
+  pie title "Tasa de Encomiendas (Ejemplo Semanal)"
+      "Despachadas a Tiempo (<48h)" : 85
+      "Estancadas (>48h)" : 15
+  ```
+
 * **Rendimiento de Flota (Fleet Utilization):**
   * *Definición:* Capacidad operativa real de los vehículos.
   * *Fórmula:* `(Vehículos asignados a Trips hoy / Total de vehículos registrados) * 100`.
+
+  ```mermaid
+  pie title "Estado de la Flota"
+      "En Ruta (Generando Ingresos)" : 18
+      "Libres / En Mantenimiento" : 4
+  ```
+
 * **Conversión de Ocupación por Viaje (Seat Occupancy Rate):**
   * *Definición:* Rentabilidad del espacio por viaje.
   * *Fórmula:* `(Asientos vendidos / Capacidad total del autobús) * 100`.
 
+  ```mermaid
+  xychart-beta
+      title "Promedio de Ocupación de Asientos por Ruta"
+      x-axis ["Lima-Ica", "Lima-Piura", "Ica-Arequipa", "Piura-Tumbes"]
+      y-axis "Ocupación (%)" 0 --> 100
+      bar [90, 75, 60, 85]
+  ```
+
 ### 3.2. Indicadores de Ingeniería (DevOps / GitHub)
 * **Frecuencia de Despliegue (Deployment Frequency):** 
   * *Definición:* Medida de agilidad del equipo. Cuántos PRs (Pull Requests) o Sprints se integran a `main` y pasan el CD exitosamente por semana.
+
+  ```mermaid
+  gitGraph
+      commit id: "Sprint 1" tag: "v1.0"
+      commit id: "Fix Bug"
+      branch feature
+      commit id: "Matriz Tarifas"
+      checkout main
+      merge feature tag: "v1.1 (Auto-Deploy)"
+  ```
+
 * **Tiempo de Entrega de Cambios (Lead Time for Changes):** 
   * *Definición:* Tiempo transcurrido desde que se hace el primer `commit` de una nueva funcionalidad hasta que GitHub Actions la valida (CI) y aprueba.
+
+  ```mermaid
+  xychart-beta
+      title "Tiempo de Entrega (DevOps Lead Time)"
+      x-axis [Sprint 1, Sprint 2, Sprint 3, Sprint 4]
+      y-axis "Horas hasta Integración" 0 --> 48
+      line [42, 24, 18, 5]
+  ```
+
 * **Control de Deuda Técnica (Clean Code Rate):** 
   * *Definición:* Porcentaje de archivos que cumplen al 100% el estándar PSR-12, medido automáticamente por *Laravel Pint* antes de cada fusión de código.
+
+  ```mermaid
+  pie title "Deuda Técnica (Análisis Laravel Pint)"
+      "Archivos Limpios (PSR-12)" : 128
+      "Advertencias de Estilo" : 0
+  ```
