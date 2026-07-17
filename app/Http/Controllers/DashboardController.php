@@ -342,25 +342,30 @@ class DashboardController extends Controller
             // 11. Estadísticas de Licencias de Conductores
             $drivers = Driver::whereNull('deleted_at')->get(['id', 'license_expiry']);
             $vencida = 0;
-            $porVencer = 0; // <= 2 meses
-            $vigente = 0; // > 2 meses
+            $porVencer = 0; // <= 1 mes
+            $vigenteCorta = 0; // > 1 mes <= 2 meses
+            $vigenteOptima = 0; // > 2 meses
 
+            $oneMonthFromNow = Carbon::today()->addMonths(1);
             $twoMonthsFromNow = Carbon::today()->addMonths(2);
 
             foreach ($drivers as $d) {
                 if (! $d->license_expiry || $d->license_expiry->isPast()) {
                     $vencida++;
-                } elseif ($d->license_expiry <= $twoMonthsFromNow) {
+                } elseif ($d->license_expiry <= $oneMonthFromNow) {
                     $porVencer++;
+                } elseif ($d->license_expiry <= $twoMonthsFromNow) {
+                    $vigenteCorta++;
                 } else {
-                    $vigente++;
+                    $vigenteOptima++;
                 }
             }
 
             $driverLicenseStats = [
-                ['name' => 'Vigente (> 2 meses)', 'value' => $vigente, 'color' => '#10B981'],
-                ['name' => 'Por vencer (<= 2 meses)', 'value' => $porVencer, 'color' => '#EAB308'],
-                ['name' => 'Vencida', 'value' => $vencida, 'color' => '#EF4444'],
+                ['name' => 'Vigente Óptima (> 2 meses)', 'value' => $vigenteOptima, 'color' => '#3B82F6'], // Azul
+                ['name' => 'Vigente (1 - 2 meses)', 'value' => $vigenteCorta, 'color' => '#10B981'], // Verde
+                ['name' => 'Por vencer (<= 1 mes)', 'value' => $porVencer, 'color' => '#EAB308'], // Amarillo
+                ['name' => 'Vencida', 'value' => $vencida, 'color' => '#EF4444'], // Rojo
             ];
 
             return Inertia::render('Dashboard', [
