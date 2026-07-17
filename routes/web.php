@@ -142,6 +142,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('packages/{package}/assign-trip', [PackageController::class, 'assignTrip'])->name('packages.assignTrip');
     });
 
+    // Módulo de Comprobantes
+    Route::get('receipts/ticket/{ticket}/voucher', [\App\Http\Controllers\ReceiptController::class, 'ticketVoucher'])->name('receipts.ticket.voucher');
+    Route::get('receipts/ticket/{ticket}/boleta', [\App\Http\Controllers\ReceiptController::class, 'ticketBoleta'])->name('receipts.ticket.boleta');
+    Route::get('receipts/ticket/{ticket}/factura', [\App\Http\Controllers\ReceiptController::class, 'ticketFactura'])->name('receipts.ticket.factura');
+    
+    Route::get('receipts/package/{package}/voucher', [\App\Http\Controllers\ReceiptController::class, 'packageVoucher'])->name('receipts.package.voucher');
+    Route::get('receipts/package/{package}/boleta', [\App\Http\Controllers\ReceiptController::class, 'packageBoleta'])->name('receipts.package.boleta');
+    Route::get('receipts/package/{package}/factura', [\App\Http\Controllers\ReceiptController::class, 'packageFactura'])->name('receipts.package.factura');
+
     // ── MÓDULO DE EMPRESA (Solo Administrador) ──
     Route::middleware('role:administrador')->group(function () {
         Route::get('admin/empresa', [CompanyController::class, 'edit'])->name('admin.company.edit');
