@@ -163,3 +163,13 @@ Para robustecer la vigilancia del proyecto, se agregan submétricas específicas
       "Archivos Limpios (PSR-12)" : 128
       "Advertencias de Estilo" : 0
   ```
+
+* **Tasa de Cumplimiento de Requerimientos (Requirements Completion Rate):** 
+  * *Definición:* Medida del avance real del proyecto frente al alcance planificado. Evalúa cuántas historias de usuario o requerimientos funcionales fueron programados y entregados con éxito en cada Sprint.
+  * *Fórmula:* `(Requerimientos Aprobados / Requerimientos Planificados del Sprint) * 100`.
+
+  ```mermaid
+  pie title "Cumplimiento de Requerimientos (Sprint 2)"
+      "Completados y Aprobados" : 24
+      "En Progreso / Backlog" : 2
+  ```
