@@ -31,8 +31,10 @@ El proyecto está desarrollado bajo una arquitectura SPA (Single Page Applicatio
   Selección visual de asientos mediante un mapa interactivo del vehículo (basado en la capacidad física real del bus/van), registro del pasajero y emisión de comprobantes.
 * **Gestión de Encomiendas**: 
   Envío de paquetes por peso, tamaño (Sobre, Cajas pequeñas/medianas/grandes), recargo automático de peso, estado de pago, asignación a un viaje, y generación automática de seguimiento (Tracking Code).
-* **Dashboards Estadísticos**:
-  Indicadores clave de rendimiento (KPIs), gráficas de tendencias de ventas, ingresos, volumen de carga, e informes de "Top Operadores" y "Rutas Frecuentes".
+* **Vigilancia de Calidad y Valor Social (KPIs Estratégicos)**:
+  Implementación formal de un marco de medición que integra indicadores operativos (Tasa de Encomiendas Estancadas, Rendimiento de Flota, Nivel de Ocupación) y métricas de ingeniería continua (Frecuencia de Despliegue, Deuda Técnica, y Tasa de Cumplimiento de Requerimientos), respaldado por tableros visuales dinámicos.
+* **Dashboards Estadísticos Operativos**:
+  Indicadores en tiempo real, gráficas de tendencias de ventas, ingresos, volumen de carga, e informes de "Top Operadores" y "Rutas Frecuentes" integrados al flujo diario de trabajo.
 * **Alertas Inteligentes**:
   Notificación en tiempo real para encomiendas estancadas (más de 48h sin viaje asignado) y validación de licencias de conducir vencidas.
 
