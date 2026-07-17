@@ -50,8 +50,26 @@ Este Dashboard no es genérico, se alimentará de los datos del propio repositor
 2. **Indicadores Visuales por Eje (Gráficos Numéricos):**
    * Paneles que extraen en tiempo real la salud del sistema: % de Tests de PHPUnit superados (Automatización), % de Rutas Protegidas por Middleware (Seguridad) y Score de Rendimiento de Vite (Accesibilidad).
 
+   *(Ejemplo de visualización de Seguridad/RBAC en el Dashboard)*
+   ```mermaid
+   pie title "Cumplimiento Ético y Seguridad (Sprint Actual)"
+       "Accesos Autorizados (RBAC Exitoso)" : 92
+       "Bloqueos Preventivos (No-Admin)" : 8
+       "Vulnerabilidades/Errores 500" : 0
+   ```
+
 3. **Comparación Histórica (Evolución Temporal):**
    * Un *Line Chart* (Gráfico de Líneas) que compare el desempeño de los operarios de sucursal frente a entregas de código pasadas. Demostrando si la actualización del `Dashboard.tsx` redujo el tiempo de procesamiento de cajas estancadas.
+
+   *(Ejemplo del gráfico dinámico de progreso histórico)*
+   ```mermaid
+   xychart-beta
+       title "Evolución del Score Global de Calidad (Sprints 1 al 4)"
+       x-axis [Sprint 1, Sprint 2, Sprint 3, Sprint 4]
+       y-axis "Score (%)" 50 --> 100
+       line [62, 75, 88, 96]
+       bar [62, 75, 88, 96]
+   ```
 
 4. **Sistema de Semaforización (Estado de Metas Reales):**
    * 🟢 **Verde:** Pruebas CI pasando al 100%, Matriz de Precios bloqueada solo para Admin.
@@ -63,3 +81,12 @@ Este Dashboard no es genérico, se alimentará de los datos del propio repositor
 
 6. **Indicador Compuesto Global:**
    * Promedio final derivado de la suma de Calidad de Código (GitHub Actions), Seguridad del RBAC (Backend) y Fluidez de Navegación (Frontend React).
+
+   ```mermaid
+   flowchart LR
+       A[Automatización CI/CD] -->|33%| D(Score Global)
+       B[Seguridad RBAC] -->|33%| D(Score Global)
+       C[Accesibilidad React] -->|33%| D(Score Global)
+       D --> E{Estado Final: 🟢 Óptimo}
+       style D fill:#22c55e,stroke:#166534,stroke-width:2px,color:#fff
+   ```
