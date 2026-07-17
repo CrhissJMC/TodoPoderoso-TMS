@@ -28,6 +28,7 @@ class CompanyController extends Controller
             'primary_color' => 'required|string|max:20',
             'bg_color' => 'required|string|max:20',
             'accent_color' => 'required|string|max:20',
+            'website_url' => 'nullable|url|max:255',
         ]);
 
         $company = Company::first();
@@ -36,7 +37,7 @@ class CompanyController extends Controller
         }
 
         $company->fill($request->only([
-            'name', 'primary_color', 'bg_color', 'accent_color',
+            'name', 'primary_color', 'bg_color', 'accent_color', 'website_url',
         ]));
         $company->save();
 

@@ -15,5 +15,6 @@ class Company extends Model
         'bg_color',
         'accent_color',
         'logo_path',
+        'website_url',
     ];
 }

@@ -206,8 +206,8 @@ export default function Welcome({ canLogin, activeRoutes }: Props) {
                                                             <p className={`font-bold text-sm ${isCurrent ? 'text-theme-primary' : (isCompleted ? 'text-gray-900' : 'text-gray-400')}`}>
                                                                 {STATUS_LABELS[stage]}
                                                             </p>
-                                                            {stage === 'recibido' && <p className="text-xs text-gray-500 mt-1">{result.package.origin}</p>}
-                                                            {stage === 'listo_para_recojo' && <p className="text-xs text-gray-500 mt-1">{result.package.destination}</p>}
+                                                            {stage === 'recibido' && <p className="text-xs text-gray-500 mt-1">{result.package?.origin}</p>}
+                                                            {stage === 'listo_para_recojo' && <p className="text-xs text-gray-500 mt-1">{result.package?.destination}</p>}
                                                         </div>
                                                     </div>
                                                 );
@@ -356,7 +356,7 @@ export default function Welcome({ canLogin, activeRoutes }: Props) {
                                 <div className="h-[400px] lg:h-[500px] rounded-3xl overflow-hidden shadow-2xl border-4 border-gray-100">
                                     {/* Google Maps Embed using Bagua coordinates */}
                                     <iframe 
-                                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3968.32454659354!2d-78.5342795!3d-5.6329241!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOcKwMzcnNTguNSJTIDc4wrAzMiczLjQiVw!5e0!3m2!1sen!2spe!4v1680000000000!5m2!1sen!2spe" 
+                                        src="https://maps.google.com/maps?q=Av%20H%C3%A9roes%20del%20Cenepa%2001721,%20Bagua,%20Amazonas&t=&z=16&ie=UTF8&iwloc=&output=embed" 
                                         width="100%" 
                                         height="100%" 
                                         style={{ border: 0 }} 

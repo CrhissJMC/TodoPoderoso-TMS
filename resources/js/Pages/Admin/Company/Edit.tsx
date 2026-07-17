@@ -9,6 +9,7 @@ interface Props {
         primary_color: string;
         bg_color: string;
         accent_color: string;
+        website_url: string;
     };
     routes: any[];
 }
@@ -21,6 +22,7 @@ export default function CompanyEdit({ companySettings, routes }: Props) {
         primary_color: companySettings?.primary_color || '#4F46E5',
         bg_color: companySettings?.bg_color || '#F9FAFB',
         accent_color: companySettings?.accent_color || '#8B5CF6',
+        website_url: companySettings?.website_url || '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -84,6 +86,19 @@ export default function CompanyEdit({ companySettings, routes }: Props) {
                                         required
                                     />
                                     {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Página Web (URL)</label>
+                                    <input 
+                                        type="url" 
+                                        value={data.website_url} 
+                                        onChange={e => setData('website_url', e.target.value)}
+                                        placeholder="https://www.misitio.com"
+                                        className="w-full rounded-xl border-gray-300 focus:ring-theme-primary focus:border-theme-primary transition-colors text-sm"
+                                    />
+                                    {errors.website_url && <p className="text-red-500 text-xs mt-1">{errors.website_url}</p>}
+                                    <p className="text-xs text-gray-500 mt-1">Se imprimirá en los bouchers para que los clientes puedan rastrear sus envíos.</p>
                                 </div>
 
                                 <div className="space-y-4">

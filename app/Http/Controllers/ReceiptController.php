@@ -82,10 +82,12 @@ class ReceiptController extends Controller
     public function packageVoucher(Package $package)
     {
         $package->load(['sender', 'receiver', 'trip.route', 'receivedBy']);
+        $company = \App\Models\Company::first();
 
         $data = [
             'package' => $package,
             'title' => 'Voucher - '.$package->tracking_code,
+            'company' => $company,
         ];
 
         $pdf = Pdf::loadView('receipts.package_voucher', $data)
