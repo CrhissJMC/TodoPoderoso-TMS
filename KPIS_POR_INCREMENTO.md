@@ -1,0 +1,175 @@
+# Diseño del Dashboard de Vigilancia de Calidad y Valor Social (Adaptado al Sistema Todo Poderoso)
+
+Este documento aterriza la vigilancia de calidad directamente sobre la realidad del código, la arquitectura RBAC (Roles) y los flujos de trabajo (CI/CD) construidos en el repositorio del proyecto "Todo Poderoso TMS".
+
+---
+
+## 1. Definición Operacional, Fórmulas y Justificación por Ejes
+
+La evaluación de cada incremento (sprint) se ancla a los componentes reales programados en el sistema y al progreso del propio repositorio en GitHub.
+
+### Eje 1: Automatización (Operativa y de Repositorio)
+* **Definición Operacional:** Evalúa tanto la automatización del negocio (auto-cálculo de fletes en los Dashboards) como la automatización del desarrollo continuo en el repositorio (CI/CD).
+* **Criterios y Fórmulas de Cálculo:**
+  1. *Automatización Logística (Dashboard de Operador):* `(Cotizaciones Automáticas de Encomiendas calculadas por React / Total de Encomiendas Registradas) * 100`.
+  2. *Automatización del Código (Repositorio):* `(Ejecuciones exitosas de GitHub Actions / Total de Pushes en la rama Main) * 100`.
+* **Herramientas Seleccionadas:** 
+  - Lógica frontend en `PackageModal.tsx` que lee la matriz de `route_prices`.
+  - **GitHub Actions (`ci.yml` y `cd-docs.yml`)**.
+* **Justificación:** La automatización no solo debe aliviar al Operador en la sucursal (evitando el uso de calculadoras físicas), sino que también debe proteger a los desarrolladores asegurando que el código pasa las pruebas (`php artisan test`) automáticamente antes de cada integración.
+
+### Eje 2: Cumplimiento Ético y Seguridad (RBAC y Fiabilidad)
+* **Definición Operacional:** Mide el blindaje de la información confidencial según el Rol del usuario y la garantía de código libre de vulnerabilidades.
+* **Criterios y Fórmulas de Cálculo:**
+  1. *Filtro de Privilegios (Dashboard de Administrador):* `(Intentos de modificación de Tarifas o Colores por Roles No-Admin bloqueados / Total de peticiones a CompanyController) * 100`.
+  2. *Estándar de Código (Repositorio):* `100 - (Número de fallos de estilo detectados por Laravel Pint en el PR)`.
+* **Herramientas Seleccionadas:** 
+  - Middlewares de Laravel y validadores (`PackageRequest.php`).
+  - Linter automático (`Laravel Pint`) configurado en el flujo de Integración Continua.
+* **Justificación:** El Administrador es el único con la autoridad ética y legal para alterar precios. Garantizar esto a nivel de código (y auditarlo mediante GitHub) asegura el cumplimiento de las normativas de la empresa de transportes y previene fraudes.
+
+### Eje 3: Accesibilidad Social (Usabilidad Diferenciada por Rol)
+* **Definición Operacional:** Mide cómo el sistema se adapta a las capacidades digitales de cada empleado, ofreciendo una experiencia sin fricciones según su labor específica (Ventas vs. Gerencia).
+* **Criterios y Fórmulas de Cálculo:**
+  1. *Nivel de Usabilidad (Dashboard por Rol):* Diferencia en la velocidad de respuesta del sistema al usar una arquitectura SPA: `((Tiempo de Carga de Múltiples Páginas PHP) - (Tiempo de Navegación con Inertia.js)) / Tiempo Base * 100`.
+* **Herramientas Seleccionadas:** 
+  - **React e Inertia.js** combinados con **TailwindCSS v4**.
+* **Justificación:** Un Operador necesita un Dashboard rápido para vender tickets y despachar encomiendas con el cliente en la ventanilla, mientras que un Administrador requiere gráficos analíticos profundos. La arquitectura SPA de Inertia elimina los tiempos de recarga web (pantallas en blanco), reduciendo la frustración y haciendo el sistema altamente accesible para todos los estratos laborales.
+
+---
+
+## 2. Componentes del Dashboard de Vigilancia de Calidad (Integración con el Proyecto)
+
+Este Dashboard no es genérico, se alimentará de los datos del propio repositorio y de la base de datos de PostgreSQL del proyecto:
+
+1. **Panel de Identificación:**
+   * **Proyecto:** Todo Poderoso TMS.
+   * **Sprint Evaluado:** Ej. Implementación de Dashboards Analíticos y Matriz de Tarifas.
+   * **Estado del Repositorio:** Último commit aprobado y status del workflow de GitHub Actions (Badge de CI).
+
+2. **Indicadores Visuales por Eje (Gráficos Numéricos):**
+   * Paneles que extraen en tiempo real la salud del sistema: % de Tests de PHPUnit superados (Automatización), % de Rutas Protegidas por Middleware (Seguridad) y Score de Rendimiento de Vite (Accesibilidad).
+
+   *(Ejemplo de visualización de Seguridad/RBAC en el Dashboard)*
+   ```mermaid
+   pie title "Cumplimiento Ético y Seguridad (Sprint Actual)"
+       "Accesos Autorizados (RBAC Exitoso)" : 92
+       "Bloqueos Preventivos (No-Admin)" : 8
+       "Vulnerabilidades/Errores 500" : 0
+   ```
+
+3. **Comparación Histórica (Evolución Temporal):**
+   * Un *Line Chart* (Gráfico de Líneas) que compare el desempeño de los operarios de sucursal frente a entregas de código pasadas. Demostrando si la actualización del `Dashboard.tsx` redujo el tiempo de procesamiento de cajas estancadas.
+
+   *(Ejemplo del gráfico dinámico de progreso histórico)*
+   ```mermaid
+   xychart-beta
+       title "Evolución del Score Global de Calidad (Sprints 1 y 2)"
+       x-axis [Sprint 1, Sprint 2]
+       y-axis "Score (%)" 50 --> 100
+       line [62, 88]
+       bar [62, 88]
+   ```
+
+4. **Sistema de Semaforización (Estado de Metas Reales):**
+   * 🟢 **Verde:** Pruebas CI pasando al 100%, Matriz de Precios bloqueada solo para Admin.
+   * 🟡 **Amarillo:** Warnings en la compilación de TypeScript o dependencias de Node.
+   * 🔴 **Rojo:** Errores 500 en producción (Ej: Vite manifest not found, como el detectado y corregido en el último PR).
+
+5. **Sección de Observaciones y Alertas (Post-Mortem):**
+   * Panel donde los desarrolladores registrarán desviaciones reales ocurridas en la entrega. *Ejemplo:* Documentación del incidente de CI por falta de Node.js en el runner de GitHub, y la acción correctiva aplicada al `ci.yml`.
+
+6. **Indicador Compuesto Global:**
+   * Promedio final derivado de la suma de Calidad de Código (GitHub Actions), Seguridad del RBAC (Backend) y Fluidez de Navegación (Frontend React).
+
+   ```mermaid
+   flowchart LR
+       A[Automatización CI/CD] -->|33%| D(Score Global)
+       B[Seguridad RBAC] -->|33%| D(Score Global)
+       C[Accesibilidad React] -->|33%| D(Score Global)
+       D --> E{Estado Final: 🟢 Óptimo}
+       style D fill:#22c55e,stroke:#166534,stroke-width:2px,color:#fff
+   ```
+
+---
+
+## 3. Indicadores Complementarios (Negocio y DevOps)
+
+Para robustecer la vigilancia del proyecto, se agregan submétricas específicas tanto para la empresa de transportes como para el ciclo de vida del código (SDLC):
+
+### 3.1. Indicadores del Negocio (Logística y Pasajes)
+* **Tasa de Encomiendas Estancadas (Stuck Packages Rate):** 
+  * *Definición:* Porcentaje de paquetes que exceden el SLA (Acuerdo de Nivel de Servicio) de 48 horas sin ser asignados a un viaje en curso.
+  * *Fórmula:* `(Encomiendas > 48h en estado 'Recibido' / Total de Encomiendas Activas) * 100`.
+  
+  ```mermaid
+  pie title "Tasa de Encomiendas (Ejemplo Semanal)"
+      "Despachadas a Tiempo (<48h)" : 85
+      "Estancadas (>48h)" : 15
+  ```
+
+* **Rendimiento de Flota (Fleet Utilization):**
+  * *Definición:* Capacidad operativa real de los vehículos.
+  * *Fórmula:* `(Vehículos asignados a Trips hoy / Total de vehículos registrados) * 100`.
+
+  ```mermaid
+  pie title "Estado de la Flota"
+      "En Ruta (Generando Ingresos)" : 18
+      "Libres / En Mantenimiento" : 4
+  ```
+
+* **Conversión de Ocupación por Viaje (Seat Occupancy Rate):**
+  * *Definición:* Rentabilidad del espacio por viaje.
+  * *Fórmula:* `(Asientos vendidos / Capacidad total del autobús) * 100`.
+
+  ```mermaid
+  xychart-beta
+      title "Promedio de Ocupación de Asientos por Ruta"
+      x-axis ["Lima-Ica", "Lima-Piura", "Ica-Arequipa", "Piura-Tumbes"]
+      y-axis "Ocupación (%)" 0 --> 100
+      bar [90, 75, 60, 85]
+  ```
+
+### 3.2. Indicadores de Ingeniería (DevOps / GitHub)
+* **Frecuencia de Despliegue (Deployment Frequency):** 
+  * *Definición:* Medida de agilidad del equipo. Cuántos PRs (Pull Requests) o Sprints se integran a `main` y pasan el CD exitosamente por semana.
+
+  ```mermaid
+  gitGraph
+      commit id: "Sprint 1" tag: "v1.0"
+      commit id: "Fix Bug"
+      branch feature
+      commit id: "Matriz Tarifas"
+      checkout main
+      merge feature tag: "v1.1 (Auto-Deploy)"
+  ```
+
+* **Tiempo de Entrega de Cambios (Lead Time for Changes):** 
+  * *Definición:* Tiempo transcurrido desde que se hace el primer `commit` de una nueva funcionalidad hasta que GitHub Actions la valida (CI) y aprueba.
+
+  ```mermaid
+  xychart-beta
+      title "Tiempo de Entrega (DevOps Lead Time)"
+      x-axis [Sprint 1, Sprint 2]
+      y-axis "Horas hasta Integración" 0 --> 48
+      line [42, 24]
+  ```
+
+* **Control de Deuda Técnica (Clean Code Rate):** 
+  * *Definición:* Porcentaje de archivos que cumplen al 100% el estándar PSR-12, medido automáticamente por *Laravel Pint* antes de cada fusión de código.
+
+  ```mermaid
+  pie title "Deuda Técnica (Análisis Laravel Pint)"
+      "Archivos Limpios (PSR-12)" : 128
+      "Advertencias de Estilo" : 0
+  ```
+
+* **Tasa de Cumplimiento de Requerimientos (Requirements Completion Rate):** 
+  * *Definición:* Medida del avance real del proyecto frente al alcance planificado. Evalúa cuántas historias de usuario o requerimientos funcionales fueron programados y entregados con éxito en cada Sprint.
+  * *Fórmula:* `(Requerimientos Aprobados / Requerimientos Planificados del Sprint) * 100`.
+
+  ```mermaid
+  pie title "Cumplimiento de Requerimientos (Sprint 2)"
+      "Completados y Aprobados" : 24
+      "En Progreso / Backlog" : 2
+  ```
