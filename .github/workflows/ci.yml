@@ -71,6 +71,18 @@ jobs:
       - name: Verificar estilo de código (Laravel Pint)
         run: ./vendor/bin/pint --test
 
+      - name: Configurar Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependencias NPM
+        run: npm ci
+
+      - name: Build de Vite (necesario para pruebas de Inertia)
+        run: npm run build
+
       - name: Ejecutar test suite
         run: php artisan test
 
