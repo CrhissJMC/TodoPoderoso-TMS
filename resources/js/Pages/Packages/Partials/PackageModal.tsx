@@ -42,10 +42,9 @@ const inputCls = (error?: string) =>
 
 export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, paymentMethods, paymentStatuses, locations, onClose }: Props) {
     const isEditing = !!pkg;
-    const [showBoxFields, setShowBoxFields] = useState(false);
-
     const [senderLookup, setSenderLookup] = useState<'idle' | 'searching' | 'found' | 'new'>('idle');
     const [receiverLookup, setReceiverLookup] = useState<'idle' | 'searching' | 'found' | 'new'>('idle');
+    const [showDimensions, setShowDimensions] = useState(false);
 
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
         sender_id:              '',
@@ -111,11 +110,30 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
         }
     }, [isOpen, pkg]);
 
+    useEffect(() => {
+        if (!hasAdmin && !pkg) { // Solo autocalcular si no es admin y es nueva encomienda (no edición)
+            let base = 0;
+            switch (data.package_type) {
+                case 'sobre_manila': base = 5; break;
+                case 'caja_pequena': base = 10; break;
+                case 'caja_mediana': base = 15; break;
+                case 'caja_grande': base = 20; break;
+            }
+            if (data.weight && data.package_type !== 'sobre_manila') {
+                 const w = parseFloat(data.weight);
+                 if (w > 0) base += w * 0.50; // Ejemplo: 0.50 soles por kg adicional
+            }
+            if (base > 0) {
+                setData('price', base.toFixed(2));
+            }
+        }
+    }, [data.package_type, data.weight, hasAdmin, pkg]);
+
     function handleTypeChange(type: string) {
         setData('package_type', type);
-        setShowBoxFields(type === 'caja');
+        setShowDimensions(type.includes('caja'));
         if (type === 'sobre_manila') {
-            setData(d => ({ ...d, package_type: type, weight: '', dimensions: '' }));
+            setData(d => ({ ...d, package_type: type, dimensions: '' }));
         } else {
             setData('package_type', type);
         }
@@ -205,7 +223,7 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                             {isEditing ? 'Modifica los datos del paquete.' : 'Registra un paquete y asígnalo a un viaje.'}
                         </p>
                     </div>
-                    <button onClick={handleClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                    <button type="button" onClick={handleClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
@@ -331,18 +349,18 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                         </div>
 
                         {/* Campos extra si es caja */}
-                        {showBoxFields && (
-                            <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                <Field label="Peso (kg)" error={errors.weight}>
-                                    <input type="number" value={data.weight} onChange={e => setData('weight', e.target.value)}
-                                        placeholder="2.5" min="0.01" step="0.01" className={inputCls(errors.weight)} />
-                                </Field>
+                        <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 mt-3">
+                            <Field label="Peso (kg)" error={errors.weight}>
+                                <input type="number" value={data.weight} onChange={e => setData('weight', e.target.value)}
+                                    placeholder="0.5" min="0.01" step="0.01" className={inputCls(errors.weight)} />
+                            </Field>
+                            {showDimensions && (
                                 <Field label="Dimensiones" error={errors.dimensions}>
                                     <input value={data.dimensions} onChange={e => setData('dimensions', e.target.value)}
                                         placeholder="20x30x15 cm" className={inputCls(errors.dimensions)} />
                                 </Field>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
                         {/* Ruta */}
                         <div className="border-t border-gray-100 pt-4 mt-2">
@@ -391,7 +409,9 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                         <div className="grid grid-cols-3 gap-3">
                             <Field label="Precio (S/)" required error={errors.price}>
                                 <input type="number" value={data.price} onChange={e => setData('price', e.target.value)}
-                                    placeholder="10.00" min="0" step="0.50" className={inputCls(errors.price)} />
+                                    disabled={!hasAdmin}
+                                    title={!hasAdmin ? "Solo el administrador puede editar el precio manualmente" : ""}
+                                    placeholder="10.00" min="0" step="0.50" className={inputCls(errors.price) + (!hasAdmin ? " bg-gray-100 cursor-not-allowed" : "")} />
                             </Field>
                             <Field label="Método de pago" required error={errors.payment_method}>
                                 <select value={data.payment_method} onChange={e => setData('payment_method', e.target.value)}
