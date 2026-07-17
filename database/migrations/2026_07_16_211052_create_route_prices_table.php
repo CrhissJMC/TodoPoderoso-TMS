@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('pkg_fare_caja_mediana', 10, 2)->nullable();
             $table->decimal('pkg_fare_caja_grande', 10, 2)->nullable();
             $table->timestamps();
-            
+
             // Uniquely identify a tramo per route
             $table->unique(['route_id', 'origin_name', 'destination_name'], 'route_prices_unique_tramo');
         });

@@ -429,7 +429,7 @@ class DashboardController extends Controller
 
             // --- Nuevas Métricas Logísticas ---
             $now = now();
-            
+
             // Estancadas: Encomiendas recibidas hace más de 48h y sin despachar
             $stagnantPackages = Package::with(['sender', 'receiver'])
                 ->where('status', 'recibido')

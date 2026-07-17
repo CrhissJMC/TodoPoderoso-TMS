@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -36,7 +37,7 @@ class HandleInertiaRequests extends Middleware
             $user->load(['role', 'driver']);
         }
 
-        $company = \App\Models\Company::first();
+        $company = Company::first();
 
         return [
             ...parent::share($request),

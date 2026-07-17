@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\PackageRequest;
 use App\Models\Client;
 use App\Models\Package;
+use App\Models\Route;
+use App\Models\RoutePrice;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -72,7 +74,7 @@ class PackageController extends Controller
                     ->merge([$t->route->destination])
                     ->values()
                     ->all();
-                
+
                 return [
                     'id' => $t->id,
                     'label' => $t->route->name.' — '.$t->trip_date->format('d/m/Y'),
@@ -83,11 +85,11 @@ class PackageController extends Controller
                 ];
             });
 
-        $locations = \App\Models\Route::where('active', true)->with('stops')->get()->flatMap(function ($r) {
+        $locations = Route::where('active', true)->with('stops')->get()->flatMap(function ($r) {
             return collect([$r->origin])->merge($r->stops->pluck('stop_name'))->merge([$r->destination]);
         })->unique()->sort()->values()->all();
 
-        $routePrices = \App\Models\RoutePrice::all();
+        $routePrices = RoutePrice::all();
 
         return Inertia::render('Packages/Index', [
             'packages' => $packages,
@@ -234,11 +236,11 @@ class PackageController extends Controller
     public function assignTrip(Request $request, Package $package)
     {
         $request->validate([
-            'trip_id' => 'required|exists:trips,id'
+            'trip_id' => 'required|exists:trips,id',
         ]);
 
         $trip = Trip::with('route.stops')->findOrFail($request->trip_id);
-        
+
         // El viaje no puede estar completado o cancelado
         if (in_array($trip->status, ['completado', 'cancelado'])) {
             return back()->with('error', 'El viaje seleccionado ya no está disponible para asignación.');
@@ -250,7 +252,7 @@ class PackageController extends Controller
             ->merge([$trip->route->destination])
             ->values()
             ->all();
-        
+
         $originIndex = array_search($package->origin, $locations);
         $destinationIndex = array_search($package->destination, $locations);
 

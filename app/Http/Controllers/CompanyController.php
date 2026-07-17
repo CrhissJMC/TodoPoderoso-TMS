@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\Route;
+use App\Models\RoutePrice;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -10,8 +12,8 @@ class CompanyController extends Controller
 {
     public function edit()
     {
-        $company = Company::first() ?? new Company();
-        $routes = \App\Models\Route::with(['stops', 'prices'])->get();
+        $company = Company::first() ?? new Company;
+        $routes = Route::with(['stops', 'prices'])->get();
 
         return Inertia::render('Admin/Company/Edit', [
             'companySettings' => $company,
@@ -29,12 +31,12 @@ class CompanyController extends Controller
         ]);
 
         $company = Company::first();
-        if (!$company) {
-            $company = new Company();
+        if (! $company) {
+            $company = new Company;
         }
 
         $company->fill($request->only([
-            'name', 'primary_color', 'bg_color', 'accent_color'
+            'name', 'primary_color', 'bg_color', 'accent_color',
         ]));
         $company->save();
 
@@ -56,7 +58,7 @@ class CompanyController extends Controller
         ]);
 
         foreach ($request->prices as $priceData) {
-            \App\Models\RoutePrice::updateOrCreate(
+            RoutePrice::updateOrCreate(
                 [
                     'route_id' => $priceData['route_id'],
                     'origin_name' => $priceData['origin_name'],

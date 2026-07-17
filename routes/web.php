@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverLicenseController;
@@ -13,9 +14,7 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
-use App\Http\Controllers\CompanyController;
 use Illuminate\Support\Facades\Route;
-
 use Inertia\Inertia;
 
 // Página de Bienvenida y Rastreo Público

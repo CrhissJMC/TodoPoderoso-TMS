@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Package;
+use App\Models\Trip;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -64,20 +65,20 @@ class PackageRequest extends FormRequest
         $validator->after(function ($validator) {
             $type = $this->input('package_type');
             $weight = $this->input('weight');
-            
+
             if ($type === 'sobre_manila' && $weight > 1) {
                 $validator->errors()->add('weight', 'Un sobre de manila no puede pesar más de 1 kg.');
             }
 
             if ($this->trip_id) {
-                $trip = \App\Models\Trip::with('route.stops')->find($this->trip_id);
+                $trip = Trip::with('route.stops')->find($this->trip_id);
                 if ($trip) {
                     $locations = collect([$trip->route->origin])
                         ->merge($trip->route->stops->pluck('stop_name'))
                         ->merge([$trip->route->destination])
                         ->values()
                         ->all();
-                    
+
                     $originIndex = array_search($this->origin, $locations);
                     $destinationIndex = array_search($this->destination, $locations);
 
