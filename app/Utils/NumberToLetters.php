@@ -25,7 +25,7 @@ class NumberToLetters
         'DIECISIETE ',
         'DIECIOCHO ',
         'DIECINUEVE ',
-        'VEINTE '
+        'VEINTE ',
     ];
 
     private static $DECENAS = [
@@ -37,7 +37,7 @@ class NumberToLetters
         'SETENTA ',
         'OCHENTA ',
         'NOVENTA ',
-        'CIEN '
+        'CIEN ',
     ];
 
     private static $CENTENAS = [
@@ -49,15 +49,15 @@ class NumberToLetters
         'SEISCIENTOS ',
         'SETECIENTOS ',
         'OCHOCIENTOS ',
-        'NOVECIENTOS '
+        'NOVECIENTOS ',
     ];
 
     public static function convert($number, $currency = 'SOLES', $centsFormat = 'CON')
     {
-        $numberStr = (string)$number;
+        $numberStr = (string) $number;
         $parts = explode('.', $numberStr);
 
-        $wholeNumber = (int)$parts[0];
+        $wholeNumber = (int) $parts[0];
         $cents = isset($parts[1]) ? str_pad(substr($parts[1], 0, 2), 2, '0', STR_PAD_RIGHT) : '00';
 
         if ($wholeNumber == 0) {
@@ -66,7 +66,7 @@ class NumberToLetters
             $words = self::convertNumber($wholeNumber);
         }
 
-        return 'SON: ' . trim($words) . ' ' . $centsFormat . ' ' . $cents . '/100 ' . strtoupper($currency);
+        return 'SON: '.trim($words).' '.$centsFormat.' '.$cents.'/100 '.strtoupper($currency);
     }
 
     private static function convertNumber($number)
@@ -77,7 +77,7 @@ class NumberToLetters
             return 'No es posible convertir el numero a letras';
         }
 
-        $numberStr = (string)$number;
+        $numberStr = (string) $number;
         $numberStr = str_pad($numberStr, 9, '0', STR_PAD_LEFT);
 
         $millones = substr($numberStr, 0, 3);
@@ -87,7 +87,7 @@ class NumberToLetters
         if (intval($millones) > 0) {
             if ($millones == '001') {
                 $converted .= 'UN MILLON ';
-            } else if (intval($millones) > 0) {
+            } elseif (intval($millones) > 0) {
                 $converted .= sprintf('%sMILLONES ', self::convertGroup($millones));
             }
         }
@@ -95,7 +95,7 @@ class NumberToLetters
         if (intval($miles) > 0) {
             if ($miles == '001') {
                 $converted .= 'MIL ';
-            } else if (intval($miles) > 0) {
+            } elseif (intval($miles) > 0) {
                 $converted .= sprintf('%sMIL ', self::convertGroup($miles));
             }
         }
@@ -103,7 +103,7 @@ class NumberToLetters
         if (intval($cientos) > 0) {
             if ($cientos == '001') {
                 $converted .= 'UN ';
-            } else if (intval($cientos) > 0) {
+            } elseif (intval($cientos) > 0) {
                 $converted .= sprintf('%s ', self::convertGroup($cientos));
             }
         }
@@ -116,8 +116,8 @@ class NumberToLetters
         $output = '';
 
         if ($n == '100') {
-            $output = "CIEN ";
-        } else if ($n[0] !== '0') {
+            $output = 'CIEN ';
+        } elseif ($n[0] !== '0') {
             $output = self::$CENTENAS[$n[0] - 1];
         }
 

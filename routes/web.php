@@ -7,6 +7,7 @@ use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverLicenseController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\ScheduleController;
@@ -143,13 +144,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Módulo de Comprobantes
-    Route::get('receipts/ticket/{ticket}/voucher', [\App\Http\Controllers\ReceiptController::class, 'ticketVoucher'])->name('receipts.ticket.voucher');
-    Route::get('receipts/ticket/{ticket}/boleta', [\App\Http\Controllers\ReceiptController::class, 'ticketBoleta'])->name('receipts.ticket.boleta');
-    Route::get('receipts/ticket/{ticket}/factura', [\App\Http\Controllers\ReceiptController::class, 'ticketFactura'])->name('receipts.ticket.factura');
-    
-    Route::get('receipts/package/{package}/voucher', [\App\Http\Controllers\ReceiptController::class, 'packageVoucher'])->name('receipts.package.voucher');
-    Route::get('receipts/package/{package}/boleta', [\App\Http\Controllers\ReceiptController::class, 'packageBoleta'])->name('receipts.package.boleta');
-    Route::get('receipts/package/{package}/factura', [\App\Http\Controllers\ReceiptController::class, 'packageFactura'])->name('receipts.package.factura');
+    Route::get('receipts/ticket/{ticket}/voucher', [ReceiptController::class, 'ticketVoucher'])->name('receipts.ticket.voucher');
+    Route::get('receipts/ticket/{ticket}/boleta', [ReceiptController::class, 'ticketBoleta'])->name('receipts.ticket.boleta');
+    Route::get('receipts/ticket/{ticket}/factura', [ReceiptController::class, 'ticketFactura'])->name('receipts.ticket.factura');
+
+    Route::get('receipts/package/{package}/voucher', [ReceiptController::class, 'packageVoucher'])->name('receipts.package.voucher');
+    Route::get('receipts/package/{package}/boleta', [ReceiptController::class, 'packageBoleta'])->name('receipts.package.boleta');
+    Route::get('receipts/package/{package}/factura', [ReceiptController::class, 'packageFactura'])->name('receipts.package.factura');
 
     // ── MÓDULO DE EMPRESA (Solo Administrador) ──
     Route::middleware('role:administrador')->group(function () {
