@@ -83,7 +83,7 @@
                     <strong>TELÉFONO:</strong> {{ $package->receiver->phone ?? '-' }}
                 </td>
                 <td width="50%">
-                    <strong>ORIGEN:</strong> {{ strtoupper($package->trip->route->origin->name) }} &nbsp;&nbsp; <strong>DESTINO:</strong> {{ strtoupper($package->trip->route->destination->name) }}<br>
+                    <strong>ORIGEN:</strong> {{ strtoupper($package->trip->route->origin) }} &nbsp;&nbsp; <strong>DESTINO:</strong> {{ strtoupper($package->trip->route->destination) }}<br>
                     <strong>TIPO:</strong> {{ strtoupper($package->package_type) }} &nbsp;&nbsp; <strong>PESO:</strong> {{ $package->weight }} KG<br>
                     <strong>TRACKING:</strong> {{ $package->tracking_code }}
                 </td>
@@ -110,7 +110,7 @@
                 <td>NIU</td>
                 <td class="desc">
                     SERVICIO FLETE DE ENCOMIENDA <br>
-                    {{ strtoupper($package->trip->route->origin->name) }} - {{ strtoupper($package->trip->route->destination->name) }} <br>
+                    {{ strtoupper($package->trip->route->origin) }} - {{ strtoupper($package->trip->route->destination) }} <br>
                     DESCRIPCION: {{ strtoupper($package->description ?? 'PAQUETE') }}
                 </td>
                 <td>{{ $package->weight }} KG</td>

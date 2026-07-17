@@ -47,11 +47,11 @@
     <div style="text-align: left;">
         <div class="info-row">
             <span class="info-label">ORIGEN:</span>
-            <span class="info-value">{{ strtoupper($package->trip->route->origin->name) }}</span>
+            <span class="info-value">{{ strtoupper($package->trip->route->origin) }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">DESTINO:</span>
-            <span class="info-value">{{ strtoupper($package->trip->route->destination->name) }}</span>
+            <span class="info-value">{{ strtoupper($package->trip->route->destination) }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">TIPO/PESO:</span>

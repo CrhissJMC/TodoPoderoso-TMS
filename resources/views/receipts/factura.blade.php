@@ -83,7 +83,7 @@
                     <strong>DIRECCIÓN:</strong> {{ strtoupper($ticket->client->address ?? '-') }}
                 </td>
                 <td width="40%">
-                    <strong>ORIGEN:</strong> {{ strtoupper($ticket->trip->route->origin->name) }} &nbsp;&nbsp; <strong>DESTINO:</strong> {{ strtoupper($ticket->trip->route->destination->name) }}<br>
+                    <strong>ORIGEN:</strong> {{ strtoupper($ticket->trip->route->origin) }} &nbsp;&nbsp; <strong>DESTINO:</strong> {{ strtoupper($ticket->trip->route->destination) }}<br>
                     <strong>FE. VIAJE:</strong> {{ date('Y-m-d', strtotime($ticket->trip->trip_date)) }} &nbsp;&nbsp; <strong>HORA VIAJE:</strong> {{ date('H:i', strtotime($ticket->trip->time)) }}<br>
                     <strong>ASIENTO:</strong> {{ $ticket->seat_number }}
                 </td>
@@ -110,7 +110,7 @@
                 <td>NIU</td>
                 <td class="desc">
                     SERV. TRANSP. RUTA <br>
-                    {{ strtoupper($ticket->trip->route->origin->name) }} - {{ strtoupper($ticket->trip->route->destination->name) }} <br>
+                    {{ strtoupper($ticket->trip->route->origin) }} - {{ strtoupper($ticket->trip->route->destination) }} <br>
                     NR {{ $ticket->ticket_code }}
                 </td>
                 <td>{{ $ticket->seat_number }}</td>

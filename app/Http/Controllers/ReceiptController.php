@@ -15,7 +15,7 @@ class ReceiptController extends Controller
      */
     public function ticketVoucher(Ticket $ticket)
     {
-        $ticket->load(['client', 'trip.route.origin', 'trip.route.destination', 'soldBy']);
+        $ticket->load(['client', 'trip.route', 'soldBy']);
         
         $data = [
             'ticket' => $ticket,
@@ -34,7 +34,7 @@ class ReceiptController extends Controller
      */
     public function ticketBoleta(Ticket $ticket)
     {
-        $ticket->load(['client', 'trip.route.origin', 'trip.route.destination', 'soldBy']);
+        $ticket->load(['client', 'trip.route', 'soldBy']);
         
         // Formatear N° Boleta basado en ID (Ej: B001-000045)
         $boletaNumber = 'B001-' . str_pad($ticket->id, 8, '0', STR_PAD_LEFT);
@@ -58,7 +58,7 @@ class ReceiptController extends Controller
      */
     public function ticketFactura(Ticket $ticket)
     {
-        $ticket->load(['client', 'trip.route.origin', 'trip.route.destination', 'soldBy']);
+        $ticket->load(['client', 'trip.route', 'soldBy']);
         
         // Formatear N° Factura basado en ID (Ej: F001-000045)
         $facturaNumber = 'F001-' . str_pad($ticket->id, 8, '0', STR_PAD_LEFT);
@@ -82,7 +82,7 @@ class ReceiptController extends Controller
      */
     public function packageVoucher(Package $package)
     {
-        $package->load(['sender', 'receiver', 'trip.route.origin', 'trip.route.destination', 'receivedBy']);
+        $package->load(['sender', 'receiver', 'trip.route', 'receivedBy']);
         
         $data = [
             'package' => $package,
@@ -100,7 +100,7 @@ class ReceiptController extends Controller
      */
     public function packageBoleta(Package $package)
     {
-        $package->load(['sender', 'receiver', 'trip.route.origin', 'trip.route.destination', 'receivedBy']);
+        $package->load(['sender', 'receiver', 'trip.route', 'receivedBy']);
         
         $boletaNumber = 'B001-' . str_pad($package->id, 8, '0', STR_PAD_LEFT);
         $amountWords = NumberToLetters::convert($package->price);
@@ -123,7 +123,7 @@ class ReceiptController extends Controller
      */
     public function packageFactura(Package $package)
     {
-        $package->load(['sender', 'receiver', 'trip.route.origin', 'trip.route.destination', 'receivedBy']);
+        $package->load(['sender', 'receiver', 'trip.route', 'receivedBy']);
         
         $facturaNumber = 'F001-' . str_pad($package->id, 8, '0', STR_PAD_LEFT);
         $amountWords = NumberToLetters::convert($package->price);
