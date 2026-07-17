@@ -163,9 +163,9 @@ class TripController extends Controller
                 $trip->packages()->where('status', 'recibido')->update(['status' => 'en_ruta']);
             }
 
-            // Si se completa, marcar encomiendas como entregadas
+            // Si se completa, marcar encomiendas como listas para recojo
             if ($newStatus === 'completado') {
-                $trip->packages()->where('status', 'en_ruta')->update(['status' => 'entregado']);
+                $trip->packages()->where('status', 'en_ruta')->update(['status' => 'listo_para_recojo']);
             }
         });
 

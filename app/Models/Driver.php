@@ -24,6 +24,7 @@ class Driver extends Model
         'contract_type', // NUEVO
         'rental_fee',    // NUEVO
         'observations',
+        'license_document_path',
     ];
 
     protected $casts = [

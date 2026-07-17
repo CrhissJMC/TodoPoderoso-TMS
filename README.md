@@ -1,54 +1,105 @@
 [![CI](https://github.com/CrhissJMC/TodoPoderoso-TMS/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CrhissJMC/TodoPoderoso-TMS/actions/workflows/ci.yml)
+[![CD Docs](https://github.com/CrhissJMC/TodoPoderoso-TMS/actions/workflows/cd-docs.yml/badge.svg?branch=main)](https://github.com/CrhissJMC/TodoPoderoso-TMS/actions/workflows/cd-docs.yml)
 
 # Sistema Web de Gestión de Transporte y Encomiendas (TMS) - Todo Poderoso
 
-[cite_start]Este repositorio contiene el código fuente del nuevo sistema web de gestión de transporte y encomiendas desarrollado para la EMPRESA DE TRANSPORTES “TODO PODEROSO”[cite: 3, 6]. [cite_start]El sistema tiene como objetivo automatizar los procesos críticos de la empresa, reemplazando el seguimiento manual por una solución digital centralizada y de alta fiabilidad de datos[cite: 6, 7].
+Este repositorio contiene el código fuente del sistema web integral de gestión de transporte, ventas de pasajes y envíos de encomiendas desarrollado para la EMPRESA DE TRANSPORTES “TODO PODEROSO”. El sistema digitaliza la logística, reemplazando los procesos manuales por una solución en tiempo real.
 
 ## 🚀 Tecnologías y Arquitectura
 
-[cite_start]El proyecto está desarrollado bajo una arquitectura moderna de Aplicación de Página Única (SPA), utilizando el siguiente ecosistema técnico[cite: 4, 15]:
+El proyecto está desarrollado bajo una arquitectura SPA (Single Page Application), garantizando rendimiento y modernidad:
 
-* [cite_start]**Backend (Laravel)**: Encargado de la lógica de negocio, seguridad, API interna, validaciones mediante Form Requests y persistencia con Eloquent ORM[cite: 16]. [cite_start]Toda la lógica de enrutamiento web se concentrará estrictamente en el archivo `routes/web.php`[cite: 21].
-* [cite_start]**Capa de Enlace (Inertia.js)**: Conecta los controladores de Laravel directamente con las vistas de React de forma transparente, evitando recargas de página[cite: 17].
-* [cite_start]**Frontend (React)**: Interfaz de usuario interactiva y dinámica, estructurando componentes modulares para formularios reactivos y listados en tiempo real[cite: 18].
-* **Base de Datos (PostgreSQL)**: Sistema de gestión RDBMS de nivel empresarial. [cite_start]Garantizará la integridad referencial, el cumplimiento estricto de ACID y un rendimiento óptimo[cite: 19, 20].
+* **Backend (Laravel 11)**: API interna, validaciones, lógica de negocio y persistencia con Eloquent ORM.
+* **Capa de Enlace (Inertia.js)**: Conecta Laravel con React de forma transparente, permitiendo un enrutamiento fluido sin recargar la página.
+* **Frontend (React 18 + TailwindCSS v4 + Vite)**: Componentes reactivos, interfaces modernas e interactivas, y una experiencia de usuario (UX) ágil.
+* **Base de Datos (PostgreSQL)**: Gestión robusta, integridad referencial y alto rendimiento.
+* **Entorno (Docker + Sail)**: Desarrollo unificado y orquestado en contenedores.
 
-## ⚙️ Módulos Principales
+## ⚙️ Módulos Principales (Funcionalidades)
 
-* [cite_start]**Gestión de Vehículos (RF-01)**: Permite el registro completo de vehículos (placa, modelo, capacidad, tipo) reflejando su estado actual (Disponible, En Viaje, En Mantenimiento) y soporta opciones de eliminación lógica (Soft Delete)[cite: 23].
-* [cite_start]**Gestión de Conductores (RF-02)**: Registro de conductores (nombre, licencia, teléfono) con asignación a vehículos y mantenimiento de un historial de viajes[cite: 23].
-* [cite_start]**Gestión de Clientes (RF-03)**: Módulo para almacenar y gestionar clientes/remitentes, incluyendo razón social, RUC/CI y dirección fiscal[cite: 23].
-* [cite_start]**Gestión de Viajes y Encomiendas (RF-04)**: Módulo core que registra viajes mandatorios (origen, destino, cliente, vehículo, conductor, detalle de carga) transitando por los estados: Pendiente, En curso, Completado, Cancelado[cite: 23].
-* [cite_start]**Seguimiento y Control (RF-05)**: El operador puede marcar viajes como 'Completado', registrando de forma obligatoria observaciones o novedades en ruta[cite: 23].
-* [cite_start]**Generación de Documentos (RF-06)**: Generación automática en PDF de la 'Guía de remisión' o 'Carta porte' con todos los datos legales y técnicos del viaje[cite: 23].
-* [cite_start]**Reportes y Estadísticas (RF-07)**: Extracción de datos optimizada por rango de fechas, cliente, vehículo/conductor, y contadores analíticos de viajes completados frente a cancelados[cite: 23].
-* [cite_start]**Autenticación y Roles (RF-08)**: Sistema de login obligatorio con dos niveles de acceso: Administrador (acceso total CRUD y reportes) y Usuario Operador (permisos restringidos para viajes y guías)[cite: 23].
+* **Seguridad y RBAC (Control de Acceso basado en Roles)**: 
+  Roles predefinidos (Administrador, Operador, Conductor, Cliente) y permisos granulares. Solo el Administrador puede gestionar configuraciones de empresa y usuarios.
+* **Gestión de Empresa y Tarifario Dinámico**: 
+  El panel de empresa permite personalizar el tema (colores de la interfaz) y administrar una **Matriz de Tarifas**. El sistema calcula y define automáticamente los precios de pasajes y encomiendas para cualquier combinación de *Origen -> Destino / Paradas* registradas.
+* **Gestión de Flota y Personal**: 
+  Registro y asignación de **Vehículos** (capacidad, placas, estado) y **Conductores** (licencias, vigencia, asignación de vehículo).
+* **Gestión de Rutas y Paradas**: 
+  Mantenimiento de rutas fijas con paradas intermedias, tiempo estimado de viaje y control del orden de las escalas.
+* **Programación de Viajes (Trips)**: 
+  Asignación de fechas, rutas, vehículos y conductores a viajes concretos. Control de estados (*Programado, En Ruta, Completado, Cancelado*).
+* **Venta de Pasajes (Tickets)**: 
+  Selección visual de asientos mediante un mapa interactivo del vehículo (basado en la capacidad física real del bus/van), registro del pasajero y emisión de comprobantes.
+* **Gestión de Encomiendas**: 
+  Envío de paquetes por peso, tamaño (Sobre, Cajas pequeñas/medianas/grandes), recargo automático de peso, estado de pago, asignación a un viaje, y generación automática de seguimiento (Tracking Code).
+* **Dashboards Estadísticos**:
+  Indicadores clave de rendimiento (KPIs), gráficas de tendencias de ventas, ingresos, volumen de carga, e informes de "Top Operadores" y "Rutas Frecuentes".
+* **Alertas Inteligentes**:
+  Notificación en tiempo real para encomiendas estancadas (más de 48h sin viaje asignado) y validación de licencias de conducir vencidas.
 
-## 🛡️ Atributos de Calidad
+## 🛡️ CI/CD (Integración y Despliegue Continuo)
 
-* **Seguridad (RNF-01)**: Todas las contraseñas se cifran mediante Bcrypt. [cite_start]Se implementan llaves foráneas para proteger la integridad referencial[cite: 25].
-* [cite_start]**Rendimiento (RNF-02)**: Las consultas complejas se optimizarán mediante índices específicos en PostgreSQL, asegurando tiempos de respuesta que no excedan los 2 segundos[cite: 25].
-* [cite_start]**Concurrencia (RNF-04)**: PostgreSQL gestionará el control de concurrencia mediante MVCC para permitir registros simultáneos sin bloqueos de tablas[cite: 25].
-* **Usabilidad (RNF-03, RNF-05)**: Interfaz 100% responsiva e intuitiva, que requiere un máximo de 3 clics para completar el registro de un viaje. [cite_start]Compatible con Chrome, Firefox, Edge y Safari[cite: 25].
-
----
-
-## 🐳 Instalación y Entorno de Desarrollo (Docker)
-
-El entorno de desarrollo está completamente contenerizado usando **Laravel Sail**, lo que significa que no necesitas tener PHP, Composer, Node.js ni PostgreSQL instalados de forma local en tu máquina. Todo corre dentro de Docker de forma segura.
-
-### Requisitos Previos (Para Windows)
-1. Tener instalado [Docker Desktop](https://www.docker.com/products/docker-desktop/) y activo.
-2. Tener habilitado **WSL 2** (Windows Subsystem for Linux) con la distribución de **Ubuntu** instalada.
-3. En la configuración de Docker Desktop (`Settings > Resources > WSL Integration`), asegúrate de tener encendido el interruptor para tu distribución de **Ubuntu**.
+* **CI (Integración Continua)**: Validaciones automáticas en cada Pull Request para asegurar la calidad del código mediante **Laravel Pint** (estilos de código PHP) y pruebas unitarias/feature con **PHPUnit/Pest**.
+* **CD (Despliegue Continuo de Documentación)**: Las guías y manuales técnicos (en archivos `.md` como este README, `RBAC_DOCUMENTATION.md`, `AUDIT_REPORT.md`, etc.) se transforman automáticamente a un sitio HTML estilizado y se publican en **GitHub Pages** con cada actualización en `main`.
 
 ---
 
-### Pasos para Configurar por Primera Vez (Tras clonar el repositorio)
+## 🐳 Instalación y Entorno de Desarrollo Local
 
-Cuando un programador clona este repositorio por primera vez, las dependencias (`vendor`, `node_modules`) y el archivo de entorno `.env` no existen. Sigue estos pasos exactos dentro de tu terminal de **Ubuntu (WSL)**:
+Todo el ecosistema de desarrollo funciona sobre **Docker** a través de **Laravel Sail**. (Exclusivo para entornos Windows con WSL2 o Linux nativos).
 
-#### 1. Clonar el repositorio y entrar a la carpeta
-```bash
-git clone [https://github.com/CrhissJMC/TodoPoderoso-TMS.git](https://github.com/CrhissJMC/TodoPoderoso-TMS.git)
-cd TodoPoderoso-TMS
+### Requisitos Previos (Windows)
+1. Instalar [Docker Desktop](https://www.docker.com/products/docker-desktop/) e iniciarlo.
+2. Habilitar **WSL 2** (Windows Subsystem for Linux) y tener **Ubuntu** instalado.
+3. Asegurar la integración de WSL en Docker (Settings > Resources > WSL Integration).
+4. Node.js (v20+) y NPM instalados de forma local o global en tu WSL.
+
+### Comandos de Configuración Rápida
+
+Dado que los comandos PHP y Composer viven dentro del contenedor, el proyecto expone atajos a través del sistema de scripts de Composer en WSL.
+
+1. **Clonar el Repositorio**
+   ```bash
+   git clone https://github.com/CrhissJMC/TodoPoderoso-TMS.git
+   cd TodoPoderoso-TMS
+   ```
+
+2. **Levantar el contenedor sin dependencias locales e iniciar setup**
+   Ejecuta el siguiente contenedor temporal de Composer para instalar las dependencias primarias, y luego invoca el script de configuración total (`composer setup`):
+   ```bash
+   docker run --rm \
+       -u "$(id -u):$(id -g)" \
+       -v "$(pwd):/var/www/html" \
+       -w /var/www/html \
+       laravelsail/php83-composer:latest \
+       composer install --ignore-platform-reqs
+
+   # Iniciar contenedores e instalar el resto del entorno:
+   ./vendor/bin/sail up -d
+   ./vendor/bin/sail npm install
+   ./vendor/bin/sail php artisan key:generate
+   ./vendor/bin/sail php artisan migrate:fresh --seed
+   ```
+
+### Uso del Entorno en el Día a Día
+
+* **Levantar servidor local completo (Backend, Base de Datos y Compilador Frontend Vite):**
+  ```bash
+  ./vendor/bin/sail up -d
+  ./vendor/bin/sail npm run dev
+  ```
+  La app estará disponible en: [http://localhost](http://localhost)
+
+* **Correr Linter Automático (Laravel Pint):**
+  ```bash
+  ./vendor/bin/sail bin pint
+  ```
+
+* **Correr Pruebas (Test Suite):**
+  ```bash
+  ./vendor/bin/sail artisan test
+  ```
+
+* **Apagar los contenedores:**
+  ```bash
+  ./vendor/bin/sail down
+  ```

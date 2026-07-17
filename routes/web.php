@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
+use App\Http\Controllers\DriverLicenseController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
@@ -13,11 +15,17 @@ use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-// Redirigir la raíz al Login
+// Página de Bienvenida y Rastreo Público
 Route::get('/', function () {
-    return redirect()->route('login');
+    return Inertia::render('Welcome', [
+        'canLogin' => Route::has('login'),
+    ]);
 });
+
+// Rastreo Público de Encomiendas API
+Route::get('/api/track', [PackageController::class, 'track'])->name('packages.track.public');
 
 // Dashboard protegido
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -31,6 +39,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Renovación de Licencia (Chofer)
+    Route::get('/driver/license/renew', [DriverLicenseController::class, 'showRenewForm'])->name('driver.license.renew');
+    Route::post('/driver/license/renew', [DriverLicenseController::class, 'processRenewal']);
 
     // Módulo de Vehículos
     Route::middleware('permission:vehiculos.ver')->group(function () {
@@ -120,9 +132,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Módulo de Encomiendas
     Route::middleware('permission:encomiendas.ver')->group(function () {
         Route::get('packages', [PackageController::class, 'index'])->name('packages.index');
-        // Consulta de rastreo — debe registrarse antes de packages/{package} para no ser
-        // capturada por el parámetro genérico {package}.
-        Route::get('packages/track', [PackageController::class, 'track'])->name('packages.track');
         Route::get('packages/{package}', [PackageController::class, 'show'])->name('packages.show');
     });
     Route::middleware('permission:encomiendas.admin')->group(function () {
@@ -130,6 +139,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('packages/{package}', [PackageController::class, 'update'])->name('packages.update');
         Route::delete('packages/{package}', [PackageController::class, 'destroy'])->name('packages.destroy');
         Route::patch('packages/{package}/status', [PackageController::class, 'updateStatus'])->name('packages.updateStatus');
+        Route::patch('packages/{package}/assign-trip', [PackageController::class, 'assignTrip'])->name('packages.assignTrip');
+    });
+
+    // ── MÓDULO DE EMPRESA (Solo Administrador) ──
+    Route::middleware('role:administrador')->group(function () {
+        Route::get('admin/empresa', [CompanyController::class, 'edit'])->name('admin.company.edit');
+        Route::put('admin/empresa', [CompanyController::class, 'update'])->name('admin.company.update');
+        Route::put('admin/empresa/precios', [CompanyController::class, 'updatePrices'])->name('admin.company.prices.update');
     });
 
     // ── MÓDULO DE ROLES Y USUARIOS (Solo Administrador) ──

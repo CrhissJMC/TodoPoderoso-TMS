@@ -3,6 +3,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PackageModal from './Partials/PackageModal';
 import DeleteConfirmModal from './Partials/DeleteConfirmModal';
+import AssignTripModal from './Partials/AssignTripModal';
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -12,6 +13,7 @@ interface ActiveTrip {
     status: string;
     trip_date: string;
     route_name: string;
+    locations: string[];
 }
 
 interface PackageItem {
@@ -45,11 +47,13 @@ interface Props {
     packages: Paginated<PackageItem>;
     counts: Record<string, number>;
     activeTrips: ActiveTrip[];
-    filters: Record<string, string>;
+    routePrices: any[];
+    filters: { search?: string; status?: string; package_type?: string };
     packageTypes: string[];
     paymentMethods: string[];
     paymentStatuses: string[];
     statuses: string[];
+    locations: string[];
 }
 
 // ── Constantes ───────────────────────────────────────────────────────────────
@@ -72,7 +76,9 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
 
 const TYPE_LABELS: Record<string, string> = {
     sobre_manila: 'Sobre manila',
-    caja:         'Caja',
+    caja_pequena: 'Caja pequeña',
+    caja_mediana: 'Caja mediana',
+    caja_grande:  'Caja grande',
 };
 
 const PAYMENT_STATUS: Record<string, string> = {
@@ -87,8 +93,8 @@ function formatDate(d: string) {
 // ── Página ───────────────────────────────────────────────────────────────────
 
 export default function PackagesIndex({
-    packages, counts, activeTrips, filters,
-    packageTypes, paymentMethods, paymentStatuses, statuses,
+    packages, counts, activeTrips, routePrices, filters,
+    packageTypes, paymentMethods, paymentStatuses, statuses, locations,
 }: Props) {
     const { flash, auth } = usePage().props as any;
     const permissions = auth.permissions || [];
@@ -100,6 +106,7 @@ export default function PackagesIndex({
     const [modalOpen, setModalOpen]   = useState(false);
     const [editPkg, setEdit]          = useState<PackageItem | null>(null);
     const [deleteTarget, setDelete]   = useState<PackageItem | null>(null);
+    const [assignTarget, setAssign]   = useState<PackageItem | null>(null);
 
     function applyFilters(overrides: Record<string, string> = {}) {
         router.get(route('packages.index'),
@@ -309,22 +316,28 @@ export default function PackagesIndex({
 
                                     {/* Acciones */}
                                     <td className="px-4 py-3">
-                                        {hasAdmin && (
-                                            <div className="flex items-center justify-end gap-1">
-                                                {p.status !== 'entregado' && (
-                                                    <button onClick={() => openEdit(p)} title="Editar"
-                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/></svg>
-                                                    </button>
+                                        <div className="flex items-center justify-end gap-1">
+                                            {p.status === 'recibido' && (
+                                                <button onClick={() => setAssign(p)} title="Asignar a viaje"
+                                                    className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg>
+                                                </button>
+                                            )}
+                                            <button onClick={() => openEdit(p)} title={p.status === 'entregado' ? "Ver detalles" : "Editar"}
+                                                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+                                                {p.status === 'entregado' ? (
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                                ) : (
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/></svg>
                                                 )}
-                                                {p.status !== 'en_ruta' && (
-                                                    <button onClick={() => setDelete(p)} title="Eliminar"
-                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )}
+                                            </button>
+                                            {p.status !== 'en_ruta' && (
+                                                <button onClick={() => setDelete(p)} title="Eliminar"
+                                                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -349,10 +362,20 @@ export default function PackagesIndex({
                 )}
             </div>
 
-            <PackageModal isOpen={modalOpen} pkg={editPkg} activeTrips={activeTrips}
-                packageTypes={packageTypes} paymentMethods={paymentMethods} paymentStatuses={paymentStatuses}
-                onClose={closeModal} />
+            <PackageModal
+                isOpen={modalOpen}
+                pkg={editPkg}
+                activeTrips={activeTrips}
+                routePrices={routePrices}
+                packageTypes={packageTypes}
+                paymentMethods={paymentMethods}
+                paymentStatuses={paymentStatuses}
+                locations={locations}
+                onClose={closeModal}
+            />
+            
             <DeleteConfirmModal pkg={deleteTarget} onClose={() => setDelete(null)} />
+            <AssignTripModal pkg={assignTarget} activeTrips={activeTrips} onClose={() => setAssign(null)} />
         </AuthenticatedLayout>
     );
 }

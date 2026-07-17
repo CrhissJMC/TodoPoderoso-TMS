@@ -38,6 +38,7 @@ class VehicleRequest extends FormRequest
 
             'type' => ['required', 'string', Rule::in(Vehicle::types())],
             'status' => ['required', 'string', Rule::in(Vehicle::statuses())],
+            'soat_expiration_date' => ['required', 'date'],
             'color' => ['nullable', 'string', 'max:50'],
             'observations' => ['nullable', 'string', 'max:1000'],
         ];
@@ -64,6 +65,8 @@ class VehicleRequest extends FormRequest
 
             'type.required' => 'El tipo de vehículo es obligatorio.',
             'status.required' => 'El estado es obligatorio.',
+            'soat_expiration_date.required' => 'La fecha de vencimiento del SOAT es obligatoria.',
+            'soat_expiration_date.date' => 'La fecha de vencimiento del SOAT no es una fecha válida.',
             'year.min' => 'El año no es válido.',
             'year.max' => 'El año no puede ser en el futuro.',
         ];

@@ -53,6 +53,11 @@ class Route extends Model
         return $this->hasMany(Trip::class);
     }
 
+    public function prices()
+    {
+        return $this->hasMany(RoutePrice::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('active', true);

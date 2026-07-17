@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 
-interface ActiveTrip { id: number; label: string; status: string; route_name: string; }
+interface ActiveTrip { id: number; label: string; status: string; route_name: string; locations: string[]; }
 interface PackageItem {
     id: number;
     sender: { name: string; document_number: string; document_type: string; phone: string | null };
@@ -14,13 +14,15 @@ interface Props {
     isOpen: boolean;
     pkg: PackageItem | null;
     activeTrips: ActiveTrip[];
+    routePrices?: any[];
     packageTypes: string[];
     paymentMethods: string[];
     paymentStatuses: string[];
+    locations: string[];
     onClose: () => void;
 }
 
-const TYPE_LABELS: Record<string, string>    = { sobre_manila: 'Sobre manila', caja: 'Caja' };
+const TYPE_LABELS: Record<string, string>    = { sobre_manila: 'Sobre manila', caja_pequena: 'Caja pequeña', caja_mediana: 'Caja mediana', caja_grande: 'Caja grande' };
 const METHOD_LABELS: Record<string, string>  = { efectivo: 'Efectivo', yape: 'Yape', plin: 'Plin', tarjeta: 'Tarjeta' };
 const PSTATUS_LABELS: Record<string, string> = { pagado: 'Pagado', pendiente: 'Pendiente' };
 
@@ -39,12 +41,15 @@ function Field({ label, error, required, children }: { label: string; error?: st
 const inputCls = (error?: string) =>
     `w-full px-3 py-2 text-sm border rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-colors ${error ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-gray-300 focus:border-gray-400'}`;
 
-export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, paymentMethods, paymentStatuses, onClose }: Props) {
+export default function PackageModal({ isOpen, pkg, activeTrips, routePrices = [], packageTypes, paymentMethods, paymentStatuses, locations, onClose }: Props) {
     const isEditing = !!pkg;
-    const [showBoxFields, setShowBoxFields] = useState(false);
-
+    const { auth } = usePage().props as any;
+    const permissions = auth?.permissions || [];
+    const hasAdmin = permissions.includes('encomiendas.admin') || permissions.includes('administrador');
+    
     const [senderLookup, setSenderLookup] = useState<'idle' | 'searching' | 'found' | 'new'>('idle');
     const [receiverLookup, setReceiverLookup] = useState<'idle' | 'searching' | 'found' | 'new'>('idle');
+    const [showDimensions, setShowDimensions] = useState(false);
 
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
         sender_id:              '',
@@ -98,23 +103,61 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                 observations:   pkg.observations ?? '',
             };
             setData(d);
-            setShowBoxFields(pkg.package_type === 'caja');
+            setShowDimensions(pkg.package_type.startsWith('caja'));
             setSenderLookup('found');
             setReceiverLookup('found');
         } else if (isOpen) {
             reset();
             clearErrors();
-            setShowBoxFields(false);
+            setShowDimensions(false);
             setSenderLookup('idle');
             setReceiverLookup('idle');
         }
     }, [isOpen, pkg]);
 
+    useEffect(() => {
+        if (!hasAdmin && !pkg && data.origin && data.destination && data.trip_id) { 
+            let base = 0;
+            const trip = activeTrips.find(t => t.id.toString() === data.trip_id);
+            if (trip) {
+                // Find matching price matrix entry for this route + origin + destination
+                const routeName = trip.route_name;
+                // We don't have route_id on activeTrips directly but routePrices has route_id.
+                // Assuming we can match by origin and destination directly for now since routePrices are global pairs for a route.
+                const matchedPrice = routePrices.find(rp => 
+                    rp.origin_name === data.origin && 
+                    rp.destination_name === data.destination
+                );
+
+                if (matchedPrice) {
+                    const typeKey = `pkg_fare_${data.package_type}`;
+                    base = matchedPrice[typeKey] ? parseFloat(matchedPrice[typeKey]) : 0;
+                } else {
+                    // Fallback default pricing if no matrix exists for this tramo
+                    switch (data.package_type) {
+                        case 'sobre_manila': base = 5; break;
+                        case 'caja_pequena': base = 10; break;
+                        case 'caja_mediana': base = 15; break;
+                        case 'caja_grande': base = 20; break;
+                    }
+                }
+            }
+
+            if (data.weight && data.package_type !== 'sobre_manila') {
+                 const w = parseFloat(data.weight);
+                 if (w > 0) base += w * 0.50; // Ejemplo: 0.50 soles por kg adicional
+            }
+            if (base > 0) {
+                setData('price', base.toFixed(2));
+            }
+        }
+    }, [data.package_type, data.weight, data.origin, data.destination, data.trip_id, hasAdmin, pkg, activeTrips, routePrices]);
+
     function handleTypeChange(type: string) {
         setData('package_type', type);
-        setShowBoxFields(type === 'caja');
+        setShowDimensions(type.includes('caja'));
         if (type === 'sobre_manila') {
-            setData(d => ({ ...d, package_type: type, weight: '', dimensions: '' }));
+            setData(d => ({ ...d, package_type: type, dimensions: '' }));
         } else {
             setData('package_type', type);
         }
@@ -166,7 +209,7 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
     }
 
     function handleClose() {
-        reset(); clearErrors(); setShowBoxFields(false);
+        reset(); clearErrors(); setShowDimensions(false);
         setSenderLookup('idle'); setReceiverLookup('idle');
         onClose();
     }
@@ -179,6 +222,13 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
             post(route('packages.store'), { onSuccess: handleClose });
         }
     }
+
+    const availableTrips = activeTrips.filter(t => {
+        if (!data.origin || !data.destination) return true;
+        const oIdx = t.locations.indexOf(data.origin);
+        const dIdx = t.locations.indexOf(data.destination);
+        return oIdx !== -1 && dIdx !== -1 && oIdx < dIdx;
+    });
 
     if (!isOpen) return null;
 
@@ -197,7 +247,7 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                             {isEditing ? 'Modifica los datos del paquete.' : 'Registra un paquete y asígnalo a un viaje.'}
                         </p>
                     </div>
-                    <button onClick={handleClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                    <button type="button" onClick={handleClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
@@ -323,18 +373,18 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                         </div>
 
                         {/* Campos extra si es caja */}
-                        {showBoxFields && (
-                            <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                <Field label="Peso (kg)" error={errors.weight}>
-                                    <input type="number" value={data.weight} onChange={e => setData('weight', e.target.value)}
-                                        placeholder="2.5" min="0.01" step="0.01" className={inputCls(errors.weight)} />
-                                </Field>
+                        <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 mt-3">
+                            <Field label="Peso (kg)" error={errors.weight}>
+                                <input type="number" value={data.weight} onChange={e => setData('weight', e.target.value)}
+                                    placeholder="0.5" min="0.01" step="0.01" className={inputCls(errors.weight)} />
+                            </Field>
+                            {showDimensions && (
                                 <Field label="Dimensiones" error={errors.dimensions}>
                                     <input value={data.dimensions} onChange={e => setData('dimensions', e.target.value)}
                                         placeholder="20x30x15 cm" className={inputCls(errors.dimensions)} />
                                 </Field>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
                         {/* Ruta */}
                         <div className="border-t border-gray-100 pt-4 mt-2">
@@ -343,12 +393,20 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
 
                         <div className="grid grid-cols-2 gap-3">
                             <Field label="Origen" required error={errors.origin}>
-                                <input value={data.origin} onChange={e => setData('origin', e.target.value)}
-                                    placeholder="Chachapoyas" className={inputCls(errors.origin)} />
+                                <select value={data.origin} onChange={e => {
+                                    setData(d => ({ ...d, origin: e.target.value, trip_id: '' }));
+                                }} className={inputCls(errors.origin)}>
+                                    <option value="">Seleccione origen</option>
+                                    {locations.map(l => <option key={l} value={l}>{l}</option>)}
+                                </select>
                             </Field>
                             <Field label="Destino" required error={errors.destination}>
-                                <input value={data.destination} onChange={e => setData('destination', e.target.value)}
-                                    placeholder="Bagua Grande" className={inputCls(errors.destination)} />
+                                <select value={data.destination} onChange={e => {
+                                    setData(d => ({ ...d, destination: e.target.value, trip_id: '' }));
+                                }} className={inputCls(errors.destination)}>
+                                    <option value="">Seleccione destino</option>
+                                    {locations.map(l => <option key={l} value={l}>{l}</option>)}
+                                </select>
                             </Field>
                         </div>
 
@@ -356,11 +414,15 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                             <select value={data.trip_id} onChange={e => setData('trip_id', e.target.value)}
                                 className={inputCls(errors.trip_id)}>
                                 <option value="">Sin asignar (registrar como recibido)</option>
-                                {activeTrips.map(t => (
+                                {availableTrips.map(t => (
                                     <option key={t.id} value={t.id}>{t.label}</option>
                                 ))}
                             </select>
-                            <p className="text-xs text-gray-400 mt-0.5">Solo viajes activos de hoy en adelante</p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                                {availableTrips.length === 0 && data.origin && data.destination 
+                                    ? 'No hay viajes activos para esta ruta.'
+                                    : 'Solo viajes activos de hoy en adelante que cubren esta ruta.'}
+                            </p>
                         </Field>
 
                         {/* Cobro */}
@@ -371,7 +433,9 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                         <div className="grid grid-cols-3 gap-3">
                             <Field label="Precio (S/)" required error={errors.price}>
                                 <input type="number" value={data.price} onChange={e => setData('price', e.target.value)}
-                                    placeholder="10.00" min="0" step="0.50" className={inputCls(errors.price)} />
+                                    disabled={!hasAdmin}
+                                    title={!hasAdmin ? "Solo el administrador puede editar el precio manualmente" : ""}
+                                    placeholder="10.00" min="0" step="0.50" className={inputCls(errors.price) + (!hasAdmin ? " bg-gray-100 cursor-not-allowed" : "")} />
                             </Field>
                             <Field label="Método de pago" required error={errors.payment_method}>
                                 <select value={data.payment_method} onChange={e => setData('payment_method', e.target.value)}

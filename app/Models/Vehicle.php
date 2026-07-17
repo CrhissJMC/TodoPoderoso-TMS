@@ -18,6 +18,7 @@ class Vehicle extends Model
         'year',
         'capacity_seats', // NUEVO
         'sellable_seats', // NUEVO
+        'soat_expiration_date',
         'type',
         'status',
         'color',
@@ -28,6 +29,7 @@ class Vehicle extends Model
         'year' => 'integer',
         'capacity_seats' => 'integer',
         'sellable_seats' => 'integer',
+        'soat_expiration_date' => 'date',
     ];
 
     // Tipos de vehículo ajustados para personas

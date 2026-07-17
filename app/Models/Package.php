@@ -34,7 +34,7 @@ class Package extends Model
 
     public static function packageTypes(): array
     {
-        return ['sobre_manila', 'caja'];
+        return ['sobre_manila', 'caja_pequena', 'caja_mediana', 'caja_grande'];
     }
 
     public static function paymentMethods(): array
@@ -49,13 +49,12 @@ class Package extends Model
 
     public static function statuses(): array
     {
-        return ['recibido', 'en_ruta', 'entregado'];
+        return ['recibido', 'en_ruta', 'listo_para_recojo', 'entregado'];
     }
 
-    // Genera un código único: PKG-00001
     public static function generateTrackingCode(): string
     {
-        $last = self::withTrashed()->latest('id')->value('id') ?? 0;
+        $last = self::latest('id')->value('id') ?? 0;
 
         return 'PKG-'.str_pad($last + 1, 5, '0', STR_PAD_LEFT);
     }

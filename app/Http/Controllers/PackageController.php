@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\PackageRequest;
 use App\Models\Client;
 use App\Models\Package;
+use App\Models\Route;
+use App\Models\RoutePrice;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +18,19 @@ class PackageController extends Controller
     public function index(Request $request)
     {
         $query = Package::with(['trip.route', 'receivedBy', 'sender', 'receiver']);
+
+        $user = Auth::user();
+        if ($user && ($user->role_id === 6 || $user->role === 'cliente')) {
+            if ($user->client) {
+                $query->where(function ($q) use ($user) {
+                    $q->where('sender_id', $user->client->id)
+                        ->orWhere('receiver_id', $user->client->id);
+                });
+            } else {
+                // Si es rol cliente pero no tiene cliente vinculado, no mostrar encomiendas
+                $query->where('id', -1);
+            }
+        }
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -48,28 +63,45 @@ class PackageController extends Controller
         ];
 
         // Viajes activos para asignar encomiendas
-        $activeTrips = Trip::with('route')
+        $activeTrips = Trip::with('route.stops')
             ->whereIn('status', ['programado', 'abordando', 'en_ruta'])
             ->whereDate('trip_date', '>=', today()->subDay())
             ->orderBy('trip_date')
             ->get(['id', 'trip_date', 'status', 'route_id'])
-            ->map(fn ($t) => [
-                'id' => $t->id,
-                'label' => $t->route->name.' — '.$t->trip_date->format('d/m/Y'),
-                'status' => $t->status,
-                'trip_date' => $t->trip_date->toDateString(),
-                'route_name' => $t->route->name,
-            ]);
+            ->map(function ($t) {
+                $locations = collect([$t->route->origin])
+                    ->merge($t->route->stops->pluck('stop_name'))
+                    ->merge([$t->route->destination])
+                    ->values()
+                    ->all();
+
+                return [
+                    'id' => $t->id,
+                    'label' => $t->route->name.' — '.$t->trip_date->format('d/m/Y'),
+                    'status' => $t->status,
+                    'trip_date' => $t->trip_date->toDateString(),
+                    'route_name' => $t->route->name,
+                    'locations' => $locations,
+                ];
+            });
+
+        $locations = Route::where('active', true)->with('stops')->get()->flatMap(function ($r) {
+            return collect([$r->origin])->merge($r->stops->pluck('stop_name'))->merge([$r->destination]);
+        })->unique()->sort()->values()->all();
+
+        $routePrices = RoutePrice::all();
 
         return Inertia::render('Packages/Index', [
             'packages' => $packages,
             'counts' => $counts,
             'activeTrips' => $activeTrips,
+            'routePrices' => $routePrices,
             'filters' => $request->only(['search', 'status', 'package_type']),
             'packageTypes' => Package::packageTypes(),
             'paymentMethods' => Package::paymentMethods(),
             'paymentStatuses' => Package::paymentStatuses(),
             'statuses' => Package::statuses(),
+            'locations' => $locations,
         ]);
     }
 
@@ -192,12 +224,50 @@ class PackageController extends Controller
     public function updateStatus(Request $request, Package $package)
     {
         $request->validate([
-            'status' => ['required', 'in:recibido,en_ruta,entregado'],
+            'status' => ['required', 'in:recibido,en_ruta,listo_para_recojo,entregado'],
         ]);
 
         $package->update(['status' => $request->status]);
 
         return back()->with('success', 'Estado actualizado correctamente.');
+    }
+
+    // Asignar encomienda a un viaje
+    public function assignTrip(Request $request, Package $package)
+    {
+        $request->validate([
+            'trip_id' => 'required|exists:trips,id',
+        ]);
+
+        $trip = Trip::with('route.stops')->findOrFail($request->trip_id);
+
+        // El viaje no puede estar completado o cancelado
+        if (in_array($trip->status, ['completado', 'cancelado'])) {
+            return back()->with('error', 'El viaje seleccionado ya no está disponible para asignación.');
+        }
+
+        // Verificar que el viaje pase por el origen y destino del paquete y en el orden correcto
+        $locations = collect([$trip->route->origin])
+            ->merge($trip->route->stops->pluck('stop_name'))
+            ->merge([$trip->route->destination])
+            ->values()
+            ->all();
+
+        $originIndex = array_search($package->origin, $locations);
+        $destinationIndex = array_search($package->destination, $locations);
+
+        if ($originIndex === false || $destinationIndex === false) {
+            return back()->with('error', 'El origen o destino de la encomienda no pertenecen a la ruta de este viaje.');
+        } elseif ($originIndex >= $destinationIndex) {
+            return back()->with('error', 'El destino de la encomienda debe ser una parada posterior al origen en la ruta del viaje seleccionado.');
+        }
+
+        $package->update([
+            'trip_id' => $trip->id,
+            'status' => $trip->status === 'en_ruta' ? 'en_ruta' : 'recibido',
+        ]);
+
+        return back()->with('success', 'Encomienda asignada al viaje exitosamente.');
     }
 
     // Búsqueda por código de rastreo (para consulta pública o front)

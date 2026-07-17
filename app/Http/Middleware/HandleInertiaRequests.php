@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -36,6 +37,8 @@ class HandleInertiaRequests extends Middleware
             $user->load(['role', 'driver']);
         }
 
+        $company = Company::first();
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -44,6 +47,7 @@ class HandleInertiaRequests extends Middleware
                 'estado' => $user ? $user->estado : null,
                 'permissions' => $user ? $user->getAllPermissions() : [],
             ],
+            'company' => $company,
         ];
     }
 }
