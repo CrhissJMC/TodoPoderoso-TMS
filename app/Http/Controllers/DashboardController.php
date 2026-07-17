@@ -8,6 +8,7 @@ use App\Models\Ticket;
 use App\Models\Trip;
 use App\Models\TripStatusLog;
 use App\Models\User;
+use App\Models\Vehicle;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -320,6 +321,23 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get(['id', 'name', 'email']);
 
+            // 10. Alertas Críticas (Compliance)
+            $complianceAlerts = Vehicle::whereNotNull('soat_expiration_date')
+                ->where('soat_expiration_date', '<=', Carbon::today()->addDays(30))
+                ->whereNull('deleted_at')
+                ->get(['id', 'plate', 'soat_expiration_date'])
+                ->map(function ($vehicle) {
+                    $daysLeft = Carbon::today()->diffInDays(Carbon::parse($vehicle->soat_expiration_date), false);
+
+                    return [
+                        'plate' => $vehicle->plate,
+                        'days_left' => (int) $daysLeft,
+                        'expiration_date' => $vehicle->soat_expiration_date->format('Y-m-d'),
+                    ];
+                })
+                ->sortBy('days_left')
+                ->values();
+
             return Inertia::render('Dashboard', [
                 'allRoutes' => $allRoutes,
                 'filters' => $request->only(['route_id']),
@@ -335,6 +353,7 @@ class DashboardController extends Controller
                 'topTicketSellers' => $topTicketSellers,
                 'topPackageSellers' => $topPackageSellers,
                 'statusConfig' => Trip::statusConfig(),
+                'complianceAlerts' => $complianceAlerts,
             ]);
         }
         if ($roleName === 'operador_encomiendas' || $roleId === 4) {

@@ -20,6 +20,7 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
         year: '',
         capacity_seats: '',
         sellable_seats: '',
+        soat_expiration_date: '',
         type: 'Minivan',
         status: 'disponible',
         color: '',
@@ -36,6 +37,7 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
                 year: vehicle.year ?? '',
                 capacity_seats: vehicle.capacity_seats ?? '',
                 sellable_seats: vehicle.sellable_seats ?? '',
+                soat_expiration_date: vehicle.soat_expiration_date ?? '',
                 type: vehicle.type ?? 'Minivan',
                 status: vehicle.status ?? 'disponible',
                 color: vehicle.color ?? '',
@@ -161,8 +163,13 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
                                 className={inputClass(errors.year)}
                             />
                         </Field>
-                        <Field label="Color" error={errors.color}>
-                            <input value={data.color} onChange={e => setData('color', e.target.value)} placeholder="Blanco" className={inputClass(errors.color)} />
+                        <Field label="Vencimiento SOAT *" error={errors.soat_expiration_date}>
+                            <input
+                                type="date"
+                                value={data.soat_expiration_date}
+                                onChange={e => setData('soat_expiration_date', e.target.value)}
+                                className={inputClass(errors.soat_expiration_date)}
+                            />
                         </Field>
                         <Field label="Estado *" error={errors.status}>
                             <select value={data.status} onChange={e => setData('status', e.target.value)} className={inputClass(errors.status)}>
@@ -170,6 +177,12 @@ export default function VehicleModal({ isOpen, vehicle, types, statuses, onClose
                                     <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
                                 ))}
                             </select>
+                        </Field>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <Field label="Color" error={errors.color}>
+                            <input value={data.color} onChange={e => setData('color', e.target.value)} placeholder="Blanco" className={inputClass(errors.color)} />
                         </Field>
                     </div>
 

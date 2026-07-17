@@ -75,6 +75,7 @@ interface Props {
     clientOnTimeDelivered?: number;
     clientRouteSummary?: { name: string; trips_count: number }[];
     statusConfig: Record<string, { label: string; color: string }>;
+    complianceAlerts?: { plate: string; days_left: number; expiration_date: string }[];
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -87,7 +88,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgress = 0, passengersToday = 0, revenueToday = 0, occupancyRate = 0, revenueChart = [], packagesCountChart = [], topRoutes = [], recentTrips = [], pendingPackages = [], topTicketSellers = [], topPackageSellers = [], driverTrips = [], driverTotalTrips = 0, driverFrequentRoutes = [], driverUpcomingPackages = [], driverRanking = 0, operatorTotalPackages = 0, operatorPendingPackages = 0, operatorRecentPackages = [], operatorRanking = 0, sellerTotalTickets = 0, sellerTodayTickets = 0, sellerRecentTickets = [], sellerRanking = 0, agentTotalTickets = 0, agentTodayTickets = 0, agentRecentTickets = [], agentTotalPackages = 0, agentPendingPackages = 0, agentRecentPackages = [], agentRevenueToday = 0, clientError, clientKpis, clientActiveTrips = [], clientUpcomingPackages = [], clientRecentActivity = [], clientTripHistory = [], clientOtd = 0, clientTotalDelivered = 0, clientOnTimeDelivered = 0, clientRouteSummary = [], statusConfig }: Props) {
+export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgress = 0, passengersToday = 0, revenueToday = 0, occupancyRate = 0, revenueChart = [], packagesCountChart = [], topRoutes = [], recentTrips = [], pendingPackages = [], topTicketSellers = [], topPackageSellers = [], driverTrips = [], driverTotalTrips = 0, driverFrequentRoutes = [], driverUpcomingPackages = [], driverRanking = 0, operatorTotalPackages = 0, operatorPendingPackages = 0, operatorRecentPackages = [], operatorRanking = 0, sellerTotalTickets = 0, sellerTodayTickets = 0, sellerRecentTickets = [], sellerRanking = 0, agentTotalTickets = 0, agentTodayTickets = 0, agentRecentTickets = [], agentTotalPackages = 0, agentPendingPackages = 0, agentRecentPackages = [], agentRevenueToday = 0, clientError, clientKpis, clientActiveTrips = [], clientUpcomingPackages = [], clientRecentActivity = [], clientTripHistory = [], clientOtd = 0, clientTotalDelivered = 0, clientOnTimeDelivered = 0, clientRouteSummary = [], statusConfig, complianceAlerts = [] }: Props) {
     const { auth } = usePage().props as any;
     const [clientTab, setClientTab] = useState<'resumen' | 'historial' | 'notificaciones'>('resumen');
     const isAdmin = auth.role === 'administrador' || auth.user.role_id === 1;
@@ -861,6 +862,31 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                             </select>
                         </div>
                     </div>
+
+                    {/* Alertas de Compliance */}
+                    {complianceAlerts && complianceAlerts.length > 0 && (
+                        <div className="bg-red-50/50 border border-red-200 rounded-2xl p-4 shadow-sm">
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="text-red-600">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                                </span>
+                                <h3 className="text-base font-bold text-red-900">Alertas de Vencimiento de SOAT (Próximos 30 días)</h3>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {complianceAlerts.map((alert, idx) => (
+                                    <div key={idx} className="bg-white p-3 rounded-xl border border-red-100 shadow-sm flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-900">{alert.plate}</p>
+                                            <p className="text-xs text-gray-500">Vence: {alert.expiration_date}</p>
+                                        </div>
+                                        <div className={`px-2.5 py-1 rounded-md text-xs font-bold ${alert.days_left <= 7 ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}`}>
+                                            {alert.days_left < 0 ? 'Vencido' : alert.days_left === 0 ? 'Vence hoy' : `En ${alert.days_left} días`}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Resumen Superior */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
