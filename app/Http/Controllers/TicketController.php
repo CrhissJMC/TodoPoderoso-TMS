@@ -54,7 +54,7 @@ class TicketController extends Controller
         ];
 
         // Viajes disponibles para vender (no completados/cancelados, desde ayer)
-        $availableTrips = Trip::with(['route.stops', 'vehicle'])
+        $availableTrips = Trip::with(['route.stops', 'route.prices', 'vehicle'])
             ->whereNotIn('status', ['completado', 'cancelado'])
             ->whereDate('trip_date', '>=', today()->subDay())
             ->orderBy('trip_date')
@@ -72,6 +72,7 @@ class TicketController extends Controller
                     'name' => $s->stop_name,
                     'fare' => $s->fare_from_origin,
                 ]),
+                'prices' => $t->route->prices,
                 'occupied_seats' => $t->occupiedSeats(),
             ]);
 
@@ -109,6 +110,16 @@ class TicketController extends Controller
                 ]);
             }
 
+            // Calcular tarifa en el backend
+            $trip = Trip::with('route.prices')->findOrFail($request->trip_id);
+            $priceObj = $trip->route->prices
+                ->where('origin_name', $request->boarding_stop)
+                ->where('destination_name', $request->dropoff_stop)
+                ->first();
+            $fare = $priceObj && $priceObj->ticket_fare !== null 
+                ? $priceObj->ticket_fare 
+                : $trip->route->base_fare;
+
             Ticket::create([
                 'trip_id' => $request->trip_id,
                 'client_id' => $client->id,
@@ -116,7 +127,7 @@ class TicketController extends Controller
                 'seat_number' => $request->seat_number,
                 'boarding_stop' => $request->boarding_stop,
                 'dropoff_stop' => $request->dropoff_stop,
-                'fare' => $request->fare,
+                'fare' => $fare,
                 'ticket_status' => 'emitido',
                 'payment_status' => $request->payment_status,
                 'payment_method' => $request->payment_method,
@@ -146,13 +157,23 @@ class TicketController extends Controller
                 'phone' => $request->client_phone,
             ]);
         }
+        // Recalcular tarifa en backend por si cambiaron los puntos de abordaje/bajada
+        $trip = Trip::with('route.prices')->findOrFail($request->trip_id);
+        $priceObj = $trip->route->prices
+            ->where('origin_name', $request->boarding_stop)
+            ->where('destination_name', $request->dropoff_stop)
+            ->first();
+        $fare = $priceObj && $priceObj->ticket_fare !== null 
+            ? $priceObj->ticket_fare 
+            : $trip->route->base_fare;
 
         $ticket->update([
+            'trip_id' => $request->trip_id,
             'client_id' => $client->id,
             'seat_number' => $request->seat_number,
             'boarding_stop' => $request->boarding_stop,
             'dropoff_stop' => $request->dropoff_stop,
-            'fare' => $request->fare,
+            'fare' => $fare,
             'payment_method' => $request->payment_method,
             'payment_status' => $request->payment_status,
         ]);

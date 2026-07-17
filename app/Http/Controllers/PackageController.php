@@ -151,6 +151,30 @@ class PackageController extends Controller
                     $status = 'en_ruta';
                 }
             }
+            // Calcular precio en base a la matriz de tarifas
+            $typeKey = match ($data['package_type']) {
+                'sobre_manila' => 'pkg_fare_sobre_manila',
+                'caja_pequena' => 'pkg_fare_caja_pequena',
+                'caja_mediana' => 'pkg_fare_caja_mediana',
+                'caja_grande' => 'pkg_fare_caja_grande',
+                default => null,
+            };
+            
+            $routePrice = \App\Models\RoutePrice::where('origin_name', $data['origin'])
+                ->where('destination_name', $data['destination'])
+                ->first();
+                
+            $basePrice = ($typeKey && $routePrice && $routePrice->{$typeKey} !== null) 
+                ? $routePrice->{$typeKey} 
+                : 0;
+
+            if (!empty($data['weight']) && $data['package_type'] !== 'sobre_manila') {
+                 $w = floatval($data['weight']);
+                 if ($w > 0) {
+                     $basePrice += $w * 0.50; // Extra por kg
+                 }
+            }
+            $data['price'] = $basePrice;
 
             Package::create([
                 ...$data,
@@ -198,6 +222,30 @@ class PackageController extends Controller
 
             $data['sender_id'] = $sender->id;
             $data['receiver_id'] = $receiver->id;
+            // Recalcular precio por si cambiaron los datos
+            $typeKey = match ($data['package_type']) {
+                'sobre_manila' => 'pkg_fare_sobre_manila',
+                'caja_pequena' => 'pkg_fare_caja_pequena',
+                'caja_mediana' => 'pkg_fare_caja_mediana',
+                'caja_grande' => 'pkg_fare_caja_grande',
+                default => null,
+            };
+            
+            $routePrice = \App\Models\RoutePrice::where('origin_name', $data['origin'])
+                ->where('destination_name', $data['destination'])
+                ->first();
+                
+            $basePrice = ($typeKey && $routePrice && $routePrice->{$typeKey} !== null) 
+                ? $routePrice->{$typeKey} 
+                : 0;
+
+            if (!empty($data['weight']) && $data['package_type'] !== 'sobre_manila') {
+                 $w = floatval($data['weight']);
+                 if ($w > 0) {
+                     $basePrice += $w * 0.50; // Extra por kg
+                 }
+            }
+            $data['price'] = $basePrice;
 
             $package->update($data);
         });

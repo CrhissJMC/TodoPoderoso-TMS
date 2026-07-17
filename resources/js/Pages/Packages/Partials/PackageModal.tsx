@@ -116,30 +116,24 @@ export default function PackageModal({ isOpen, pkg, activeTrips, routePrices = [
     }, [isOpen, pkg]);
 
     useEffect(() => {
-        if (!hasAdmin && !pkg && data.origin && data.destination && data.trip_id) { 
+        if (data.origin && data.destination && data.package_type) { 
             let base = 0;
-            const trip = activeTrips.find(t => t.id.toString() === data.trip_id);
-            if (trip) {
-                // Find matching price matrix entry for this route + origin + destination
-                const routeName = trip.route_name;
-                // We don't have route_id on activeTrips directly but routePrices has route_id.
-                // Assuming we can match by origin and destination directly for now since routePrices are global pairs for a route.
-                const matchedPrice = routePrices.find(rp => 
-                    rp.origin_name === data.origin && 
-                    rp.destination_name === data.destination
-                );
+            // Find matching price matrix entry for this origin + destination
+            const matchedPrice = routePrices.find(rp => 
+                rp.origin_name === data.origin && 
+                rp.destination_name === data.destination
+            );
 
-                if (matchedPrice) {
-                    const typeKey = `pkg_fare_${data.package_type}`;
-                    base = matchedPrice[typeKey] ? parseFloat(matchedPrice[typeKey]) : 0;
-                } else {
-                    // Fallback default pricing if no matrix exists for this tramo
-                    switch (data.package_type) {
-                        case 'sobre_manila': base = 5; break;
-                        case 'caja_pequena': base = 10; break;
-                        case 'caja_mediana': base = 15; break;
-                        case 'caja_grande': base = 20; break;
-                    }
+            if (matchedPrice) {
+                const typeKey = `pkg_fare_${data.package_type}`;
+                base = matchedPrice[typeKey] ? parseFloat(matchedPrice[typeKey]) : 0;
+            } else {
+                // Fallback default pricing if no matrix exists for this tramo
+                switch (data.package_type) {
+                    case 'sobre_manila': base = 5; break;
+                    case 'caja_pequena': base = 10; break;
+                    case 'caja_mediana': base = 15; break;
+                    case 'caja_grande': base = 20; break;
                 }
             }
 
@@ -147,11 +141,14 @@ export default function PackageModal({ isOpen, pkg, activeTrips, routePrices = [
                  const w = parseFloat(data.weight);
                  if (w > 0) base += w * 0.50; // Ejemplo: 0.50 soles por kg adicional
             }
-            if (base > 0) {
-                setData('price', base.toFixed(2));
+            
+            // Prevent infinite loops and only set if different
+            const newPriceStr = base.toFixed(2);
+            if (parseFloat(data.price || '0') !== base) {
+                setData('price', newPriceStr);
             }
         }
-    }, [data.package_type, data.weight, data.origin, data.destination, data.trip_id, hasAdmin, pkg, activeTrips, routePrices]);
+    }, [data.package_type, data.weight, data.origin, data.destination, routePrices]);
 
     function handleTypeChange(type: string) {
         setData('package_type', type);
@@ -432,10 +429,8 @@ export default function PackageModal({ isOpen, pkg, activeTrips, routePrices = [
 
                         <div className="grid grid-cols-3 gap-3">
                             <Field label="Precio (S/)" required error={errors.price}>
-                                <input type="number" value={data.price} onChange={e => setData('price', e.target.value)}
-                                    disabled={!hasAdmin}
-                                    title={!hasAdmin ? "Solo el administrador puede editar el precio manualmente" : ""}
-                                    placeholder="10.00" min="0" step="0.50" className={inputCls(errors.price) + (!hasAdmin ? " bg-gray-100 cursor-not-allowed" : "")} />
+                                <input type="number" value={data.price} readOnly
+                                    className={inputCls(errors.price) + " bg-gray-100 cursor-not-allowed text-gray-600 font-semibold"} />
                             </Field>
                             <Field label="Método de pago" required error={errors.payment_method}>
                                 <select value={data.payment_method} onChange={e => setData('payment_method', e.target.value)}
