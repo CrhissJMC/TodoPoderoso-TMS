@@ -34,7 +34,7 @@ class Package extends Model
 
     public static function packageTypes(): array
     {
-        return ['sobre_manila', 'caja'];
+        return ['sobre_manila', 'caja_pequena', 'caja_mediana', 'caja_grande'];
     }
 
     public static function paymentMethods(): array

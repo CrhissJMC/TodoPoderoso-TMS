@@ -75,7 +75,9 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
 
 const TYPE_LABELS: Record<string, string> = {
     sobre_manila: 'Sobre manila',
-    caja:         'Caja',
+    caja_pequena: 'Caja pequeña',
+    caja_mediana: 'Caja mediana',
+    caja_grande:  'Caja grande',
 };
 
 const PAYMENT_STATUS: Record<string, string> = {
