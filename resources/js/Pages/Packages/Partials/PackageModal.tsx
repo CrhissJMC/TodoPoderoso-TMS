@@ -71,6 +71,7 @@ export default function PackageModal({ isOpen, pkg, activeTrips, routePrices = [
         weight:         '',
         dimensions:     '',
         price:          '',
+        discount:       '',
         payment_method: 'efectivo',
         payment_status: 'pagado',
         observations:   '',
@@ -98,6 +99,7 @@ export default function PackageModal({ isOpen, pkg, activeTrips, routePrices = [
                 weight:         pkg.weight ?? '',
                 dimensions:     pkg.dimensions ?? '',
                 price:          pkg.price,
+                discount:       pkg.discount ?? '',
                 payment_method: pkg.payment_method,
                 payment_status: pkg.payment_status,
                 observations:   pkg.observations ?? '',
@@ -142,13 +144,19 @@ export default function PackageModal({ isOpen, pkg, activeTrips, routePrices = [
                  if (w > 0) base += w * 0.50; // Ejemplo: 0.50 soles por kg adicional
             }
             
+            // Subtract discount if any
+            let discountVal = parseFloat(data.discount || '0');
+            if (isNaN(discountVal) || discountVal < 0) discountVal = 0;
+            
+            base = Math.max(0, base - discountVal);
+            
             // Prevent infinite loops and only set if different
             const newPriceStr = base.toFixed(2);
             if (parseFloat(data.price || '0') !== base) {
                 setData('price', newPriceStr);
             }
         }
-    }, [data.package_type, data.weight, data.origin, data.destination, routePrices]);
+    }, [data.package_type, data.weight, data.origin, data.destination, data.discount, routePrices]);
 
     function handleTypeChange(type: string) {
         setData('package_type', type);
@@ -427,11 +435,17 @@ export default function PackageModal({ isOpen, pkg, activeTrips, routePrices = [
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Cobro</p>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-3">
-                            <Field label="Precio (S/)" required error={errors.price}>
+                        <div className="grid grid-cols-4 gap-3">
+                            <Field label="Precio Final (S/)" required error={errors.price}>
                                 <input type="number" value={data.price} readOnly
                                     className={inputCls(errors.price) + " bg-gray-100 cursor-not-allowed text-gray-600 font-semibold"} />
                             </Field>
+                            {hasAdmin && (
+                                <Field label="Descuento (S/)" error={errors.discount}>
+                                    <input type="number" value={data.discount} onChange={e => setData('discount', e.target.value)}
+                                        placeholder="0.00" min="0" step="0.50" className={inputCls(errors.discount)} />
+                                </Field>
+                            )}
                             <Field label="Método de pago" required error={errors.payment_method}>
                                 <select value={data.payment_method} onChange={e => setData('payment_method', e.target.value)}
                                     className={inputCls(errors.payment_method)}>

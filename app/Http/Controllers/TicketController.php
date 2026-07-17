@@ -116,8 +116,8 @@ class TicketController extends Controller
                 ->where('origin_name', $request->boarding_stop)
                 ->where('destination_name', $request->dropoff_stop)
                 ->first();
-            $fare = $priceObj && $priceObj->ticket_fare !== null 
-                ? $priceObj->ticket_fare 
+            $fare = $priceObj && $priceObj->ticket_fare !== null
+                ? $priceObj->ticket_fare
                 : $trip->route->base_fare;
 
             Ticket::create([
@@ -163,8 +163,8 @@ class TicketController extends Controller
             ->where('origin_name', $request->boarding_stop)
             ->where('destination_name', $request->dropoff_stop)
             ->first();
-        $fare = $priceObj && $priceObj->ticket_fare !== null 
-            ? $priceObj->ticket_fare 
+        $fare = $priceObj && $priceObj->ticket_fare !== null
+            ? $priceObj->ticket_fare
             : $trip->route->base_fare;
 
         $ticket->update([

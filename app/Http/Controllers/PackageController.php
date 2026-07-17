@@ -159,22 +159,29 @@ class PackageController extends Controller
                 'caja_grande' => 'pkg_fare_caja_grande',
                 default => null,
             };
-            
-            $routePrice = \App\Models\RoutePrice::where('origin_name', $data['origin'])
+
+            $routePrice = RoutePrice::where('origin_name', $data['origin'])
                 ->where('destination_name', $data['destination'])
                 ->first();
-                
-            $basePrice = ($typeKey && $routePrice && $routePrice->{$typeKey} !== null) 
-                ? $routePrice->{$typeKey} 
+
+            $basePrice = ($typeKey && $routePrice && $routePrice->{$typeKey} !== null)
+                ? $routePrice->{$typeKey}
                 : 0;
 
-            if (!empty($data['weight']) && $data['package_type'] !== 'sobre_manila') {
-                 $w = floatval($data['weight']);
-                 if ($w > 0) {
-                     $basePrice += $w * 0.50; // Extra por kg
-                 }
+            if (! empty($data['weight']) && $data['package_type'] !== 'sobre_manila') {
+                $w = floatval($data['weight']);
+                if ($w > 0) {
+                    $basePrice += $w * 0.50; // Extra por kg
+                }
             }
-            $data['price'] = $basePrice;
+
+            $discount = 0;
+            if (Auth::user() && Auth::user()->role_id === 1 && ! empty($data['discount'])) {
+                $discount = floatval($data['discount']);
+            }
+
+            $data['price'] = max(0, $basePrice - $discount);
+            $data['discount'] = $discount;
 
             Package::create([
                 ...$data,
@@ -230,22 +237,29 @@ class PackageController extends Controller
                 'caja_grande' => 'pkg_fare_caja_grande',
                 default => null,
             };
-            
-            $routePrice = \App\Models\RoutePrice::where('origin_name', $data['origin'])
+
+            $routePrice = RoutePrice::where('origin_name', $data['origin'])
                 ->where('destination_name', $data['destination'])
                 ->first();
-                
-            $basePrice = ($typeKey && $routePrice && $routePrice->{$typeKey} !== null) 
-                ? $routePrice->{$typeKey} 
+
+            $basePrice = ($typeKey && $routePrice && $routePrice->{$typeKey} !== null)
+                ? $routePrice->{$typeKey}
                 : 0;
 
-            if (!empty($data['weight']) && $data['package_type'] !== 'sobre_manila') {
-                 $w = floatval($data['weight']);
-                 if ($w > 0) {
-                     $basePrice += $w * 0.50; // Extra por kg
-                 }
+            if (! empty($data['weight']) && $data['package_type'] !== 'sobre_manila') {
+                $w = floatval($data['weight']);
+                if ($w > 0) {
+                    $basePrice += $w * 0.50; // Extra por kg
+                }
             }
-            $data['price'] = $basePrice;
+
+            $discount = 0;
+            if (Auth::user() && Auth::user()->role_id === 1 && ! empty($data['discount'])) {
+                $discount = floatval($data['discount']);
+            }
+
+            $data['price'] = max(0, $basePrice - $discount);
+            $data['discount'] = $discount;
 
             $package->update($data);
         });

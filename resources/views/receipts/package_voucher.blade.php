@@ -81,7 +81,19 @@
     <div class="divider"></div>
     
     <div class="totals">
-        TOTAL FLETE: S/ {{ number_format($package->price, 2) }}
+        <div class="info-row">
+            <span class="info-label" style="font-size:12px;">FLETE BASE:</span>
+            <span class="info-value" style="font-size:12px;">S/ {{ number_format($package->price + $package->discount, 2) }}</span>
+        </div>
+        @if($package->discount > 0)
+        <div class="info-row">
+            <span class="info-label" style="font-size:12px; color:red;">DESCUENTO:</span>
+            <span class="info-value" style="font-size:12px; color:red;">-S/ {{ number_format($package->discount, 2) }}</span>
+        </div>
+        @endif
+        <div style="font-size: 18px; font-weight: bold; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #000;">
+            TOTAL A PAGAR: S/ {{ number_format($package->price, 2) }}
+        </div>
     </div>
 
     <div class="divider"></div>
