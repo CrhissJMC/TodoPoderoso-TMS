@@ -153,23 +153,23 @@ export default function PricesTab({ routes, primaryColor }: { routes: Route[], p
                                                                 {p.destination_name}
                                                             </td>
                                                             <td className="px-4 py-2 border-l bg-blue-50/30">
-                                                                <input type="number" step="0.5" className="w-20 p-1 text-sm border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 mx-auto block" 
+                                                                <input type="number" step="0.5" className="w-20 p-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mx-auto block bg-white" 
                                                                     value={p.ticket_fare ?? ''} onChange={e => updatePriceField(r.id, p.origin_name, p.destination_name, 'ticket_fare', e.target.value)} />
                                                             </td>
                                                             <td className="px-2 py-2 border-l bg-green-50/30">
-                                                                <input type="number" step="0.5" className="w-16 p-1 text-sm border-gray-300 rounded focus:ring-green-500 focus:border-green-500 mx-auto block" 
+                                                                <input type="number" step="0.5" className="w-20 p-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 mx-auto block bg-white" 
                                                                     value={p.pkg_fare_sobre_manila ?? ''} onChange={e => updatePriceField(r.id, p.origin_name, p.destination_name, 'pkg_fare_sobre_manila', e.target.value)} />
                                                             </td>
                                                             <td className="px-2 py-2 border-l bg-green-50/30">
-                                                                <input type="number" step="0.5" className="w-16 p-1 text-sm border-gray-300 rounded focus:ring-green-500 focus:border-green-500 mx-auto block" 
+                                                                <input type="number" step="0.5" className="w-20 p-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 mx-auto block bg-white" 
                                                                     value={p.pkg_fare_caja_pequena ?? ''} onChange={e => updatePriceField(r.id, p.origin_name, p.destination_name, 'pkg_fare_caja_pequena', e.target.value)} />
                                                             </td>
                                                             <td className="px-2 py-2 border-l bg-green-50/30">
-                                                                <input type="number" step="0.5" className="w-16 p-1 text-sm border-gray-300 rounded focus:ring-green-500 focus:border-green-500 mx-auto block" 
+                                                                <input type="number" step="0.5" className="w-20 p-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 mx-auto block bg-white" 
                                                                     value={p.pkg_fare_caja_mediana ?? ''} onChange={e => updatePriceField(r.id, p.origin_name, p.destination_name, 'pkg_fare_caja_mediana', e.target.value)} />
                                                             </td>
                                                             <td className="px-2 py-2 border-l bg-green-50/30">
-                                                                <input type="number" step="0.5" className="w-16 p-1 text-sm border-gray-300 rounded focus:ring-green-500 focus:border-green-500 mx-auto block" 
+                                                                <input type="number" step="0.5" className="w-20 p-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 mx-auto block bg-white" 
                                                                     value={p.pkg_fare_caja_grande ?? ''} onChange={e => updatePriceField(r.id, p.origin_name, p.destination_name, 'pkg_fare_caja_grande', e.target.value)} />
                                                             </td>
                                                         </tr>
