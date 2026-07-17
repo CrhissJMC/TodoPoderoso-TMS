@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ActiveUserMiddleware;
+use App\Http\Middleware\CheckLicenseExpiration;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ActiveUserMiddleware::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            CheckLicenseExpiration::class,
         ]);
 
         // Register middleware aliases

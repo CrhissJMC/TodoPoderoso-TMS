@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Driver;
 use App\Models\Package;
 use App\Models\Route;
 use App\Models\Ticket;
@@ -338,6 +339,30 @@ class DashboardController extends Controller
                 ->sortBy('days_left')
                 ->values();
 
+            // 11. Estadísticas de Licencias de Conductores
+            $drivers = Driver::whereNull('deleted_at')->get(['id', 'license_expiry']);
+            $vencida = 0;
+            $porVencer = 0; // <= 2 meses
+            $vigente = 0; // > 2 meses
+
+            $twoMonthsFromNow = Carbon::today()->addMonths(2);
+
+            foreach ($drivers as $d) {
+                if (! $d->license_expiry || $d->license_expiry->isPast()) {
+                    $vencida++;
+                } elseif ($d->license_expiry <= $twoMonthsFromNow) {
+                    $porVencer++;
+                } else {
+                    $vigente++;
+                }
+            }
+
+            $driverLicenseStats = [
+                ['name' => 'Vigente (> 2 meses)', 'value' => $vigente, 'color' => '#10B981'],
+                ['name' => 'Por vencer (<= 2 meses)', 'value' => $porVencer, 'color' => '#EAB308'],
+                ['name' => 'Vencida', 'value' => $vencida, 'color' => '#EF4444'],
+            ];
+
             return Inertia::render('Dashboard', [
                 'allRoutes' => $allRoutes,
                 'filters' => $request->only(['route_id']),
@@ -354,6 +379,7 @@ class DashboardController extends Controller
                 'topPackageSellers' => $topPackageSellers,
                 'statusConfig' => Trip::statusConfig(),
                 'complianceAlerts' => $complianceAlerts,
+                'driverLicenseStats' => $driverLicenseStats,
             ]);
         }
         if ($roleName === 'operador_encomiendas' || $roleId === 4) {

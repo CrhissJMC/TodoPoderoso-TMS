@@ -3,6 +3,7 @@
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
+use App\Http\Controllers\DriverLicenseController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
@@ -31,6 +32,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Renovación de Licencia (Chofer)
+    Route::get('/driver/license/renew', [DriverLicenseController::class, 'showRenewForm'])->name('driver.license.renew');
+    Route::post('/driver/license/renew', [DriverLicenseController::class, 'processRenewal']);
 
     // Módulo de Vehículos
     Route::middleware('permission:vehiculos.ver')->group(function () {

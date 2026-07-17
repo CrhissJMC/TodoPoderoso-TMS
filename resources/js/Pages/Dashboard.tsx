@@ -76,6 +76,7 @@ interface Props {
     clientRouteSummary?: { name: string; trips_count: number }[];
     statusConfig: Record<string, { label: string; color: string }>;
     complianceAlerts?: { plate: string; days_left: number; expiration_date: string }[];
+    driverLicenseStats?: { name: string; value: number; color: string }[];
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -88,7 +89,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgress = 0, passengersToday = 0, revenueToday = 0, occupancyRate = 0, revenueChart = [], packagesCountChart = [], topRoutes = [], recentTrips = [], pendingPackages = [], topTicketSellers = [], topPackageSellers = [], driverTrips = [], driverTotalTrips = 0, driverFrequentRoutes = [], driverUpcomingPackages = [], driverRanking = 0, operatorTotalPackages = 0, operatorPendingPackages = 0, operatorRecentPackages = [], operatorRanking = 0, sellerTotalTickets = 0, sellerTodayTickets = 0, sellerRecentTickets = [], sellerRanking = 0, agentTotalTickets = 0, agentTodayTickets = 0, agentRecentTickets = [], agentTotalPackages = 0, agentPendingPackages = 0, agentRecentPackages = [], agentRevenueToday = 0, clientError, clientKpis, clientActiveTrips = [], clientUpcomingPackages = [], clientRecentActivity = [], clientTripHistory = [], clientOtd = 0, clientTotalDelivered = 0, clientOnTimeDelivered = 0, clientRouteSummary = [], statusConfig, complianceAlerts = [] }: Props) {
+export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgress = 0, passengersToday = 0, revenueToday = 0, occupancyRate = 0, revenueChart = [], packagesCountChart = [], topRoutes = [], recentTrips = [], pendingPackages = [], topTicketSellers = [], topPackageSellers = [], driverTrips = [], driverTotalTrips = 0, driverFrequentRoutes = [], driverUpcomingPackages = [], driverRanking = 0, operatorTotalPackages = 0, operatorPendingPackages = 0, operatorRecentPackages = [], operatorRanking = 0, sellerTotalTickets = 0, sellerTodayTickets = 0, sellerRecentTickets = [], sellerRanking = 0, agentTotalTickets = 0, agentTodayTickets = 0, agentRecentTickets = [], agentTotalPackages = 0, agentPendingPackages = 0, agentRecentPackages = [], agentRevenueToday = 0, clientError, clientKpis, clientActiveTrips = [], clientUpcomingPackages = [], clientRecentActivity = [], clientTripHistory = [], clientOtd = 0, clientTotalDelivered = 0, clientOnTimeDelivered = 0, clientRouteSummary = [], statusConfig, complianceAlerts = [], driverLicenseStats = [] }: Props) {
     const { auth } = usePage().props as any;
     const [clientTab, setClientTab] = useState<'resumen' | 'historial' | 'notificaciones'>('resumen');
     const isAdmin = auth.role === 'administrador' || auth.user.role_id === 1;
@@ -1014,9 +1015,9 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                         </div>
                     </div>
 
-                    {/* Gráficos de Encomiendas */}
-                    <div className="grid grid-cols-1 gap-6">
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    {/* Gráficos de Encomiendas y Licencias */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                             <h3 className="text-lg font-bold text-gray-900 mb-6">Estado de Encomiendas (Últimos 7 días)</h3>
                             <div className="h-72 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -1047,6 +1048,50 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                         <Area type="monotone" name="Devueltas" dataKey="devueltas" stroke="#EF4444" strokeWidth={3} fillOpacity={1} fill="url(#colorDevueltas)" />
                                     </AreaChart>
                                 </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Gráfico Circular: Estado de Licencias */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">Estado de Licencias</h3>
+                            <p className="text-xs text-gray-500 mb-4">De conductores registrados</p>
+                            <div className="flex-1 w-full min-h-[250px]">
+                                {driverLicenseStats.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={driverLicenseStats}
+                                                cx="50%"
+                                                cy="45%"
+                                                innerRadius={60}
+                                                outerRadius={90}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                                nameKey="name"
+                                                stroke="none"
+                                            >
+                                                {driverLicenseStats.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip 
+                                                formatter={(value: any) => [`${value} conductores`, 'Total']}
+                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                            />
+                                            <Legend 
+                                                layout="vertical" 
+                                                verticalAlign="bottom" 
+                                                align="center"
+                                                iconType="circle"
+                                                wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                                        No hay datos de licencias
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
