@@ -67,7 +67,7 @@
             <table class="info-table">
                 <tr><td><strong>Moneda</strong></td><td>: SOLES</td></tr>
                 <tr><td><strong>Condicion Pago</strong></td><td>: CONTADO</td></tr>
-                <tr><td><strong>Vendedor</strong></td><td>: {{ strtoupper($package->createdBy->name) }}</td></tr>
+                <tr><td><strong>Vendedor</strong></td><td>: {{ strtoupper($package->receivedBy->name) }}</td></tr>
                 <tr><td><strong>Medio de Pago</strong></td><td>: EFECTIVO</td></tr>
             </table>
         </div>
@@ -84,7 +84,7 @@
                 </td>
                 <td width="50%">
                     <strong>ORIGEN:</strong> {{ strtoupper($package->trip->route->origin->name) }} &nbsp;&nbsp; <strong>DESTINO:</strong> {{ strtoupper($package->trip->route->destination->name) }}<br>
-                    <strong>TIPO:</strong> {{ strtoupper($package->package_type) }} &nbsp;&nbsp; <strong>PESO:</strong> {{ $package->weight_kg }} KG<br>
+                    <strong>TIPO:</strong> {{ strtoupper($package->package_type) }} &nbsp;&nbsp; <strong>PESO:</strong> {{ $package->weight }} KG<br>
                     <strong>TRACKING:</strong> {{ $package->tracking_code }}
                 </td>
             </tr>
@@ -113,7 +113,7 @@
                     {{ strtoupper($package->trip->route->origin->name) }} - {{ strtoupper($package->trip->route->destination->name) }} <br>
                     DESCRIPCION: {{ strtoupper($package->description ?? 'PAQUETE') }}
                 </td>
-                <td>{{ $package->weight_kg }} KG</td>
+                <td>{{ $package->weight }} KG</td>
                 <td>{{ number_format($package->price, 2) }}</td>
                 <td>{{ number_format($package->price, 2) }}</td>
             </tr>

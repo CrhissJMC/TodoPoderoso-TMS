@@ -82,7 +82,7 @@ class ReceiptController extends Controller
      */
     public function packageVoucher(Package $package)
     {
-        $package->load(['sender', 'receiver', 'trip.route.origin', 'trip.route.destination', 'createdBy']);
+        $package->load(['sender', 'receiver', 'trip.route.origin', 'trip.route.destination', 'receivedBy']);
         
         $data = [
             'package' => $package,
@@ -100,7 +100,7 @@ class ReceiptController extends Controller
      */
     public function packageBoleta(Package $package)
     {
-        $package->load(['sender', 'receiver', 'trip.route.origin', 'trip.route.destination', 'createdBy']);
+        $package->load(['sender', 'receiver', 'trip.route.origin', 'trip.route.destination', 'receivedBy']);
         
         $boletaNumber = 'B001-' . str_pad($package->id, 8, '0', STR_PAD_LEFT);
         $amountWords = NumberToLetters::convert($package->price);
@@ -123,7 +123,7 @@ class ReceiptController extends Controller
      */
     public function packageFactura(Package $package)
     {
-        $package->load(['sender', 'receiver', 'trip.route.origin', 'trip.route.destination', 'createdBy']);
+        $package->load(['sender', 'receiver', 'trip.route.origin', 'trip.route.destination', 'receivedBy']);
         
         $facturaNumber = 'F001-' . str_pad($package->id, 8, '0', STR_PAD_LEFT);
         $amountWords = NumberToLetters::convert($package->price);

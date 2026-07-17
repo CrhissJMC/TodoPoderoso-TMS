@@ -55,7 +55,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">TIPO/PESO:</span>
-            <span class="info-value">{{ strtoupper($package->package_type) }} / {{ $package->weight_kg }} KG</span>
+            <span class="info-value">{{ strtoupper($package->package_type) }} / {{ $package->weight }} KG</span>
         </div>
     </div>
 
@@ -70,7 +70,7 @@
     <div style="text-align: left;">
         <div class="info-row">
             <span class="info-label">CAJERO:</span>
-            <span class="info-value">{{ substr(strtoupper($package->createdBy->name), 0, 15) }}</span>
+            <span class="info-value">{{ substr(strtoupper($package->receivedBy->name), 0, 15) }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">MÉTODO PAGO:</span>
