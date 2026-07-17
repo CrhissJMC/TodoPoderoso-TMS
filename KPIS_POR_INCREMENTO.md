@@ -64,11 +64,11 @@ Este Dashboard no es genérico, se alimentará de los datos del propio repositor
    *(Ejemplo del gráfico dinámico de progreso histórico)*
    ```mermaid
    xychart-beta
-       title "Evolución del Score Global de Calidad (Sprints 1 al 4)"
-       x-axis [Sprint 1, Sprint 2, Sprint 3, Sprint 4]
+       title "Evolución del Score Global de Calidad (Sprints 1 y 2)"
+       x-axis [Sprint 1, Sprint 2]
        y-axis "Score (%)" 50 --> 100
-       line [62, 75, 88, 96]
-       bar [62, 75, 88, 96]
+       line [62, 88]
+       bar [62, 88]
    ```
 
 4. **Sistema de Semaforización (Estado de Metas Reales):**
@@ -150,9 +150,9 @@ Para robustecer la vigilancia del proyecto, se agregan submétricas específicas
   ```mermaid
   xychart-beta
       title "Tiempo de Entrega (DevOps Lead Time)"
-      x-axis [Sprint 1, Sprint 2, Sprint 3, Sprint 4]
+      x-axis [Sprint 1, Sprint 2]
       y-axis "Horas hasta Integración" 0 --> 48
-      line [42, 24, 18, 5]
+      line [42, 24]
   ```
 
 * **Control de Deuda Técnica (Clean Code Rate):** 
