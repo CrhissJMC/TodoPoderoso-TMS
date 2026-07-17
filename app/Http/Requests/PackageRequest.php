@@ -58,4 +58,29 @@ class PackageRequest extends FormRequest
             'weight.min' => 'El peso debe ser mayor a 0.',
         ];
     }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if ($this->trip_id) {
+                $trip = \App\Models\Trip::with('route.stops')->find($this->trip_id);
+                if ($trip) {
+                    $locations = collect([$trip->route->origin])
+                        ->merge($trip->route->stops->pluck('stop_name'))
+                        ->merge([$trip->route->destination])
+                        ->values()
+                        ->all();
+                    
+                    $originIndex = array_search($this->origin, $locations);
+                    $destinationIndex = array_search($this->destination, $locations);
+
+                    if ($originIndex === false || $destinationIndex === false) {
+                        $validator->errors()->add('trip_id', 'El origen o destino no pertenecen a la ruta de este viaje.');
+                    } elseif ($originIndex >= $destinationIndex) {
+                        $validator->errors()->add('destination', 'El destino debe ser una parada posterior al origen en la ruta seleccionada.');
+                    }
+                }
+            }
+        });
+    }
 }

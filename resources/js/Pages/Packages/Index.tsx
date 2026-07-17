@@ -13,6 +13,7 @@ interface ActiveTrip {
     status: string;
     trip_date: string;
     route_name: string;
+    locations: string[];
 }
 
 interface PackageItem {
@@ -51,6 +52,7 @@ interface Props {
     paymentMethods: string[];
     paymentStatuses: string[];
     statuses: string[];
+    locations: string[];
 }
 
 // ── Constantes ───────────────────────────────────────────────────────────────
@@ -89,7 +91,7 @@ function formatDate(d: string) {
 
 export default function PackagesIndex({
     packages, counts, activeTrips, filters,
-    packageTypes, paymentMethods, paymentStatuses, statuses,
+    packageTypes, paymentMethods, paymentStatuses, statuses, locations,
 }: Props) {
     const { flash, auth } = usePage().props as any;
     const permissions = auth.permissions || [];
@@ -357,10 +359,16 @@ export default function PackagesIndex({
                 )}
             </div>
 
-            <PackageModal isOpen={modalOpen} pkg={editPkg} activeTrips={activeTrips}
-                packageTypes={packageTypes} paymentMethods={paymentMethods} paymentStatuses={paymentStatuses}
-                onClose={closeModal} />
-            <DeleteConfirmModal pkg={deleteTarget} onClose={() => setDelete(null)} />
+            <PackageModal
+                isOpen={modalOpen}
+                pkg={editPkg}
+                activeTrips={activeTrips}
+                packageTypes={packageTypes}
+                paymentMethods={paymentMethods}
+                paymentStatuses={paymentStatuses}
+                locations={locations}
+                onClose={closeModal}
+            /><DeleteConfirmModal pkg={deleteTarget} onClose={() => setDelete(null)} />
             <AssignTripModal pkg={assignTarget} activeTrips={activeTrips} onClose={() => setAssign(null)} />
         </AuthenticatedLayout>
     );

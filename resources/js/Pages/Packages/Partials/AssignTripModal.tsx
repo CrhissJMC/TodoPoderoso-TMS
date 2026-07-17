@@ -20,14 +20,13 @@ export default function AssignTripModal({ pkg, activeTrips, onClose }: Props) {
 
     if (!pkg) return null;
 
-    // Filtrar viajes que coincidan con el origen y destino del paquete
-    const compatibleTrips = activeTrips.filter(t => 
-        // El viaje tiene un route_name (ej: "Lima - Arequipa") y la encomienda tiene origin "Lima" y destination "Arequipa"
-        // Como no tenemos el origin/destination exactos del viaje aquí, podemos buscar que el route_name contenga ambos.
-        t.route_name.toLowerCase().includes(pkg.origin.toLowerCase()) && 
-        t.route_name.toLowerCase().includes(pkg.destination.toLowerCase()) &&
-        t.status !== 'completado' && t.status !== 'cancelado'
-    );
+    // Filtrar viajes que coincidan con el origen y destino del paquete usando el array de locations
+    const compatibleTrips = activeTrips.filter(t => {
+        if (!t.locations) return false;
+        const oIdx = t.locations.indexOf(pkg.origin);
+        const dIdx = t.locations.indexOf(pkg.destination);
+        return oIdx !== -1 && dIdx !== -1 && oIdx < dIdx && t.status !== 'completado' && t.status !== 'cancelado';
+    });
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();

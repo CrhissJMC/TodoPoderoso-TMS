@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
 
-interface ActiveTrip { id: number; label: string; status: string; route_name: string; }
+interface ActiveTrip { id: number; label: string; status: string; route_name: string; locations: string[]; }
 interface PackageItem {
     id: number;
     sender: { name: string; document_number: string; document_type: string; phone: string | null };
@@ -17,6 +17,7 @@ interface Props {
     packageTypes: string[];
     paymentMethods: string[];
     paymentStatuses: string[];
+    locations: string[];
     onClose: () => void;
 }
 
@@ -39,7 +40,7 @@ function Field({ label, error, required, children }: { label: string; error?: st
 const inputCls = (error?: string) =>
     `w-full px-3 py-2 text-sm border rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-colors ${error ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-gray-300 focus:border-gray-400'}`;
 
-export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, paymentMethods, paymentStatuses, onClose }: Props) {
+export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, paymentMethods, paymentStatuses, locations, onClose }: Props) {
     const isEditing = !!pkg;
     const [showBoxFields, setShowBoxFields] = useState(false);
 
@@ -179,6 +180,13 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
             post(route('packages.store'), { onSuccess: handleClose });
         }
     }
+
+    const availableTrips = activeTrips.filter(t => {
+        if (!data.origin || !data.destination) return true;
+        const oIdx = t.locations.indexOf(data.origin);
+        const dIdx = t.locations.indexOf(data.destination);
+        return oIdx !== -1 && dIdx !== -1 && oIdx < dIdx;
+    });
 
     if (!isOpen) return null;
 
@@ -343,12 +351,20 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
 
                         <div className="grid grid-cols-2 gap-3">
                             <Field label="Origen" required error={errors.origin}>
-                                <input value={data.origin} onChange={e => setData('origin', e.target.value)}
-                                    placeholder="Chachapoyas" className={inputCls(errors.origin)} />
+                                <select value={data.origin} onChange={e => {
+                                    setData(d => ({ ...d, origin: e.target.value, trip_id: '' }));
+                                }} className={inputCls(errors.origin)}>
+                                    <option value="">Seleccione origen</option>
+                                    {locations.map(l => <option key={l} value={l}>{l}</option>)}
+                                </select>
                             </Field>
                             <Field label="Destino" required error={errors.destination}>
-                                <input value={data.destination} onChange={e => setData('destination', e.target.value)}
-                                    placeholder="Bagua Grande" className={inputCls(errors.destination)} />
+                                <select value={data.destination} onChange={e => {
+                                    setData(d => ({ ...d, destination: e.target.value, trip_id: '' }));
+                                }} className={inputCls(errors.destination)}>
+                                    <option value="">Seleccione destino</option>
+                                    {locations.map(l => <option key={l} value={l}>{l}</option>)}
+                                </select>
                             </Field>
                         </div>
 
@@ -356,11 +372,15 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                             <select value={data.trip_id} onChange={e => setData('trip_id', e.target.value)}
                                 className={inputCls(errors.trip_id)}>
                                 <option value="">Sin asignar (registrar como recibido)</option>
-                                {activeTrips.map(t => (
+                                {availableTrips.map(t => (
                                     <option key={t.id} value={t.id}>{t.label}</option>
                                 ))}
                             </select>
-                            <p className="text-xs text-gray-400 mt-0.5">Solo viajes activos de hoy en adelante</p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                                {availableTrips.length === 0 && data.origin && data.destination 
+                                    ? 'No hay viajes activos para esta ruta.'
+                                    : 'Solo viajes activos de hoy en adelante que cubren esta ruta.'}
+                            </p>
                         </Field>
 
                         {/* Cobro */}
