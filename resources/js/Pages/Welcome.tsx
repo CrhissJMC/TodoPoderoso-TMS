@@ -6,6 +6,9 @@ interface RouteItem {
     id: number;
     name: string;
     base_fare: number;
+    origin: string;
+    destination: string;
+    prices?: any[];
 }
 
 interface Props {
@@ -319,7 +322,7 @@ export default function Welcome({ canLogin, activeRoutes }: Props) {
                                             const mainPrice = route.prices?.find((p: any) => p.origin_name === route.origin && p.destination_name === route.destination);
                                             const minPkgFare = mainPrice?.pkg_fare_sobre_manila || 
                                                 (route.prices && route.prices.length > 0 
-                                                    ? Math.min(...route.prices.map((p: any) => Number(p.pkg_fare_sobre_manila)).filter(n => n > 0)) 
+                                                    ? Math.min(...route.prices.map((p: any) => Number(p.pkg_fare_sobre_manila)).filter((n: number) => n > 0)) 
                                                     : 0);
 
                                             return (
