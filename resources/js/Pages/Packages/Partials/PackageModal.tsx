@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 
 interface ActiveTrip { id: number; label: string; status: string; route_name: string; locations: string[]; }
 interface PackageItem {
@@ -14,6 +14,7 @@ interface Props {
     isOpen: boolean;
     pkg: PackageItem | null;
     activeTrips: ActiveTrip[];
+    routePrices?: any[];
     packageTypes: string[];
     paymentMethods: string[];
     paymentStatuses: string[];
@@ -21,7 +22,7 @@ interface Props {
     onClose: () => void;
 }
 
-const TYPE_LABELS: Record<string, string>    = { sobre_manila: 'Sobre manila', caja: 'Caja' };
+const TYPE_LABELS: Record<string, string>    = { sobre_manila: 'Sobre manila', caja_pequena: 'Caja pequeña', caja_mediana: 'Caja mediana', caja_grande: 'Caja grande' };
 const METHOD_LABELS: Record<string, string>  = { efectivo: 'Efectivo', yape: 'Yape', plin: 'Plin', tarjeta: 'Tarjeta' };
 const PSTATUS_LABELS: Record<string, string> = { pagado: 'Pagado', pendiente: 'Pendiente' };
 
@@ -40,8 +41,12 @@ function Field({ label, error, required, children }: { label: string; error?: st
 const inputCls = (error?: string) =>
     `w-full px-3 py-2 text-sm border rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-colors ${error ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-gray-300 focus:border-gray-400'}`;
 
-export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, paymentMethods, paymentStatuses, locations, onClose }: Props) {
+export default function PackageModal({ isOpen, pkg, activeTrips, routePrices = [], packageTypes, paymentMethods, paymentStatuses, locations, onClose }: Props) {
     const isEditing = !!pkg;
+    const { auth } = usePage().props as any;
+    const permissions = auth?.permissions || [];
+    const hasAdmin = permissions.includes('encomiendas.admin') || permissions.includes('administrador');
+    
     const [senderLookup, setSenderLookup] = useState<'idle' | 'searching' | 'found' | 'new'>('idle');
     const [receiverLookup, setReceiverLookup] = useState<'idle' | 'searching' | 'found' | 'new'>('idle');
     const [showDimensions, setShowDimensions] = useState(false);
@@ -98,27 +103,46 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                 observations:   pkg.observations ?? '',
             };
             setData(d);
-            setShowBoxFields(pkg.package_type === 'caja');
+            setShowDimensions(pkg.package_type.startsWith('caja'));
             setSenderLookup('found');
             setReceiverLookup('found');
         } else if (isOpen) {
             reset();
             clearErrors();
-            setShowBoxFields(false);
+            setShowDimensions(false);
             setSenderLookup('idle');
             setReceiverLookup('idle');
         }
     }, [isOpen, pkg]);
 
     useEffect(() => {
-        if (!hasAdmin && !pkg) { // Solo autocalcular si no es admin y es nueva encomienda (no edición)
+        if (!hasAdmin && !pkg && data.origin && data.destination && data.trip_id) { 
             let base = 0;
-            switch (data.package_type) {
-                case 'sobre_manila': base = 5; break;
-                case 'caja_pequena': base = 10; break;
-                case 'caja_mediana': base = 15; break;
-                case 'caja_grande': base = 20; break;
+            const trip = activeTrips.find(t => t.id.toString() === data.trip_id);
+            if (trip) {
+                // Find matching price matrix entry for this route + origin + destination
+                const routeName = trip.route_name;
+                // We don't have route_id on activeTrips directly but routePrices has route_id.
+                // Assuming we can match by origin and destination directly for now since routePrices are global pairs for a route.
+                const matchedPrice = routePrices.find(rp => 
+                    rp.origin_name === data.origin && 
+                    rp.destination_name === data.destination
+                );
+
+                if (matchedPrice) {
+                    const typeKey = `pkg_fare_${data.package_type}`;
+                    base = matchedPrice[typeKey] ? parseFloat(matchedPrice[typeKey]) : 0;
+                } else {
+                    // Fallback default pricing if no matrix exists for this tramo
+                    switch (data.package_type) {
+                        case 'sobre_manila': base = 5; break;
+                        case 'caja_pequena': base = 10; break;
+                        case 'caja_mediana': base = 15; break;
+                        case 'caja_grande': base = 20; break;
+                    }
+                }
             }
+
             if (data.weight && data.package_type !== 'sobre_manila') {
                  const w = parseFloat(data.weight);
                  if (w > 0) base += w * 0.50; // Ejemplo: 0.50 soles por kg adicional
@@ -127,7 +151,7 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
                 setData('price', base.toFixed(2));
             }
         }
-    }, [data.package_type, data.weight, hasAdmin, pkg]);
+    }, [data.package_type, data.weight, data.origin, data.destination, data.trip_id, hasAdmin, pkg, activeTrips, routePrices]);
 
     function handleTypeChange(type: string) {
         setData('package_type', type);
@@ -185,7 +209,7 @@ export default function PackageModal({ isOpen, pkg, activeTrips, packageTypes, p
     }
 
     function handleClose() {
-        reset(); clearErrors(); setShowBoxFields(false);
+        reset(); clearErrors(); setShowDimensions(false);
         setSenderLookup('idle'); setReceiverLookup('idle');
         onClose();
     }

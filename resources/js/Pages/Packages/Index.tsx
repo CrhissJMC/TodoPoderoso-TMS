@@ -47,7 +47,8 @@ interface Props {
     packages: Paginated<PackageItem>;
     counts: Record<string, number>;
     activeTrips: ActiveTrip[];
-    filters: Record<string, string>;
+    routePrices: any[];
+    filters: { search?: string; status?: string; package_type?: string };
     packageTypes: string[];
     paymentMethods: string[];
     paymentStatuses: string[];
@@ -92,7 +93,7 @@ function formatDate(d: string) {
 // ── Página ───────────────────────────────────────────────────────────────────
 
 export default function PackagesIndex({
-    packages, counts, activeTrips, filters,
+    packages, counts, activeTrips, routePrices, filters,
     packageTypes, paymentMethods, paymentStatuses, statuses, locations,
 }: Props) {
     const { flash, auth } = usePage().props as any;
@@ -365,6 +366,7 @@ export default function PackagesIndex({
                 isOpen={modalOpen}
                 pkg={editPkg}
                 activeTrips={activeTrips}
+                routePrices={routePrices}
                 packageTypes={packageTypes}
                 paymentMethods={paymentMethods}
                 paymentStatuses={paymentStatuses}

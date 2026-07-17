@@ -87,10 +87,13 @@ class PackageController extends Controller
             return collect([$r->origin])->merge($r->stops->pluck('stop_name'))->merge([$r->destination]);
         })->unique()->sort()->values()->all();
 
+        $routePrices = \App\Models\RoutePrice::all();
+
         return Inertia::render('Packages/Index', [
             'packages' => $packages,
             'counts' => $counts,
             'activeTrips' => $activeTrips,
+            'routePrices' => $routePrices,
             'filters' => $request->only(['search', 'status', 'package_type']),
             'packageTypes' => Package::packageTypes(),
             'paymentMethods' => Package::paymentMethods(),

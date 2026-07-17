@@ -1,5 +1,7 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useState } from 'react';
+import PricesTab from './Partials/PricesTab';
 
 interface Props {
     companySettings: {
@@ -8,9 +10,10 @@ interface Props {
         bg_color: string;
         accent_color: string;
     };
+    routes: any[];
 }
 
-export default function CompanyEdit({ companySettings }: Props) {
+export default function CompanyEdit({ companySettings, routes }: Props) {
     const { flash } = usePage().props as any;
     
     const { data, setData, put, processing, errors } = useForm({
@@ -32,11 +35,13 @@ export default function CompanyEdit({ companySettings }: Props) {
         '--preview-accent': data.accent_color,
     } as React.CSSProperties;
 
+    const [activeTab, setActiveTab] = useState<'theme'|'prices'>('theme');
+
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">Configuración de la Empresa</h2>}>
             <Head title="Configuración de Empresa" />
 
-            <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-8 space-y-8">
+            <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-8 space-y-6">
                 
                 {flash?.success && (
                     <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2">
@@ -45,7 +50,24 @@ export default function CompanyEdit({ companySettings }: Props) {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Tabs */}
+                <div className="flex border-b border-gray-200">
+                    <button 
+                        onClick={() => setActiveTab('theme')} 
+                        className={`py-3 px-6 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'theme' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Estilos y Colores
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('prices')} 
+                        className={`py-3 px-6 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'prices' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Tarifas de Rutas
+                    </button>
+                </div>
+
+                {activeTab === 'theme' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Formulario */}
                     <div className="lg:col-span-1">
                         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
@@ -187,6 +209,10 @@ export default function CompanyEdit({ companySettings }: Props) {
                         </div>
                     </div>
                 </div>
+                )}
+                {activeTab === 'prices' && (
+                    <PricesTab routes={routes} primaryColor={data.primary_color} />
+                )}
             </div>
         </AuthenticatedLayout>
     );

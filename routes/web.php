@@ -147,6 +147,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:administrador')->group(function () {
         Route::get('admin/empresa', [CompanyController::class, 'edit'])->name('admin.company.edit');
         Route::put('admin/empresa', [CompanyController::class, 'update'])->name('admin.company.update');
+        Route::put('admin/empresa/precios', [CompanyController::class, 'updatePrices'])->name('admin.company.prices.update');
     });
 
     // ── MÓDULO DE ROLES Y USUARIOS (Solo Administrador) ──
