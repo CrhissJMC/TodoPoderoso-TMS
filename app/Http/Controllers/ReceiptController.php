@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\Package;
 use App\Models\Ticket;
 use App\Utils\NumberToLetters;
@@ -82,7 +83,7 @@ class ReceiptController extends Controller
     public function packageVoucher(Package $package)
     {
         $package->load(['sender', 'receiver', 'trip.route', 'receivedBy']);
-        $company = \App\Models\Company::first();
+        $company = Company::first();
 
         $data = [
             'package' => $package,
