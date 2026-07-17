@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import axios from 'axios';
 
@@ -43,6 +43,14 @@ const ICONS: Record<string, JSX.Element> = {
 };
 
 export default function Welcome({ canLogin }: Props) {
+    const { company } = usePage().props as any;
+
+    const themeStyles = company ? {
+        '--color-primary': company.primary_color,
+        '--color-bg': company.bg_color,
+        '--color-accent': company.accent_color,
+    } as React.CSSProperties : {};
+
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<TrackData | null>(null);
@@ -74,18 +82,18 @@ export default function Welcome({ canLogin }: Props) {
         <>
             <Head title="Rastrea tu Encomienda - TodoPoderoso TMS" />
             
-            <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+            <div className="min-h-screen flex flex-col font-sans bg-theme-bg" style={themeStyles}>
                 {/* Navbar */}
                 <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xl">
-                                T
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xl bg-theme-primary">
+                                {company?.name ? company.name.charAt(0) : 'T'}
                             </div>
-                            <span className="text-xl font-bold text-gray-900 tracking-tight">TodoPoderoso <span className="text-indigo-600">TMS</span></span>
+                            <span className="text-xl font-bold text-gray-900 tracking-tight">{company?.name || 'TodoPoderoso TMS'}</span>
                         </div>
                         {canLogin && (
-                            <Link href={route('login')} className="text-sm font-semibold text-gray-700 hover:text-indigo-600 transition-colors px-4 py-2 hover:bg-gray-50 rounded-lg">
+                            <Link href={route('login')} className="text-sm font-semibold text-gray-700 hover:text-theme-primary transition-colors px-4 py-2 hover:bg-gray-50 rounded-lg">
                                 Iniciar Sesión / Trabajadores
                             </Link>
                         )}
@@ -94,14 +102,14 @@ export default function Welcome({ canLogin }: Props) {
 
                 {/* Hero Section */}
                 <main className="flex-1 flex flex-col">
-                    <div className="bg-indigo-600 w-full relative overflow-hidden">
+                    <div className="w-full relative overflow-hidden bg-theme-primary">
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full bg-indigo-500 opacity-50 blur-3xl"></div>
-                        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-72 h-72 rounded-full bg-indigo-700 opacity-50 blur-3xl"></div>
+                        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full opacity-50 blur-3xl bg-theme-accent"></div>
+                        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-72 h-72 rounded-full opacity-30 blur-3xl bg-black"></div>
                         
                         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 text-center relative z-10">
                             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight mb-6">
-                                Rastrea tu encomienda en <span className="text-indigo-200">tiempo real</span>
+                                Rastrea tu encomienda en <span className="text-white/80">tiempo real</span>
                             </h1>
                             <p className="text-lg text-indigo-100 mb-10 max-w-2xl mx-auto">
                                 Ingresa el código de rastreo que te proporcionamos al realizar tu envío y conoce exactamente dónde se encuentra tu paquete.
@@ -109,20 +117,20 @@ export default function Welcome({ canLogin }: Props) {
 
                             <form onSubmit={handleSearch} className="max-w-xl mx-auto relative group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <svg className="w-6 h-6 text-gray-400 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    <svg className="w-6 h-6 text-gray-400 group-focus-within:text-theme-primary transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                 </div>
                                 <input 
                                     type="text" 
                                     value={code}
                                     onChange={e => setCode(e.target.value.toUpperCase())}
                                     placeholder="Ejemplo: PKG-00001" 
-                                    className="w-full pl-12 pr-32 py-5 rounded-2xl border-0 ring-4 ring-indigo-500/30 bg-white text-gray-900 font-bold text-lg focus:ring-4 focus:ring-indigo-300 focus:outline-none transition-all shadow-xl uppercase"
+                                    className="w-full pl-12 pr-32 py-5 rounded-2xl border-0 ring-4 ring-theme-primary/30 bg-white text-gray-900 font-bold text-lg focus:ring-4 focus:ring-theme-primary/50 focus:outline-none transition-all shadow-xl uppercase"
                                     required
                                 />
                                 <button 
                                     type="submit" 
                                     disabled={loading}
-                                    className="absolute inset-y-2 right-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 rounded-xl transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-md"
+                                    className="absolute inset-y-2 right-2 bg-theme-primary hover:opacity-90 text-white font-bold px-6 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-md"
                                 >
                                     {loading ? 'Buscando...' : 'Buscar'}
                                 </button>
@@ -142,7 +150,7 @@ export default function Welcome({ canLogin }: Props) {
                             <div className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-gray-100 overflow-hidden transform -mt-24 relative z-20">
                                 <div className="p-8 md:p-10 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
                                     <div>
-                                        <p className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-1">Resultado de Búsqueda</p>
+                                        <p className="text-sm font-bold text-theme-primary uppercase tracking-widest mb-1">Resultado de Búsqueda</p>
                                         <h2 className="text-3xl font-extrabold text-gray-900">{result.package.tracking_code}</h2>
                                     </div>
                                     <div className="flex gap-4">
@@ -150,9 +158,9 @@ export default function Welcome({ canLogin }: Props) {
                                             <p className="text-xs font-semibold text-gray-500 uppercase">Origen</p>
                                             <p className="font-bold text-gray-900 text-lg">{result.package.origin}</p>
                                         </div>
-                                        <div className="bg-indigo-50 px-4 py-3 rounded-2xl border border-indigo-100 text-center">
-                                            <p className="text-xs font-semibold text-indigo-500 uppercase">Destino</p>
-                                            <p className="font-bold text-indigo-900 text-lg">{result.package.destination}</p>
+                                        <div className="px-4 py-3 rounded-2xl border border-theme-primary/20 text-center bg-theme-primary/5">
+                                            <p className="text-xs font-semibold text-theme-primary uppercase">Destino</p>
+                                            <p className="font-bold text-theme-primary text-lg">{result.package.destination}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -173,13 +181,13 @@ export default function Welcome({ canLogin }: Props) {
                                                     <div key={stage} className="flex md:flex-col items-center gap-4 md:gap-3 relative z-10 md:w-1/4">
                                                         <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border-4 transition-all duration-500 ${
                                                             isCompleted 
-                                                                ? 'bg-indigo-600 border-white text-white shadow-md ring-4 ring-indigo-100' 
+                                                                ? 'bg-theme-primary border-white text-white shadow-md ring-4 ring-theme-primary/20' 
                                                                 : 'bg-white border-gray-200 text-gray-400'
                                                         }`}>
                                                             {ICONS[stage]}
                                                         </div>
                                                         <div className="md:text-center">
-                                                            <p className={`font-bold ${isCurrent ? 'text-indigo-700' : isCompleted ? 'text-gray-900' : 'text-gray-400'}`}>
+                                                            <p className={`font-bold ${isCurrent ? 'text-theme-primary' : isCompleted ? 'text-gray-900' : 'text-gray-400'}`}>
                                                                 {STATUS_LABELS[stage]}
                                                             </p>
                                                             {isCurrent && stage === 'en_ruta' && result.package?.trip && (

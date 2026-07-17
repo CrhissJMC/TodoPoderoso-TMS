@@ -13,6 +13,7 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\CompanyController;
 use Illuminate\Support\Facades\Route;
 
 use Inertia\Inertia;
@@ -140,6 +141,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('packages/{package}', [PackageController::class, 'destroy'])->name('packages.destroy');
         Route::patch('packages/{package}/status', [PackageController::class, 'updateStatus'])->name('packages.updateStatus');
         Route::patch('packages/{package}/assign-trip', [PackageController::class, 'assignTrip'])->name('packages.assignTrip');
+    });
+
+    // ── MÓDULO DE EMPRESA (Solo Administrador) ──
+    Route::middleware('role:administrador')->group(function () {
+        Route::get('admin/empresa', [CompanyController::class, 'edit'])->name('admin.company.edit');
+        Route::put('admin/empresa', [CompanyController::class, 'update'])->name('admin.company.update');
     });
 
     // ── MÓDULO DE ROLES Y USUARIOS (Solo Administrador) ──

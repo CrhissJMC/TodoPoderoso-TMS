@@ -11,6 +11,13 @@ export default function Authenticated({
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const { user, role, permissions = [] } = (usePage().props as any).auth;
+    const { company } = usePage().props as any;
+
+    const themeStyles = company ? {
+        '--color-primary': company.primary_color,
+        '--color-bg': company.bg_color,
+        '--color-accent': company.accent_color,
+    } as React.CSSProperties : {};
 
     const hasAccess = (module: string) => {
         return permissions.includes(`${module}.ver`) || permissions.includes(`${module}.admin`);
@@ -22,7 +29,7 @@ export default function Authenticated({
     // Si el conductor está en renovación, devolvemos un layout bloqueado
     if (isDriverInRenewal) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
+            <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4" style={themeStyles}>
                 <div className="max-w-md w-full bg-gray-800 rounded-xl shadow-2xl p-8 text-center space-y-6 border border-red-500/30">
                     <div className="w-20 h-20 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto">
                         <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -46,13 +53,13 @@ export default function Authenticated({
     }
 
     return (
-        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+        <div className="flex h-screen bg-theme-bg" style={themeStyles}>
             {/* Sidebar (Desktop) */}
             <aside className="hidden w-64 flex-shrink-0 bg-gray-900 md:flex md:flex-col">
                 {/* Logo Area */}
-                <div className="flex h-16 shrink-0 items-center justify-center border-b border-gray-800 px-6">
+                <div className="flex h-16 shrink-0 items-center justify-center border-b border-gray-800 px-6 gap-2">
                     <span className="text-xl font-bold tracking-wider text-white uppercase">
-                        <span className="text-blue-500">TMS</span>
+                        {company?.name ? company.name.split(' ')[0] : 'TodoPoderoso'} <span className="text-theme-primary">TMS</span>
                     </span>
                 </div>
 
@@ -102,6 +109,9 @@ export default function Authenticated({
                     )}
                     {role === 'administrador' && (
                         <div className="pt-4 mt-4 border-t border-gray-800">
+                            <SidebarNavLink href={route('admin.company.edit')} active={route().current('admin.company.edit')}>
+                                Empresa
+                            </SidebarNavLink>
                             <SidebarNavLink href={route('users.index')} active={route().current('users.index')}>
                                 Usuarios
                             </SidebarNavLink>
@@ -121,7 +131,7 @@ export default function Authenticated({
                 {/* Cabecera del cajón */}
                 <div className="flex h-16 shrink-0 items-center justify-between border-b border-gray-800 px-6">
                     <span className="text-xl font-bold tracking-wider text-white uppercase">
-                        <span className="text-blue-500">TMS</span>
+                        {company?.name ? company.name.split(' ')[0] : 'TodoPoderoso'} <span className="text-theme-primary">TMS</span>
                     </span>
                     <button onClick={() => setShowingMobileDrawer(false)} className="text-gray-400 hover:text-white">
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -178,6 +188,9 @@ export default function Authenticated({
                     )}
                     {role === 'administrador' && (
                         <div className="pt-2 mt-2 border-t border-gray-800">
+                            <ResponsiveNavLink href={route('admin.company.edit')} active={route().current('admin.company.edit')}>
+                                Empresa
+                            </ResponsiveNavLink>
                             <ResponsiveNavLink href={route('users.index')} active={route().current('users.index')}>
                                 Usuarios
                             </ResponsiveNavLink>
