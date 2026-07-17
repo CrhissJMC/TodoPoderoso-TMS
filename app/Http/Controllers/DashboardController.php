@@ -238,19 +238,30 @@ class DashboardController extends Controller
                 ];
             }
 
-            // 6. Rutas más populares (Top 5)
-            $topRoutesQuery = DB::table('tickets')
-                ->join('trips', 'tickets.trip_id', '=', 'trips.id')
-                ->join('routes', 'trips.route_id', '=', 'routes.id')
-                ->whereNotIn('tickets.ticket_status', ['anulado'])
-                ->select('routes.name', DB::raw('COUNT(tickets.id) as tickets_count'))
-                ->groupBy('routes.name')
-                ->orderByDesc('tickets_count')
-                ->limit(5);
+            // 6. Rutas / Paradas más populares (Top 5)
             if ($routeId) {
-                $topRoutesQuery->where('routes.id', $routeId);
+                // Si hay ruta seleccionada, mostramos las paradas (orígenes) más populares
+                $topRoutes = DB::table('tickets')
+                    ->join('trips', 'tickets.trip_id', '=', 'trips.id')
+                    ->where('trips.route_id', $routeId)
+                    ->whereNotIn('tickets.ticket_status', ['anulado'])
+                    ->select('tickets.boarding_stop as name', DB::raw('COUNT(tickets.id) as tickets_count'))
+                    ->groupBy('tickets.boarding_stop')
+                    ->orderByDesc('tickets_count')
+                    ->limit(5)
+                    ->get();
+            } else {
+                // Global: Rutas más populares
+                $topRoutes = DB::table('tickets')
+                    ->join('trips', 'tickets.trip_id', '=', 'trips.id')
+                    ->join('routes', 'trips.route_id', '=', 'routes.id')
+                    ->whereNotIn('tickets.ticket_status', ['anulado'])
+                    ->select('routes.name', DB::raw('COUNT(tickets.id) as tickets_count'))
+                    ->groupBy('routes.name')
+                    ->orderByDesc('tickets_count')
+                    ->limit(5)
+                    ->get();
             }
-            $topRoutes = $topRoutesQuery->get();
 
             // 7. Próximos Viajes
             $recentTripsQuery = Trip::with(['route', 'vehicle', 'driver', 'schedule'])

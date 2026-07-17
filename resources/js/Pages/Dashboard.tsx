@@ -1055,9 +1055,11 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                             </div>
                         </div>
 
-                        {/* Gráfico Circular: Rutas Populares */}
+                        {/* Gráfico Circular: Rutas/Paradas Populares */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">Rutas más populares</h3>
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">
+                                {filters.route_id ? 'Paradas más populares' : 'Rutas más populares'}
+                            </h3>
                             <p className="text-xs text-gray-500 mb-4">Basado en pasajes vendidos</p>
                             <div className="flex-1 w-full min-h-[250px]">
                                 {topRoutes.length > 0 ? (
