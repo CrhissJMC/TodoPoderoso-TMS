@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
 
 interface RouteStop {
@@ -23,6 +23,7 @@ interface Route {
     name: string;
     origin: string;
     destination: string;
+    base_fare: number;
     stops: RouteStop[];
     prices: RoutePrice[];
 }
@@ -33,7 +34,7 @@ export default function PricesTab({ routes, primaryColor }: { routes: Route[], p
     const initialPrices = useMemo(() => {
         let pricesArr: RoutePrice[] = [];
         routes.forEach(route => {
-            const locations = [route.origin, ...route.stops.map(s => s.stop_name), route.destination];
+            const locations = [route.origin, ...(route.stops || []).map(s => s.stop_name), route.destination];
             
             for (let i = 0; i < locations.length; i++) {
                 for (let j = i + 1; j < locations.length; j++) {
@@ -43,11 +44,14 @@ export default function PricesTab({ routes, primaryColor }: { routes: Route[], p
                     // Buscar si ya existe precio guardado
                     const existing = route.prices.find(p => p.origin_name === origin_name && p.destination_name === destination_name);
                     
+                    // Si es la ruta completa, por defecto usar base_fare
+                    const isFullRoute = i === 0 && j === locations.length - 1;
+
                     pricesArr.push({
                         route_id: route.id,
                         origin_name,
                         destination_name,
-                        ticket_fare: existing?.ticket_fare ?? null,
+                        ticket_fare: existing?.ticket_fare ?? (isFullRoute ? route.base_fare : null),
                         pkg_fare_sobre_manila: existing?.pkg_fare_sobre_manila ?? null,
                         pkg_fare_caja_pequena: existing?.pkg_fare_caja_pequena ?? null,
                         pkg_fare_caja_mediana: existing?.pkg_fare_caja_mediana ?? null,
@@ -62,6 +66,11 @@ export default function PricesTab({ routes, primaryColor }: { routes: Route[], p
     const { data, setData, put, processing } = useForm({
         prices: initialPrices,
     });
+
+    // Sincronizar si llegan nuevos props desde el servidor (ej. después de guardar)
+    useEffect(() => {
+        setData('prices', initialPrices);
+    }, [initialPrices]);
 
     const [openRouteId, setOpenRouteId] = useState<number | null>(null);
 

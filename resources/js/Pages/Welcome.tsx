@@ -140,6 +140,8 @@ export default function Welcome({ canLogin, activeRoutes }: Props) {
                                 </div>
                                 <input
                                     type="text"
+                                    id="tracking_code"
+                                    name="tracking_code"
                                     value={code}
                                     onChange={e => setCode(e.target.value.toUpperCase())}
                                     placeholder="EJEMPLO: PKG-00001"
@@ -313,12 +315,22 @@ export default function Welcome({ canLogin, activeRoutes }: Props) {
                                     </div>
                                     <p className="text-gray-500 mb-6 font-medium">Los envíos se tasan según el peso, tamaño y destino. Aquí tienes unos precios referenciales base (sobres):</p>
                                     <div className="space-y-4">
-                                        {activeRoutes && activeRoutes.length > 0 ? activeRoutes.map(route => (
-                                            <div key={route.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-green-500/30 transition-colors">
-                                                <span className="font-bold text-gray-700">{route.name}</span>
-                                                <span className="text-lg font-black text-green-600">desde S/ {(Number(route.base_fare) * 0.5).toFixed(2)}</span>
-                                            </div>
-                                        )) : (
+                                        {activeRoutes && activeRoutes.length > 0 ? activeRoutes.map(route => {
+                                            const mainPrice = route.prices?.find((p: any) => p.origin_name === route.origin && p.destination_name === route.destination);
+                                            const minPkgFare = mainPrice?.pkg_fare_sobre_manila || 
+                                                (route.prices && route.prices.length > 0 
+                                                    ? Math.min(...route.prices.map((p: any) => Number(p.pkg_fare_sobre_manila)).filter(n => n > 0)) 
+                                                    : 0);
+
+                                            return (
+                                                <div key={route.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-green-500/30 transition-colors">
+                                                    <span className="font-bold text-gray-700">{route.name}</span>
+                                                    <span className="text-lg font-black text-green-600">
+                                                        {minPkgFare && minPkgFare !== Infinity ? `desde S/ ${Number(minPkgFare).toFixed(2)}` : 'Consultar'}
+                                                    </span>
+                                                </div>
+                                            );
+                                        }) : (
                                             <p className="text-gray-500 text-center py-4">No hay tarifas disponibles.</p>
                                         )}
                                     </div>
@@ -345,8 +357,8 @@ export default function Welcome({ canLogin, activeRoutes }: Props) {
                                             <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                             Nuestra Oficina Principal
                                         </h3>
-                                        <p className="text-gray-700 font-medium text-lg">Av Héroes del Cenepa 01721</p>
-                                        <p className="text-gray-500 mb-4">Bagua, Amazonas</p>
+                                        <p className="text-gray-700 font-bold text-lg">Terminal Terrestre de Bagua</p>
+                                        <p className="text-gray-500 mb-4">Av. Héroes del Cenepa 01721, Bagua</p>
                                         
                                         <div className="inline-flex items-center gap-2 bg-gray-200 px-3 py-1 rounded-lg text-sm font-bold text-gray-700 font-mono">
                                             9F4F+QHF
@@ -354,9 +366,9 @@ export default function Welcome({ canLogin, activeRoutes }: Props) {
                                     </div>
                                 </div>
                                 <div className="h-[400px] lg:h-[500px] rounded-3xl overflow-hidden shadow-2xl border-4 border-gray-100">
-                                    {/* Google Maps Embed using Bagua coordinates */}
+                                    {/* Google Maps Embed using exact Plus Code for pinpoint accuracy */}
                                     <iframe 
-                                        src="https://maps.google.com/maps?q=Av%20H%C3%A9roes%20del%20Cenepa%2001721,%20Bagua,%20Amazonas&t=&z=16&ie=UTF8&iwloc=&output=embed" 
+                                        src="https://maps.google.com/maps?q=9F4F%2BQHF%2C%20Bagua&t=&z=17&ie=UTF8&iwloc=&output=embed" 
                                         width="100%" 
                                         height="100%" 
                                         style={{ border: 0 }} 
