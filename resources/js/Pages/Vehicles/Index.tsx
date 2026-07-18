@@ -3,6 +3,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import VehicleModal from './Partials/VehicleModal';
 import DeleteConfirmModal from './Partials/DeleteConfirmModal';
+import VehicleDetailsModal from './Partials/VehicleDetailsModal';
 
 // ── Constantes de UI ────────────────────────────────────────────────────────
 
@@ -45,6 +46,13 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
     const [modalOpen, setModalOpen] = useState(false);
     const [editVehicle, setEditVehicle] = useState(null);
     const [deleteTarget, setDelete] = useState(null);
+    const [detailVehicle, setDetailVehicle] = useState<any>(null);
+
+    const viewDetails = (vehicle: any) => {
+        fetch(route('vehicles.show', vehicle.id))
+            .then(res => res.json())
+            .then(data => setDetailVehicle(data));
+    };
 
     // ── Búsqueda / filtros ──────────────────────────────────────────────────
 
@@ -229,21 +237,26 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
                                             </select>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            {hasAdmin && (
-                                                <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => openEdit(v)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Editar">
-                                                        <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
-                                                            <path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                                                        </svg>
-                                                    </button>
-                                                    <button onClick={() => setDelete(v)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Eliminar">
-                                                        <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
-                                                            <path d="M6 4h8M4 4h12M5 4l1 12h8l1-12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                                            <path d="M8 8v5M12 8v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            )}
+                                            <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => viewDetails(v)} title="Ver Historial y Detalles" className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                                </button>
+                                                {hasAdmin && (
+                                                    <>
+                                                        <button onClick={() => openEdit(v)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Editar">
+                                                            <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+                                                                <path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                                                            </svg>
+                                                        </button>
+                                                        <button onClick={() => setDelete(v)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Eliminar">
+                                                            <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+                                                                <path d="M6 4h8M4 4h12M5 4l1 12h8l1-12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                                <path d="M8 8v5M12 8v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                                            </svg>
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -278,6 +291,9 @@ export default function VehiclesIndex({ vehicles, counts, filters, types, status
 
             <VehicleModal isOpen={modalOpen} vehicle={editVehicle} types={types} statuses={statuses} onClose={closeModal} />
             <DeleteConfirmModal vehicle={deleteTarget} onClose={() => setDelete(null)} />
+
+            {/* MODAL 4: DETALLE COMPLETO (SOAT Y MANTENIMIENTOS) */}
+            <VehicleDetailsModal vehicle={detailVehicle} onClose={() => setDetailVehicle(null)} />
         </AuthenticatedLayout>
     );
 }

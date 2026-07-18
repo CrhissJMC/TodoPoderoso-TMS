@@ -22,19 +22,19 @@ El proyecto está desarrollado bajo una arquitectura SPA (Single Page Applicatio
 * **Gestión de Empresa y Tarifario Dinámico**: 
   El panel de empresa permite personalizar el tema (colores de la interfaz) y administrar una **Matriz de Tarifas**. El sistema calcula y define automáticamente los precios de pasajes y encomiendas para cualquier combinación de *Origen -> Destino / Paradas* registradas.
 * **Gestión de Flota y Personal**: 
-  Registro y asignación de **Vehículos** (capacidad, placas, estado) y **Conductores** (licencias, vigencia, asignación de vehículo).
+  Registro y asignación de **Vehículos** (capacidad, placas, estado) y **Conductores** (licencias, vigencia, asignación de vehículo). Se incluye una ficha detallada (modal CV) para conductores con fotografía tipo carnet e historial completo de renovación de licencias, y para vehículos, un historial de renovación de SOAT junto con un registro de mantenimientos detallados.
 * **Gestión de Rutas y Paradas**: 
   Mantenimiento de rutas fijas con paradas intermedias, tiempo estimado de viaje y control del orden de las escalas.
 * **Programación de Viajes (Trips)**: 
   Asignación de fechas, rutas, vehículos y conductores a viajes concretos. Control de estados (*Programado, En Ruta, Completado, Cancelado*).
 * **Venta de Pasajes (Tickets)**: 
-  Selección visual de asientos mediante un mapa interactivo del vehículo (basado en la capacidad física real del bus/van), registro del pasajero y emisión de comprobantes.
+  Selección visual de asientos mediante un mapa interactivo del vehículo (basado en la capacidad física real del bus/van), registro del pasajero y emisión de comprobantes. Soporta la cancelación de boletos con la generación automática de Notas de Crédito en formato PDF y el recálculo inmediato de ingresos en el sistema.
 * **Gestión de Encomiendas**: 
   Envío de paquetes por peso, tamaño (Sobre, Cajas pequeñas/medianas/grandes), recargo automático de peso, estado de pago, asignación a un viaje, y generación automática de seguimiento (Tracking Code).
 * **Vigilancia de Calidad y Valor Social (KPIs Estratégicos)**:
   Implementación formal de un marco de medición que integra indicadores operativos (Tasa de Encomiendas Estancadas, Rendimiento de Flota, Nivel de Ocupación) y métricas de ingeniería continua (Frecuencia de Despliegue, Deuda Técnica, y Tasa de Cumplimiento de Requerimientos), respaldado por tableros visuales dinámicos.
 * **Dashboards Estadísticos Operativos**:
-  Indicadores en tiempo real, gráficas de tendencias de ventas, ingresos, volumen de carga, e informes de "Top Operadores" y "Rutas Frecuentes" integrados al flujo diario de trabajo.
+  Indicadores en tiempo real, gráficas de tendencias de ventas, ingresos, volumen de carga, e informes de "Top Operadores" y "Rutas Frecuentes" integrados al flujo diario de trabajo. Permite filtrar de manera unificada por período (Hoy/Por Horas, Últimos 7 Días, Últimos 30 Días/Mes, Últimos 12 Meses/Año), adaptando dinámicamente los ejes de las gráficas.
 * **Alertas Inteligentes**:
   Notificación en tiempo real para encomiendas estancadas (más de 48h sin viaje asignado) y validación de licencias de conducir vencidas.
 

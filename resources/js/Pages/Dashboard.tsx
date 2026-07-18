@@ -31,12 +31,32 @@ interface TopSeller {
 }
 
 interface Props {
+    nextTrip?: {
+        id: number;
+        route_name: string;
+        time: string;
+        vehicle_plate: string;
+        tickets: {
+            id: number;
+            client_name: string;
+            client_document: string;
+            seat_number: number;
+            ticket_status: string;
+        }[];
+    } | null;
     tripsInProgress?: number;
     passengersToday?: number;
     revenueToday?: number;
     occupancyRate?: number;
     revenueChart?: { date: string; boletos: number; encomiendas: number }[];
     packagesCountChart?: { date: string; recibidas: number; enviadas: number; devueltas: number }[];
+    boardingChart: {
+        date: string;
+        emitidos: number;
+        abordados: number;
+        cancelados: number;
+        no_abordaron: number;
+    }[];
     topRoutes?: { name: string; tickets_count: number }[];
     recentTrips?: RecentTrip[];
     pendingPackages?: Package[];
@@ -59,7 +79,7 @@ interface Props {
     sellerRecentTickets?: any[];
     sellerRanking?: number;
     allRoutes?: { id: number; name: string; origin: string; destination: string }[];
-    filters?: { route_id?: string };
+    filters?: { route_id?: string; period?: string };
     agentTotalTickets?: number;
     agentTodayTickets?: number;
     agentRecentTickets?: any[];
@@ -92,7 +112,75 @@ const STATUS_BADGE: Record<string, string> = {
 
 const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgress = 0, passengersToday = 0, revenueToday = 0, occupancyRate = 0, revenueChart = [], packagesCountChart = [], topRoutes = [], recentTrips = [], pendingPackages = [], topTicketSellers = [], topPackageSellers = [], driverTrips = [], driverTotalTrips = 0, driverFrequentRoutes = [], driverUpcomingPackages = [], driverRanking = 0, operatorTotalPackages = 0, operatorPendingPackages = 0, operatorRecentPackages = [], operatorRanking = 0, stagnantPackages = [], uncollectedPackages = [], volumeChart = [], sellerTotalTickets = 0, sellerTodayTickets = 0, sellerRecentTickets = [], sellerRanking = 0, agentTotalTickets = 0, agentTodayTickets = 0, agentRecentTickets = [], agentTotalPackages = 0, agentPendingPackages = 0, agentRecentPackages = [], agentRevenueToday = 0, clientError, clientKpis, clientActiveTrips = [], clientUpcomingPackages = [], clientRecentActivity = [], clientTripHistory = [], clientOtd = 0, clientTotalDelivered = 0, clientOnTimeDelivered = 0, clientRouteSummary = [], statusConfig, complianceAlerts = [], driverLicenseStats = [] }: Props) {
+const NextTripCard = ({ nextTrip }: { nextTrip: Props['nextTrip'] }) => {
+    if (!nextTrip) {
+        return (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+                <h3 className="text-base font-bold text-gray-900">Próximo Viaje</h3>
+                <p className="text-gray-500 mt-2 text-sm">No hay viajes próximos programados para abordar hoy.</p>
+            </div>
+        );
+    }
+
+    const updateStatus = (ticketId: number, status: string) => {
+        router.patch(route('tickets.updateBoardingStatus', ticketId), { status }, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                // Notificación opcional manejada globalmente
+            }
+        });
+    };
+
+    return (
+        <div className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden mb-6">
+            <div className="px-6 py-4 bg-indigo-50/50 border-b border-indigo-100 flex items-center justify-between">
+                <div>
+                    <h3 className="text-lg font-bold text-indigo-900">Próximo Viaje: {nextTrip.route_name}</h3>
+                    <p className="text-sm text-indigo-700 font-medium">Salida: {nextTrip.time} | Vehículo: {nextTrip.vehicle_plate}</p>
+                </div>
+                <div className="text-right">
+                    <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide animate-pulse">Abordando</span>
+                </div>
+            </div>
+            <div className="p-0">
+                {nextTrip.tickets.length === 0 ? (
+                    <p className="p-6 text-sm text-gray-500 text-center">No hay pasajeros registrados para este viaje.</p>
+                ) : (
+                    <ul className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+                        {nextTrip.tickets.map((t) => (
+                            <li key={t.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-700">
+                                        {t.seat_number}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-gray-900">{t.client_name}</p>
+                                        <p className="text-xs text-gray-500">DNI: {t.client_document}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {t.ticket_status === 'abordado' ? (
+                                        <span className="text-sm font-bold text-green-600 bg-green-50 px-3 py-1 rounded-md">✅ Abordó</span>
+                                    ) : t.ticket_status === 'no_abordado' ? (
+                                        <span className="text-sm font-bold text-red-600 bg-red-50 px-3 py-1 rounded-md">❌ No se presentó</span>
+                                    ) : (
+                                        <>
+                                            <button onClick={() => updateStatus(t.id, 'abordado')} className="px-3 py-1 text-xs font-bold text-white bg-green-500 rounded hover:bg-green-600 transition-colors">Abordó</button>
+                                            <button onClick={() => updateStatus(t.id, 'no_abordado')} className="px-3 py-1 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors border border-red-200">No llegó</button>
+                                        </>
+                                    )}
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default function Dashboard({ allRoutes = [], filters = {}, nextTrip, tripsInProgress = 0, passengersToday = 0, revenueToday = 0, occupancyRate = 0, revenueChart = [], packagesCountChart = [], boardingChart = [], topRoutes = [], recentTrips = [], pendingPackages = [], topTicketSellers = [], topPackageSellers = [], driverTrips = [], driverTotalTrips = 0, driverFrequentRoutes = [], driverUpcomingPackages = [], driverRanking = 0, operatorTotalPackages = 0, operatorPendingPackages = 0, operatorRecentPackages = [], operatorRanking = 0, stagnantPackages = [], uncollectedPackages = [], volumeChart = [], sellerTotalTickets = 0, sellerTodayTickets = 0, sellerRecentTickets = [], sellerRanking = 0, agentTotalTickets = 0, agentTodayTickets = 0, agentRecentTickets = [], agentTotalPackages = 0, agentPendingPackages = 0, agentRecentPackages = [], agentRevenueToday = 0, clientError, clientKpis, clientActiveTrips = [], clientUpcomingPackages = [], clientRecentActivity = [], clientTripHistory = [], clientOtd = 0, clientTotalDelivered = 0, clientOnTimeDelivered = 0, clientRouteSummary = [], statusConfig, complianceAlerts = [], driverLicenseStats = [] }: Props) {
     const { auth } = usePage().props as any;
     const [clientTab, setClientTab] = useState<'resumen' | 'historial' | 'notificaciones'>('resumen');
     const isAdmin = auth.role === 'administrador' || auth.user.role_id === 1;
@@ -106,7 +194,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                 <Head title="Panel de Conductor - TMS" />
                 <div className="py-6 bg-gray-50 min-h-screen">
                     <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
-                        
+
                         {/* Resumen Principal */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
@@ -121,7 +209,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Viajes Completados</p>
@@ -135,7 +223,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
 
                         {/* Contenido Secundario */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            
+
                             {/* Próximos Viajes */}
                             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
                                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -226,7 +314,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                 <Head title="Panel de Operador - TMS" />
                 <div className="py-6 bg-gray-50 min-h-screen">
                     <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
-                        
+
                         {/* Resumen Principal */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
@@ -241,7 +329,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                                     <p className="text-sm font-medium text-gray-500">Total Registradas</p>
@@ -320,7 +408,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                             <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} dy={10} />
                                             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} />
                                             <CartesianGrid vertical={false} stroke="#E5E7EB" strokeDasharray="3 3" />
-                                            <Tooltip 
+                                            <Tooltip
                                                 cursor={{ fill: '#F3F4F6' }}
                                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                                 formatter={(value: any) => [`${value} kg`, 'Peso']}
@@ -386,7 +474,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                 <Head title="Panel de Ventas - TMS" />
                 <div className="py-6 bg-gray-50 min-h-screen">
                     <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
-                        
+
                         {/* Resumen Principal */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
@@ -401,7 +489,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                                     <p className="text-sm font-medium text-gray-500">Total Vendidos</p>
@@ -413,6 +501,9 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                 </div>
                             </div>
                         </div>
+
+                        {/* Próximo Viaje / Control de Abordaje */}
+                        <NextTripCard nextTrip={nextTrip} />
 
                         {/* Últimas Ventas */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
@@ -512,6 +603,9 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                 </div>
                             </div>
                         </div>
+
+                        {/* Próximo Viaje / Control de Abordaje */}
+                        <NextTripCard nextTrip={nextTrip} />
 
                         {/* Tablas: Últimos Boletos y Encomiendas */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -622,11 +716,10 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                 <button
                                     key={tab}
                                     onClick={() => setClientTab(tab)}
-                                    className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all ${
-                                        clientTab === tab
+                                    className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all ${clientTab === tab
                                             ? 'bg-indigo-600 text-white shadow-sm'
                                             : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                                    }`}
+                                        }`}
                                 >
                                     {tab === 'resumen' ? '📊 Resumen y Seguimiento' : tab === 'historial' ? '📋 Historial y Rendimiento' : '🔔 Notificaciones'}
                                 </button>
@@ -744,9 +837,8 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                             <p className="px-6 py-8 text-sm text-gray-400 text-center">No hay actividad reciente.</p>
                                         ) : clientRecentActivity.map((item: any, idx: number) => (
                                             <div key={idx} className="px-6 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${
-                                                    item.type === 'viaje' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'
-                                                }`}>
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${item.type === 'viaje' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'
+                                                    }`}>
                                                     {item.type === 'viaje' ? '🚌' : '📦'}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -864,11 +956,10 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                         const isException = item.status === 'cancelado' || item.status === 'devuelto';
                                         return (
                                             <div key={idx} className={`px-6 py-4 flex items-start gap-4 hover:bg-gray-50 transition-colors ${isException ? 'bg-red-50/50 border-l-4 border-red-400' : ''}`}>
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-base flex-shrink-0 mt-0.5 ${
-                                                    isException ? 'bg-red-100 text-red-600' :
-                                                    item.status === 'completado' || item.status === 'entregado' ? 'bg-green-100 text-green-600' :
-                                                    item.type === 'viaje' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'
-                                                }`}>
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-base flex-shrink-0 mt-0.5 ${isException ? 'bg-red-100 text-red-600' :
+                                                        item.status === 'completado' || item.status === 'entregado' ? 'bg-green-100 text-green-600' :
+                                                            item.type === 'viaje' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'
+                                                    }`}>
                                                     {isException ? '⚠️' : item.type === 'viaje' ? '🚌' : '📦'}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -925,27 +1016,55 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
             <div className="py-6 bg-gray-50 min-h-screen">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
 
+                    {/* Próximo Viaje / Control de Abordaje */}
+                    <NextTripCard nextTrip={nextTrip} />
+
                     {/* Filtros */}
                     <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900">Métricas Generales</h2>
                             <p className="text-sm text-gray-500">Vista general del desempeño de la agencia</p>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <label htmlFor="route_filter" className="text-sm font-medium text-gray-700">Filtrar por Ruta:</label>
-                            <select
-                                id="route_filter"
-                                value={filters?.route_id || ''}
-                                onChange={(e) => {
-                                    router.get(route('dashboard'), { route_id: e.target.value }, { preserveState: true, preserveScroll: true });
-                                }}
-                                className="block w-64 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                            >
-                                <option value="">Todas las Rutas</option>
-                                {allRoutes.map(r => (
-                                    <option key={r.id} value={r.id}>{r.name}</option>
-                                ))}
-                            </select>
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <label htmlFor="route_filter" className="text-sm font-medium text-gray-700">Filtrar por Ruta:</label>
+                                <select
+                                    id="route_filter"
+                                    value={filters?.route_id || ''}
+                                    onChange={(e) => {
+                                        router.get(route('dashboard'), { 
+                                            route_id: e.target.value,
+                                            period: filters?.period || '7days'
+                                        }, { preserveState: true, preserveScroll: true });
+                                    }}
+                                    className="block w-60 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                                >
+                                    <option value="">Todas las Rutas</option>
+                                    {allRoutes.map(r => (
+                                        <option key={r.id} value={r.id}>{r.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <label htmlFor="period_filter" className="text-sm font-medium text-gray-700">Período:</label>
+                                <select
+                                    id="period_filter"
+                                    value={filters?.period || '7days'}
+                                    onChange={(e) => {
+                                        router.get(route('dashboard'), { 
+                                            route_id: filters?.route_id || '', 
+                                            period: e.target.value 
+                                        }, { preserveState: true, preserveScroll: true });
+                                    }}
+                                    className="block w-44 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                                >
+                                    <option value="day">Hoy (Por Horas)</option>
+                                    <option value="7days">Últimos 7 días</option>
+                                    <option value="month">Últimos 30 días (Mes)</option>
+                                    <option value="year">Últimos 12 meses (Año)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -1023,7 +1142,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
 
                     {/* Gráficos */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        
+
                         {/* Gráfico de Líneas: Ingresos de los últimos 7 días */}
                         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                             <h3 className="text-lg font-bold text-gray-900 mb-6">Ingresos (Últimos 7 días)</h3>
@@ -1032,18 +1151,18 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                     <AreaChart data={revenueChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <defs>
                                             <linearGradient id="colorBoletos" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
+                                                <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
                                             </linearGradient>
                                             <linearGradient id="colorEncomiendas" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                                                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
                                         <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} dy={10} />
                                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} tickFormatter={(val) => `S/${val}`} />
                                         <CartesianGrid vertical={false} stroke="#E5E7EB" strokeDasharray="3 3" />
-                                        <Tooltip 
+                                        <Tooltip
                                             formatter={(value: any) => [`S/ ${Number(value).toFixed(2)}`, '']}
                                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                         />
@@ -1080,13 +1199,13 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip 
+                                            <Tooltip
                                                 formatter={(value: any) => [`${value} boletos`, 'Ventas']}
                                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                             />
-                                            <Legend 
-                                                layout="vertical" 
-                                                verticalAlign="bottom" 
+                                            <Legend
+                                                layout="vertical"
+                                                verticalAlign="bottom"
                                                 align="center"
                                                 iconType="circle"
                                                 wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
@@ -1111,22 +1230,22 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                     <AreaChart data={packagesCountChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <defs>
                                             <linearGradient id="colorRecibidas" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
+                                                <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
                                             </linearGradient>
                                             <linearGradient id="colorEnviadas" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                                                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                                             </linearGradient>
                                             <linearGradient id="colorDevueltas" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
+                                                <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
                                         <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} dy={10} />
                                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} />
                                         <CartesianGrid vertical={false} stroke="#E5E7EB" strokeDasharray="3 3" />
-                                        <Tooltip 
+                                        <Tooltip
                                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                         />
                                         <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
@@ -1140,7 +1259,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
 
                         {/* Gráfico Circular: Estado de Licencias */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">Estado de Licencias</h3>
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">Estado de Licencias de Conductores</h3>
                             <p className="text-xs text-gray-500 mb-4">De conductores registrados</p>
                             <div className="flex-1 w-full min-h-[250px]">
                                 {driverLicenseStats.length > 0 ? (
@@ -1161,13 +1280,13 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                                                     <Cell key={`cell-${index}`} fill={entry.color} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip 
+                                            <Tooltip
                                                 formatter={(value: any) => [`${value} conductores`, 'Total']}
                                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                             />
-                                            <Legend 
-                                                layout="vertical" 
-                                                verticalAlign="bottom" 
+                                            <Legend
+                                                layout="vertical"
+                                                verticalAlign="bottom"
                                                 align="center"
                                                 iconType="circle"
                                                 wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
@@ -1183,9 +1302,49 @@ export default function Dashboard({ allRoutes = [], filters = {}, tripsInProgres
                         </div>
                     </div>
 
+                    {/* Gráfico de Control de Abordaje (Boletos) - Estilo AreaChart */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-6">Estado de Boletos (Últimos 7 días)</h3>
+                        <div className="h-72 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={boardingChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorEmitidos" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorAbordados" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorCancelados" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorNoAbordaron" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                                    <Area type="monotone" name="Emitidos" dataKey="emitidos" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorEmitidos)" />
+                                    <Area type="monotone" name="Abordados" dataKey="abordados" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorAbordados)" />
+                                    <Area type="monotone" name="Cancelados" dataKey="cancelados" stroke="#F59E0B" strokeWidth={3} fillOpacity={1} fill="url(#colorCancelados)" />
+                                    <Area type="monotone" name="No Abordaron" dataKey="no_abordaron" stroke="#EF4444" strokeWidth={3} fillOpacity={1} fill="url(#colorNoAbordaron)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
                     {/* Tablas Inferiores */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
-                        
+
                         {/* Próximos Viajes */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">

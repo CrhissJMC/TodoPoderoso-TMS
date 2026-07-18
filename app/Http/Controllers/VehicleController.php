@@ -55,7 +55,7 @@ class VehicleController extends Controller
     // Detalle del vehículo (endpoint JSON)
     public function show(Vehicle $vehicle)
     {
-        $vehicle->load('drivers');
+        $vehicle->load(['drivers', 'soatRenewals', 'maintenances']);
         $vehicle->loadCount('trips');
 
         return response()->json($vehicle);
@@ -63,7 +63,16 @@ class VehicleController extends Controller
 
     public function store(VehicleRequest $request)
     {
-        Vehicle::create($request->validated());
+        $vehicle = Vehicle::create($request->validated());
+
+        // Registrar primer SOAT en el historial
+        if ($vehicle->soat_expiration_date) {
+            $vehicle->soatRenewals()->create([
+                'expiration_date' => $vehicle->soat_expiration_date,
+                'renewed_at' => now(),
+                'notes' => 'Registro inicial del vehículo.',
+            ]);
+        }
 
         return redirect()
             ->route('vehicles.index')
@@ -72,7 +81,18 @@ class VehicleController extends Controller
 
     public function update(VehicleRequest $request, Vehicle $vehicle)
     {
+        $oldSoat = $vehicle->soat_expiration_date;
+
         $vehicle->update($request->validated());
+
+        // Si cambió el SOAT, registrar renovación
+        if (($vehicle->soat_expiration_date && $oldSoat && ! $vehicle->soat_expiration_date->equalTo($oldSoat)) || ($vehicle->soat_expiration_date && ! $oldSoat)) {
+            $vehicle->soatRenewals()->create([
+                'expiration_date' => $vehicle->soat_expiration_date,
+                'renewed_at' => now(),
+                'notes' => 'SOAT renovado y actualizado desde la administración.',
+            ]);
+        }
 
         return redirect()
             ->route('vehicles.index')
@@ -102,5 +122,39 @@ class VehicleController extends Controller
         $vehicle->update(['status' => $request->status]);
 
         return back()->with('success', 'Estado actualizado.');
+    }
+
+    public function addMaintenance(Request $request, Vehicle $vehicle)
+    {
+        $validated = $request->validate([
+            'maintenance_date' => 'required|date',
+            'type' => 'required|in:preventivo,correctivo',
+            'description' => 'required|string|max:255',
+            'cost' => 'required|numeric|min:0',
+            'workshop' => 'nullable|string|max:100',
+            'notes' => 'nullable|string',
+        ]);
+
+        $vehicle->maintenances()->create($validated);
+
+        return back()->with('success', 'Registro de mantenimiento agregado correctamente.');
+    }
+
+    public function addSoatRenewal(Request $request, Vehicle $vehicle)
+    {
+        $validated = $request->validate([
+            'expiration_date' => 'required|date',
+            'renewed_at' => 'required|date',
+            'cost' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string',
+        ]);
+
+        $vehicle->soatRenewals()->create($validated);
+
+        $vehicle->update([
+            'soat_expiration_date' => $validated['expiration_date'],
+        ]);
+
+        return back()->with('success', 'Renovación de SOAT registrada correctamente.');
     }
 }

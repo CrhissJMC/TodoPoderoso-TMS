@@ -31,6 +31,7 @@ export default function DriverModal({ isOpen, driver, statuses, licenseTypes, co
         vehicle_id: '',
         status: 'activo',
         observations: '',
+        photo: null as File | null,
     });
 
     useEffect(() => {
@@ -48,6 +49,7 @@ export default function DriverModal({ isOpen, driver, statuses, licenseTypes, co
                 vehicle_id: driver.vehicle_id ?? '',
                 status: driver.status ?? 'activo',
                 observations: driver.observations ?? '',
+                photo: null,
             });
         } else if (isOpen) {
             reset();
@@ -64,9 +66,19 @@ export default function DriverModal({ isOpen, driver, statuses, licenseTypes, co
     function handleSubmit(e: any) {
         e.preventDefault();
         if (isEditing) {
-            put(route('drivers.update', driver.id), { onSuccess: handleClose });
+            // Method spoofing for file uploads in PUT requests
+            router.post(route('drivers.update', driver.id), {
+                _method: 'PUT',
+                ...data
+            } as any, { 
+                forceFormData: true,
+                onSuccess: handleClose 
+            });
         } else {
-            post(route('drivers.store'), { onSuccess: handleClose });
+            post(route('drivers.store'), { 
+                forceFormData: true,
+                onSuccess: handleClose 
+            });
         }
     }
 
@@ -120,6 +132,9 @@ export default function DriverModal({ isOpen, driver, statuses, licenseTypes, co
                             </Field>
                             <Field label="Correo (Opcional)" error={errors.email}>
                                 <input type="email" value={data.email} onChange={e => setData('email', e.target.value)} className={inputClass(errors.email)} />
+                            </Field>
+                            <Field label="Foto de Carnet (Opcional)" error={errors.photo}>
+                                <input type="file" accept="image/*" onChange={e => setData('photo', e.target.files ? e.target.files[0] : null)} className={inputClass(errors.photo)} />
                             </Field>
                         </div>
                     </div>

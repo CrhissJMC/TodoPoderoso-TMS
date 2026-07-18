@@ -6,6 +6,7 @@ use App\Http\Requests\DriverRequest;
 use App\Models\Driver;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class DriverController extends Controller
@@ -60,7 +61,7 @@ class DriverController extends Controller
     // Detalle del conductor (endpoint JSON)
     public function show(Driver $driver)
     {
-        $driver->load('vehicle');
+        $driver->load(['vehicle', 'licenseRenewals']);
         $driver->loadCount('trips');
 
         return response()->json($driver);
@@ -68,7 +69,21 @@ class DriverController extends Controller
 
     public function store(DriverRequest $request)
     {
-        $driver = Driver::create($request->validated());
+        $data = $request->validated();
+        if ($request->hasFile('photo')) {
+            $data['photo_path'] = $request->file('photo')->store('photos', 'public');
+        }
+        $driver = Driver::create($data);
+
+        // Registrar primera licencia en el historial
+        if ($driver->license_number && $driver->license_expiry) {
+            $driver->licenseRenewals()->create([
+                'license_number' => $driver->license_number,
+                'expiry_date' => $driver->license_expiry,
+                'renewed_at' => now(),
+                'notes' => 'Registro inicial del conductor.',
+            ]);
+        }
 
         $this->syncVehicleAssignment($driver->vehicle_id, $driver->id);
         $this->syncVehicleStatus($driver);
@@ -80,7 +95,28 @@ class DriverController extends Controller
 
     public function update(DriverRequest $request, Driver $driver)
     {
-        $driver->update($request->validated());
+        $oldExpiry = $driver->license_expiry;
+        $oldLicense = $driver->license_number;
+
+        $data = $request->validated();
+        if ($request->hasFile('photo')) {
+            if ($driver->photo_path && Storage::disk('public')->exists($driver->photo_path)) {
+                Storage::disk('public')->delete($driver->photo_path);
+            }
+            $data['photo_path'] = $request->file('photo')->store('photos', 'public');
+        }
+
+        $driver->update($data);
+
+        // Si cambió la fecha de vencimiento o la licencia, registrar renovación
+        if (($driver->license_expiry && $oldExpiry && ! $driver->license_expiry->equalTo($oldExpiry)) || $driver->license_number !== $oldLicense) {
+            $driver->licenseRenewals()->create([
+                'license_number' => $driver->license_number,
+                'expiry_date' => $driver->license_expiry,
+                'renewed_at' => now(),
+                'notes' => 'Actualización/Renovación desde el panel de administración.',
+            ]);
+        }
 
         $this->syncVehicleAssignment($driver->vehicle_id, $driver->id);
         $this->syncVehicleStatus($driver);
@@ -120,6 +156,25 @@ class DriverController extends Controller
         $this->syncVehicleStatus($driver);
 
         return back()->with('success', 'Estado actualizado.');
+    }
+
+    public function addLicenseRenewal(Request $request, Driver $driver)
+    {
+        $validated = $request->validate([
+            'license_number' => 'required|string|max:50',
+            'expiry_date' => 'required|date',
+            'renewed_at' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $driver->licenseRenewals()->create($validated);
+
+        $driver->update([
+            'license_number' => $validated['license_number'],
+            'license_expiry' => $validated['expiry_date'],
+        ]);
+
+        return back()->with('success', 'Historial de renovación de licencia registrado correctamente.');
     }
 
     // ── METODOS PRIVADOS ──────────────────────────────

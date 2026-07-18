@@ -34,7 +34,7 @@ class Ticket extends Model
 
     public static function ticketStatuses(): array
     {
-        return ['emitido', 'abordado', 'anulado'];
+        return ['emitido', 'abordado', 'no_abordado', 'anulado', 'cancelado'];
     }
 
     public static function paymentMethods(): array

@@ -225,4 +225,38 @@ class TicketController extends Controller
             ]),
         ]);
     }
+
+    public function updateBoardingStatus(Request $request, Ticket $ticket)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:abordado,no_abordado,emitido',
+        ]);
+
+        $ticket->update(['ticket_status' => $validated['status']]);
+
+        if ($ticket->trip && $ticket->trip->status === 'programado') {
+            $ticket->trip->update(['status' => 'abordando']);
+        }
+
+        return back()->with('success', 'Estado de abordaje actualizado.');
+    }
+
+    // Cancelar un boleto (Cliente lo solicita)
+    public function cancelTicket(Ticket $ticket)
+    {
+        if (in_array($ticket->ticket_status, ['cancelado', 'anulado'])) {
+            return back()->with('error', 'El boleto ya se encuentra en un estado inactivo.');
+        }
+
+        $ticket->update([
+            'ticket_status' => 'cancelado',
+            'voided_by' => Auth::id(),
+            'voided_at' => now(),
+        ]);
+
+        // Liberar el asiento (Soft Delete) para que pueda ser vendido de nuevo
+        $ticket->delete();
+
+        return back()->with('success', 'Boleto cancelado correctamente. Puede emitir la Nota de Crédito.');
+    }
 }
