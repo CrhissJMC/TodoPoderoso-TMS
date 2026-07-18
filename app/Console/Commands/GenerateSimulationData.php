@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Driver;
 use App\Models\Package;
 use App\Models\Route;
+use App\Models\RoutePrice;
 use App\Models\Schedule;
 use App\Models\Ticket;
 use App\Models\Trip;
@@ -65,6 +66,7 @@ class GenerateSimulationData extends Command
         $createdTripsCount = 0;
         $createdTicketsCount = 0;
         $createdPackagesCount = 0;
+        $ticketSeq = 1;
 
         // Generar viajes basados en todos los horarios de hoy
         foreach ($schedules as $idx => $schedule) {
@@ -137,6 +139,12 @@ class GenerateSimulationData extends Command
                     $ticketStatus = 'emitido'; // Si el viaje está programado
                 }
 
+                $routePrice = RoutePrice::where('route_id', $trip->route_id)
+                    ->where('origin_name', $trip->route->origin)
+                    ->where('destination_name', $trip->route->destination)
+                    ->first();
+                $fare = $routePrice ? $routePrice->ticket_fare : ($trip->route->base_fare ?? 50.00);
+
                 Ticket::create([
                     'trip_id' => $trip->id,
                     'client_id' => $client->id,
@@ -144,11 +152,11 @@ class GenerateSimulationData extends Command
                     'seat_number' => $seatNumber,
                     'boarding_stop' => $trip->route->origin,
                     'dropoff_stop' => $trip->route->destination,
-                    'fare' => $trip->route->base_fare ?? 50.00,
+                    'fare' => $fare,
                     'ticket_status' => $ticketStatus,
                     'payment_status' => 'pagado',
                     'payment_method' => collect(['efectivo', 'yape', 'plin', 'tarjeta'])->random(),
-                    'ticket_code' => 'TKT-'.date('Ymd').'-'.str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT),
+                    'ticket_code' => 'TKT-'.date('Ymd').'-'.str_pad($ticketSeq++, 6, '0', STR_PAD_LEFT),
                     'created_at' => now(),
                 ]);
 
@@ -183,6 +191,31 @@ class GenerateSimulationData extends Command
                 $trip = $activeTrips->isNotEmpty() ? $activeTrips->random() : null;
             }
 
+            $packageType = collect(['sobre_manila', 'caja_pequena', 'caja_mediana', 'caja_grande'])->random();
+            $routePrice = RoutePrice::where('route_id', $route->id)
+                ->where('origin_name', $route->origin)
+                ->where('destination_name', $route->destination)
+                ->first();
+
+            $price = 10.00;
+            if ($routePrice) {
+                $price = match ($packageType) {
+                    'sobre_manila' => $routePrice->pkg_fare_sobre_manila,
+                    'caja_pequena' => $routePrice->pkg_fare_caja_pequena,
+                    'caja_mediana' => $routePrice->pkg_fare_caja_mediana,
+                    'caja_grande' => $routePrice->pkg_fare_caja_grande,
+                    default => 10.00
+                };
+            } else {
+                $price = match ($packageType) {
+                    'sobre_manila' => 5.00,
+                    'caja_pequena' => 15.00,
+                    'caja_mediana' => 30.00,
+                    'caja_grande' => 50.00,
+                    default => 10.00
+                };
+            }
+
             Package::create([
                 'sender_id' => $sender->id,
                 'receiver_id' => $receiver->id,
@@ -190,10 +223,10 @@ class GenerateSimulationData extends Command
                 'destination' => $route->destination,
                 'trip_id' => $trip?->id,
                 'received_by' => $user->id,
-                'package_type' => collect(['sobre_manila', 'caja_pequena', 'caja_mediana', 'caja_grande'])->random(),
+                'package_type' => $packageType,
                 'weight' => rand(1, 15) + (rand(0, 9) / 10),
                 'dimensions' => rand(10, 50).'x'.rand(10, 50).'x'.rand(10, 50).' cm',
-                'price' => rand(10, 80),
+                'price' => $price,
                 'payment_method' => collect(['efectivo', 'yape', 'plin', 'tarjeta'])->random(),
                 'payment_status' => 'pagado',
                 'status' => $status,
