@@ -1145,7 +1145,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, nextTrip, trip
 
                         {/* Gráfico de Líneas: Ingresos de los últimos 7 días */}
                         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                            <h3 className="text-lg font-bold text-gray-900 mb-6">Ingresos (Últimos 7 días)</h3>
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">Ingresos</h3>
                             <div className="h-72 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={revenueChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -1224,7 +1224,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, nextTrip, trip
                     {/* Gráficos de Encomiendas y Licencias */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                            <h3 className="text-lg font-bold text-gray-900 mb-6">Estado de Encomiendas (Últimos 7 días)</h3>
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">Estado de Encomiendas</h3>
                             <div className="h-72 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={packagesCountChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -1304,7 +1304,7 @@ export default function Dashboard({ allRoutes = [], filters = {}, nextTrip, trip
 
                     {/* Gráfico de Control de Abordaje (Boletos) - Estilo AreaChart */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-6">Estado de Boletos (Últimos 7 días)</h3>
+                        <h3 className="text-lg font-bold text-gray-900 mb-6">Estado de Boletos</h3>
                         <div className="h-72 w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={boardingChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
