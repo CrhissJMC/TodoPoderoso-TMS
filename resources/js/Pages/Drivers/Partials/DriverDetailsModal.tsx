@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useForm } from '@inertiajs/react';
 
+declare var route: any;
+
 interface LicenseRenewal {
     id: number;
     license_number: string;

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 
 const inputClass = (error?: string) =>
     `w-full px-4 py-2 text-sm border rounded-lg bg-gray-50 text-gray-900 focus:ring-2 outline-none transition-shadow ${error ? 'border-red-400 focus:ring-red-500' : 'border-gray-200 focus:ring-gray-400'

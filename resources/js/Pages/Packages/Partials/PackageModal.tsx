@@ -9,6 +9,7 @@ interface PackageItem {
     origin: string; destination: string;
     trip_id: number | null; package_type: string; weight: string | null; dimensions: string | null;
     price: string; payment_method: string; payment_status: string; observations: string | null;
+    discount?: string | null;
 }
 interface Props {
     isOpen: boolean;
