@@ -35,6 +35,7 @@ class PackageRequest extends FormRequest
             'weight' => ['nullable', 'numeric', 'min:0.01', 'max:999'],
             'dimensions' => ['nullable', 'string', 'max:100'],
             'price' => ['required', 'numeric', 'min:0'],
+            'discount' => ['nullable', 'numeric', 'min:0'],
             'payment_method' => ['required', 'string', Rule::in(Package::paymentMethods())],
             'payment_status' => ['required', 'string', Rule::in(Package::paymentStatuses())],
             'observations' => ['nullable', 'string', 'max:500'],

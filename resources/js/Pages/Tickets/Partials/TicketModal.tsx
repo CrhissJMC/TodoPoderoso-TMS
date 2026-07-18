@@ -7,6 +7,7 @@ interface AvailableTrip {
     id: number; label: string; status: string; route_name: string;
     origin: string; destination: string; base_fare: string;
     sellable_seats: number; stops: Stop[]; occupied_seats: number[];
+    prices?: any[];
 }
 
 interface Ticket {
@@ -104,16 +105,28 @@ export default function TicketModal({ isOpen, ticket, availableTrips, paymentMet
         }));
     }
 
-    function handleDropoffChange(stopName: string) {
-        const trip = selectedTrip;
-        let fare = trip?.base_fare ?? '';
-
-        if (trip && stopName !== trip.destination) {
-            const stop = trip.stops.find(s => s.name === stopName);
-            if (stop?.fare) fare = stop.fare;
+    // Auto-calculate fare when stops change
+    useEffect(() => {
+        if (!selectedTrip || ticket) return; // if editing an existing ticket, we might not want to overwrite initially? Actually if editing, the user can't change the price either. Wait, if ticket is set, the initial load should use ticket fare. But if they change stops, it SHOULD recalculate.
+        const origin = data.boarding_stop || selectedTrip.origin;
+        const dest = data.dropoff_stop || selectedTrip.destination;
+        
+        let newFare = selectedTrip.base_fare;
+        if (selectedTrip.prices) {
+            const priceObj = selectedTrip.prices.find(p => p.origin_name === origin && p.destination_name === dest);
+            if (priceObj && priceObj.ticket_fare !== null) {
+                newFare = priceObj.ticket_fare;
+            }
         }
+        
+        // Prevent infinite loops if fare is already the same string
+        if (parseFloat(data.fare) !== parseFloat(newFare) && !isNaN(parseFloat(newFare))) {
+            setData('fare', parseFloat(newFare).toFixed(2));
+        }
+    }, [data.boarding_stop, data.dropoff_stop, selectedTrip]);
 
-        setData(d => ({ ...d, dropoff_stop: stopName, fare }));
+    function handleDropoffChange(stopName: string) {
+        setData('dropoff_stop', stopName);
     }
 
     // Búsqueda por Documento
@@ -322,8 +335,8 @@ export default function TicketModal({ isOpen, ticket, availableTrips, paymentMet
                                 </div>
 
                                 <Field label="Tarifa (S/)" required error={errors.fare}>
-                                    <input type="number" value={data.fare} onChange={e => setData('fare', e.target.value)}
-                                        min="0" step="0.50" className={inputCls(errors.fare)} />
+                                    <input type="number" value={data.fare} readOnly
+                                        className={inputCls(errors.fare) + " bg-gray-100 cursor-not-allowed text-gray-600 font-semibold"} />
                                 </Field>
 
                                 <div className="grid grid-cols-2 gap-3">

@@ -4,6 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import DriverModal from './Partials/DriverModal';
 import DeleteConfirmModal from './Partials/DeleteConfirmModal';
 import VehicleModal from '../Vehicles/Partials/VehicleModal';
+import DriverDetailsModal from './Partials/DriverDetailsModal';
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -85,6 +86,13 @@ export default function DriversIndex({
 
     const [editDriver, setEditDriver] = useState<Driver | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Driver | null>(null);
+    const [detailDriver, setDetailDriver] = useState<any>(null);
+
+    const viewDetails = (driver: Driver) => {
+        fetch(route('drivers.show', driver.id))
+            .then(res => res.json())
+            .then(data => setDetailDriver(data));
+    };
 
     function applyFilters(overrides = {}) {
         router.get(
@@ -259,16 +267,21 @@ export default function DriversIndex({
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4.5 text-right">
-                                                {hasAdmin && (
-                                                    <div className="flex items-center justify-end gap-3">
-                                                        <button onClick={() => openEdit(d)} className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
-                                                            Editar
-                                                        </button>
-                                                        <button onClick={() => setDeleteTarget(d)} className="text-sm font-medium text-red-600 hover:text-red-800 transition-colors">
-                                                            Eliminar
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                <div className="flex items-center justify-end gap-3">
+                                                    <button onClick={() => viewDetails(d)} title="Ver Ficha (CV)" className="p-1 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                                    </button>
+                                                    {hasAdmin && (
+                                                        <>
+                                                            <button onClick={() => openEdit(d)} className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                                                                Editar
+                                                            </button>
+                                                            <button onClick={() => setDeleteTarget(d)} className="text-sm font-medium text-red-600 hover:text-red-800 transition-colors">
+                                                                Eliminar
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -326,6 +339,9 @@ export default function DriversIndex({
 
             {/* MODAL 3: ELIMINACIÓN DE CONDUCTOR */}
             <DeleteConfirmModal driver={deleteTarget} onClose={() => setDeleteTarget(null)} />
+
+            {/* MODAL 4: DETALLE COMPLETO (CV) */}
+            <DriverDetailsModal driver={detailDriver} onClose={() => setDetailDriver(null)} />
         </AuthenticatedLayout>
     );
 }

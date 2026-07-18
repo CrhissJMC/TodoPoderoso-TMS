@@ -66,6 +66,11 @@ class Driver extends Model
         return $this->license_expiry->isPast();
     }
 
+    public function licenseRenewals()
+    {
+        return $this->hasMany(DriverLicenseRenewal::class);
+    }
+
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class)->withTrashed();

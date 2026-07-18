@@ -23,6 +23,8 @@ class DashboardController extends Controller
         $roleName = $user->role ? $user->role->name : '';
         $roleId = $user->role_id;
 
+        $nextTrip = $this->getNextTripData();
+
         if ($roleName === 'chofer' || $roleId === 2) {
             $driver = $user->driver;
             $driverTrips = [];
@@ -117,7 +119,7 @@ class DashboardController extends Controller
 
             // 2. Pasajeros Hoy
             $passengersTodayQuery = Ticket::whereDate('created_at', today())
-                ->whereIn('ticket_status', ['emitido', 'abordado']);
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado']);
             if ($routeId) {
                 $passengersTodayQuery->whereHas('trip', fn ($q) => $q->where('route_id', $routeId));
             }
@@ -125,7 +127,7 @@ class DashboardController extends Controller
 
             // 3. Ingresos Hoy
             $ticketRevenueQuery = Ticket::whereDate('created_at', today())
-                ->whereNotIn('ticket_status', ['anulado']);
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado']);
             if ($routeId) {
                 $ticketRevenueQuery->whereHas('trip', fn ($q) => $q->where('route_id', $routeId));
             }
@@ -149,7 +151,7 @@ class DashboardController extends Controller
             $tripsTodayQuery = Trip::with('vehicle')
                 ->whereDate('trip_date', today())
                 ->whereNotIn('status', ['cancelado'])
-                ->withCount(['tickets' => fn ($q) => $q->whereNotIn('ticket_status', ['anulado'])]);
+                ->withCount(['tickets' => fn ($q) => $q->whereNotIn('ticket_status', ['anulado', 'cancelado'])]);
             if ($routeId) {
                 $tripsTodayQuery->where('route_id', $routeId);
             }
@@ -164,53 +166,48 @@ class DashboardController extends Controller
             }
             $occupancyRate = $totalSeats > 0 ? round(($occupiedSeats / $totalSeats) * 100) : 0;
 
-            // 5. Gráfico de Ingresos (Últimos 7 días)
-            $sevenDaysAgo = Carbon::today()->subDays(6);
+            // 5. Gráficos filtrados por Período
+            $period = $request->input('period', '7days');
 
-            $ticketsLast7DaysQuery = Ticket::where('created_at', '>=', $sevenDaysAgo)
-                ->whereNotIn('ticket_status', ['anulado'])
-                ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(fare) as total'))
-                ->groupBy('date');
-            if ($routeId) {
-                $ticketsLast7DaysQuery->whereHas('trip', fn ($q) => $q->where('route_id', $routeId));
+            switch ($period) {
+                case 'day':
+                    $startDate = Carbon::today();
+                    $groupByRaw = "to_char(created_at, 'HH24:00')";
+                    break;
+                case 'month':
+                    $startDate = Carbon::today()->subDays(29);
+                    $groupByRaw = "to_char(created_at, 'YYYY-MM-DD')";
+                    break;
+                case 'year':
+                    $startDate = Carbon::today()->subMonths(11)->startOfMonth();
+                    $groupByRaw = "to_char(created_at, 'YYYY-MM')";
+                    break;
+                case '7days':
+                default:
+                    $startDate = Carbon::today()->subDays(6);
+                    $groupByRaw = "to_char(created_at, 'YYYY-MM-DD')";
+                    break;
             }
-            $ticketsLast7Days = $ticketsLast7DaysQuery->get()->keyBy('date');
-
-            $packagesLast7DaysQuery = Package::where('created_at', '>=', $sevenDaysAgo)
-                ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(price) as total'))
-                ->groupBy('date');
-            if ($selectedRoute) {
-                $packagesLast7DaysQuery->where(function ($q) use ($selectedRoute) {
-                    $q->whereHas('trip', fn ($t) => $t->where('route_id', $selectedRoute->id))
-                        ->orWhere(function ($q2) use ($selectedRoute) {
-                            $q2->whereNull('trip_id')
-                                ->where('origin', $selectedRoute->origin)
-                                ->where('destination', $selectedRoute->destination);
-                        });
-                });
-            }
-            $packagesLast7Days = $packagesLast7DaysQuery->get()->keyBy('date');
 
             $revenueChart = [];
-            for ($i = 0; $i < 7; $i++) {
-                $date = Carbon::today()->subDays(6 - $i)->format('Y-m-d');
-                $carbonDate = Carbon::parse($date);
-                $dayName = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'][$carbonDate->dayOfWeek];
-                $label = $dayName.' '.$carbonDate->day;
+            $packagesCountChart = [];
+            $boardingChart = [];
 
-                $revenueChart[] = [
-                    'date' => $label,
-                    'boletos' => round($ticketsLast7Days->get($date)?->total ?? 0, 2),
-                    'encomiendas' => round($packagesLast7Days->get($date)?->total ?? 0, 2),
-                ];
+            // Consultas agrupadas por la clave de tiempo calculada en DB
+            $ticketsQuery = Ticket::where('created_at', '>=', $startDate)
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado'])
+                ->select(DB::raw("{$groupByRaw} as time_key"), DB::raw('SUM(fare) as total'))
+                ->groupBy('time_key');
+            if ($routeId) {
+                $ticketsQuery->whereHas('trip', fn ($q) => $q->where('route_id', $routeId));
             }
+            $ticketsData = $ticketsQuery->get()->keyBy('time_key');
 
-            // 5.5 Gráfico de Estado de Encomiendas (Últimos 7 días)
-            $packagesStatusLast7DaysQuery = Package::where('created_at', '>=', $sevenDaysAgo)
-                ->select(DB::raw('DATE(created_at) as date'), 'status', DB::raw('COUNT(id) as total'))
-                ->groupBy('date', 'status');
+            $packagesQuery = Package::where('created_at', '>=', $startDate)
+                ->select(DB::raw("{$groupByRaw} as time_key"), DB::raw('SUM(price) as total'))
+                ->groupBy('time_key');
             if ($selectedRoute) {
-                $packagesStatusLast7DaysQuery->where(function ($q) use ($selectedRoute) {
+                $packagesQuery->where(function ($q) use ($selectedRoute) {
                     $q->whereHas('trip', fn ($t) => $t->where('route_id', $selectedRoute->id))
                         ->orWhere(function ($q2) use ($selectedRoute) {
                             $q2->whereNull('trip_id')
@@ -219,23 +216,124 @@ class DashboardController extends Controller
                         });
                 });
             }
-            $packagesStatusLast7Days = $packagesStatusLast7DaysQuery->get()->groupBy('date');
+            $packagesData = $packagesQuery->get()->keyBy('time_key');
 
-            $packagesCountChart = [];
-            for ($i = 0; $i < 7; $i++) {
-                $date = Carbon::today()->subDays(6 - $i)->format('Y-m-d');
-                $carbonDate = Carbon::parse($date);
-                $dayName = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'][$carbonDate->dayOfWeek];
-                $label = $dayName.' '.$carbonDate->day;
+            $packagesStatusQuery = Package::where('created_at', '>=', $startDate)
+                ->select(DB::raw("{$groupByRaw} as time_key"), 'status', DB::raw('COUNT(id) as total'))
+                ->groupBy('time_key', 'status');
+            if ($selectedRoute) {
+                $packagesStatusQuery->where(function ($q) use ($selectedRoute) {
+                    $q->whereHas('trip', fn ($t) => $t->where('route_id', $selectedRoute->id))
+                        ->orWhere(function ($q2) use ($selectedRoute) {
+                            $q2->whereNull('trip_id')
+                                ->where('origin', $selectedRoute->origin)
+                                ->where('destination', $selectedRoute->destination);
+                        });
+                });
+            }
+            $packagesStatusData = $packagesStatusQuery->get()->groupBy('time_key');
 
-                $statusesForDate = $packagesStatusLast7Days->get($date) ?? collect();
+            $boardingQuery = Ticket::withTrashed()->where('created_at', '>=', $startDate)
+                ->whereNotIn('ticket_status', ['anulado'])
+                ->select(DB::raw("{$groupByRaw} as time_key"), 'ticket_status', DB::raw('COUNT(id) as total'))
+                ->groupBy('time_key', 'ticket_status');
+            if ($routeId) {
+                $boardingQuery->whereHas('trip', fn ($q) => $q->where('route_id', $routeId));
+            }
+            $boardingData = $boardingQuery->get()->groupBy('time_key');
 
-                $packagesCountChart[] = [
-                    'date' => $label,
-                    'recibidas' => $statusesForDate->where('status', 'recibido')->sum('total'),
-                    'enviadas' => $statusesForDate->whereIn('status', ['en_ruta', 'entregado'])->sum('total'),
-                    'devueltas' => $statusesForDate->where('status', 'devuelto')->sum('total'),
-                ];
+            // Construir los arreglos finales mapeando las etiquetas correctas en el eje X
+            if ($period === 'day') {
+                for ($i = 0; $i < 24; $i++) {
+                    $timeKey = str_pad($i, 2, '0', STR_PAD_LEFT).':00';
+                    $label = $timeKey;
+
+                    $revenueChart[] = [
+                        'date' => $label,
+                        'boletos' => round($ticketsData->get($timeKey)?->total ?? 0, 2),
+                        'encomiendas' => round($packagesData->get($timeKey)?->total ?? 0, 2),
+                    ];
+
+                    $pkgStatuses = $packagesStatusData->get($timeKey) ?? collect();
+                    $packagesCountChart[] = [
+                        'date' => $label,
+                        'recibidas' => $pkgStatuses->where('status', 'recibido')->sum('total'),
+                        'enviadas' => $pkgStatuses->whereIn('status', ['en_ruta', 'entregado'])->sum('total'),
+                        'devueltas' => $pkgStatuses->where('status', 'devuelto')->sum('total'),
+                    ];
+
+                    $boardStatuses = $boardingData->get($timeKey) ?? collect();
+                    $boardingChart[] = [
+                        'date' => $label,
+                        'abordados' => $boardStatuses->where('ticket_status', 'abordado')->sum('total'),
+                        'emitidos' => $boardStatuses->where('ticket_status', 'emitido')->sum('total'),
+                        'cancelados' => $boardStatuses->where('ticket_status', 'cancelado')->sum('total'),
+                        'no_abordaron' => $boardStatuses->where('ticket_status', 'no_abordado')->sum('total'),
+                    ];
+                }
+            } elseif ($period === '7days' || $period === 'month') {
+                $daysCount = $period === '7days' ? 7 : 30;
+                for ($i = 0; $i < $daysCount; $i++) {
+                    $carbonDate = Carbon::today()->subDays(($daysCount - 1) - $i);
+                    $timeKey = $carbonDate->format('Y-m-d');
+
+                    $dayName = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'][$carbonDate->dayOfWeek];
+                    $label = $dayName.' '.$carbonDate->day;
+
+                    $revenueChart[] = [
+                        'date' => $label,
+                        'boletos' => round($ticketsData->get($timeKey)?->total ?? 0, 2),
+                        'encomiendas' => round($packagesData->get($timeKey)?->total ?? 0, 2),
+                    ];
+
+                    $pkgStatuses = $packagesStatusData->get($timeKey) ?? collect();
+                    $packagesCountChart[] = [
+                        'date' => $label,
+                        'recibidas' => $pkgStatuses->where('status', 'recibido')->sum('total'),
+                        'enviadas' => $pkgStatuses->whereIn('status', ['en_ruta', 'entregado'])->sum('total'),
+                        'devueltas' => $pkgStatuses->where('status', 'devuelto')->sum('total'),
+                    ];
+
+                    $boardStatuses = $boardingData->get($timeKey) ?? collect();
+                    $boardingChart[] = [
+                        'date' => $label,
+                        'abordados' => $boardStatuses->where('ticket_status', 'abordado')->sum('total'),
+                        'emitidos' => $boardStatuses->where('ticket_status', 'emitido')->sum('total'),
+                        'cancelados' => $boardStatuses->where('ticket_status', 'cancelado')->sum('total'),
+                        'no_abordaron' => $boardStatuses->where('ticket_status', 'no_abordado')->sum('total'),
+                    ];
+                }
+            } elseif ($period === 'year') {
+                for ($i = 0; $i < 12; $i++) {
+                    $carbonDate = Carbon::today()->subMonths(11 - $i);
+                    $timeKey = $carbonDate->format('Y-m');
+
+                    $monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                    $label = $monthNames[$carbonDate->month - 1].' '.$carbonDate->format('y');
+
+                    $revenueChart[] = [
+                        'date' => $label,
+                        'boletos' => round($ticketsData->get($timeKey)?->total ?? 0, 2),
+                        'encomiendas' => round($packagesData->get($timeKey)?->total ?? 0, 2),
+                    ];
+
+                    $pkgStatuses = $packagesStatusData->get($timeKey) ?? collect();
+                    $packagesCountChart[] = [
+                        'date' => $label,
+                        'recibidas' => $pkgStatuses->where('status', 'recibido')->sum('total'),
+                        'enviadas' => $pkgStatuses->whereIn('status', ['en_ruta', 'entregado'])->sum('total'),
+                        'devueltas' => $pkgStatuses->where('status', 'devuelto')->sum('total'),
+                    ];
+
+                    $boardStatuses = $boardingData->get($timeKey) ?? collect();
+                    $boardingChart[] = [
+                        'date' => $label,
+                        'abordados' => $boardStatuses->where('ticket_status', 'abordado')->sum('total'),
+                        'emitidos' => $boardStatuses->where('ticket_status', 'emitido')->sum('total'),
+                        'cancelados' => $boardStatuses->where('ticket_status', 'cancelado')->sum('total'),
+                        'no_abordaron' => $boardStatuses->where('ticket_status', 'no_abordado')->sum('total'),
+                    ];
+                }
             }
 
             // 6. Rutas / Paradas más populares (Top 5)
@@ -244,7 +342,7 @@ class DashboardController extends Controller
                 $topRoutes = DB::table('tickets')
                     ->join('trips', 'tickets.trip_id', '=', 'trips.id')
                     ->where('trips.route_id', $routeId)
-                    ->whereNotIn('tickets.ticket_status', ['anulado'])
+                    ->whereNotIn('tickets.ticket_status', ['anulado', 'cancelado'])
                     ->select('tickets.boarding_stop as name', DB::raw('COUNT(tickets.id) as tickets_count'))
                     ->groupBy('tickets.boarding_stop')
                     ->orderByDesc('tickets_count')
@@ -255,7 +353,7 @@ class DashboardController extends Controller
                 $topRoutes = DB::table('tickets')
                     ->join('trips', 'tickets.trip_id', '=', 'trips.id')
                     ->join('routes', 'trips.route_id', '=', 'routes.id')
-                    ->whereNotIn('tickets.ticket_status', ['anulado'])
+                    ->whereNotIn('tickets.ticket_status', ['anulado', 'cancelado'])
                     ->select('routes.name', DB::raw('COUNT(tickets.id) as tickets_count'))
                     ->groupBy('routes.name')
                     ->orderByDesc('tickets_count')
@@ -266,7 +364,7 @@ class DashboardController extends Controller
             // 7. Próximos Viajes
             $recentTripsQuery = Trip::with(['route', 'vehicle', 'driver', 'schedule'])
                 ->whereIn('status', ['programado', 'abordando', 'en_ruta'])
-                ->withCount(['tickets' => fn ($q) => $q->whereNotIn('ticket_status', ['anulado'])])
+                ->withCount(['tickets' => fn ($q) => $q->whereNotIn('ticket_status', ['anulado', 'cancelado'])])
                 ->latest('trip_date');
             if ($routeId) {
                 $recentTripsQuery->where('route_id', $routeId);
@@ -306,7 +404,7 @@ class DashboardController extends Controller
             if ($routeId) {
                 $topTicketSellersQuery->withCount(['ticketsSold' => fn ($q) => $q->whereHas('trip', fn ($t) => $t->where('route_id', $routeId))]);
             } else {
-                $topTicketSellersQuery->withCount('ticketsSold');
+                $topTicketSellersQuery->withCount(['ticketsSold' => fn ($q) => $q->whereNotIn('ticket_status', ['anulado', 'cancelado'])]);
             }
             $topTicketSellers = $topTicketSellersQuery->orderByDesc('tickets_sold_count')
                 ->take(5)
@@ -381,13 +479,15 @@ class DashboardController extends Controller
 
             return Inertia::render('Dashboard', [
                 'allRoutes' => $allRoutes,
-                'filters' => $request->only(['route_id']),
+                'filters' => $request->only(['route_id', 'period']),
                 'tripsInProgress' => $tripsInProgress,
+                'nextTrip' => $nextTrip,
                 'passengersToday' => $passengersToday,
                 'revenueToday' => $revenueToday,
                 'occupancyRate' => $occupancyRate,
                 'revenueChart' => $revenueChart,
                 'packagesCountChart' => $packagesCountChart,
+                'boardingChart' => $boardingChart,
                 'topRoutes' => $topRoutes,
                 'recentTrips' => $recentTrips,
                 'pendingPackages' => $pendingPackages,
@@ -482,14 +582,18 @@ class DashboardController extends Controller
         }
 
         if ($roleName === 'operador_ventas' || $roleId === 3) {
-            $sellerTotalTickets = Ticket::where('sold_by', $user->id)->count();
+            $sellerTotalTickets = Ticket::where('sold_by', $user->id)
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado'])
+                ->count();
 
             $sellerTodayTickets = Ticket::where('sold_by', $user->id)
                 ->whereDate('created_at', today())
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado'])
                 ->count();
 
             $sellerRecentTickets = Ticket::with(['client', 'trip', 'trip.route'])
                 ->where('sold_by', $user->id)
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado'])
                 ->latest()
                 ->take(10)
                 ->get()
@@ -506,6 +610,7 @@ class DashboardController extends Controller
                 ]);
 
             $sellerStats = DB::table('tickets')
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado'])
                 ->select('sold_by', DB::raw('COUNT(id) as count'))
                 ->groupBy('sold_by')
                 ->orderByDesc('count')
@@ -528,6 +633,7 @@ class DashboardController extends Controller
 
             return Inertia::render('Dashboard', [
                 'sellerTotalTickets' => $sellerTotalTickets,
+                'nextTrip' => $nextTrip,
                 'sellerTodayTickets' => $sellerTodayTickets,
                 'sellerRecentTickets' => $sellerRecentTickets,
                 'sellerRanking' => $sellerRanking,
@@ -551,7 +657,7 @@ class DashboardController extends Controller
 
             // KPIs — Conteo de viajes por estado (via boletos del cliente)
             $clientTripIds = Ticket::where('client_id', $clientId)
-                ->whereNotIn('ticket_status', ['anulado'])
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado'])
                 ->pluck('trip_id')
                 ->unique();
 
@@ -666,7 +772,7 @@ class DashboardController extends Controller
                 ->join('trips', 'tickets.trip_id', '=', 'trips.id')
                 ->join('routes', 'trips.route_id', '=', 'routes.id')
                 ->where('tickets.client_id', $clientId)
-                ->whereNotIn('tickets.ticket_status', ['anulado'])
+                ->whereNotIn('tickets.ticket_status', ['anulado', 'cancelado'])
                 ->select('routes.name', DB::raw('COUNT(DISTINCT trips.id) as trips_count'))
                 ->groupBy('routes.name')
                 ->orderByDesc('trips_count')
@@ -690,13 +796,17 @@ class DashboardController extends Controller
         // Dashboard para Agente de Mostrador (combina ventas + encomiendas)
         if ($roleName === 'agente' || $roleId === 5) {
             // Boletos
-            $agentTotalTickets = Ticket::where('sold_by', $user->id)->count();
+            $agentTotalTickets = Ticket::where('sold_by', $user->id)
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado'])
+                ->count();
             $agentTodayTickets = Ticket::where('sold_by', $user->id)
                 ->whereDate('created_at', today())
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado'])
                 ->count();
 
             $agentRecentTickets = Ticket::with(['client', 'trip', 'trip.route'])
                 ->where('sold_by', $user->id)
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado'])
                 ->latest()
                 ->take(5)
                 ->get()
@@ -738,7 +848,7 @@ class DashboardController extends Controller
             // Ingresos generados hoy por este agente (boletos + encomiendas)
             $agentTicketRevenueToday = Ticket::where('sold_by', $user->id)
                 ->whereDate('created_at', today())
-                ->whereNotIn('ticket_status', ['anulado'])
+                ->whereNotIn('ticket_status', ['anulado', 'cancelado'])
                 ->sum('fare');
 
             $agentPackageRevenueToday = Package::where('received_by', $user->id)
@@ -749,6 +859,7 @@ class DashboardController extends Controller
 
             return Inertia::render('Dashboard', [
                 'agentTotalTickets' => $agentTotalTickets,
+                'nextTrip' => $nextTrip,
                 'agentTodayTickets' => $agentTodayTickets,
                 'agentRecentTickets' => $agentRecentTickets,
                 'agentTotalPackages' => $agentTotalPackages,
@@ -762,6 +873,45 @@ class DashboardController extends Controller
         // Para otros usuarios
         return Inertia::render('Dashboard', [
             'statusConfig' => Trip::statusConfig(),
+            'nextTrip' => $nextTrip,
         ]);
+    }
+
+    private function getNextTripData()
+    {
+        $nextTripObj = Trip::with(['schedule', 'route', 'vehicle', 'tickets.client'])
+            ->whereDate('trip_date', today())
+            ->whereIn('status', ['programado', 'abordando'])
+            ->get()
+            ->filter(function ($t) {
+                if (! $t->schedule) {
+                    return false;
+                }
+
+                // Dejamos 30 mins de margen para que puedan abordar a los que llegan un poco tarde o que salieron recien
+                return $t->schedule->departure_time >= now()->subMinutes(30)->format('H:i:s');
+            })
+            ->sortBy(function ($t) {
+                return $t->schedule->departure_time;
+            })
+            ->first();
+
+        if (! $nextTripObj) {
+            return null;
+        }
+
+        return [
+            'id' => $nextTripObj->id,
+            'route_name' => $nextTripObj->route->name,
+            'time' => substr($nextTripObj->schedule->departure_time, 0, 5),
+            'vehicle_plate' => $nextTripObj->vehicle?->plate ?? 'Sin asignar',
+            'tickets' => $nextTripObj->tickets->map(fn ($ticket) => [
+                'id' => $ticket->id,
+                'client_name' => $ticket->client->name,
+                'client_document' => $ticket->client->document_number,
+                'seat_number' => $ticket->seat_number,
+                'ticket_status' => $ticket->ticket_status,
+            ])->values(),
+        ];
     }
 }

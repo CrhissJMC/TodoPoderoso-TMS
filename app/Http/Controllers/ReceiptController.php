@@ -77,6 +77,36 @@ class ReceiptController extends Controller
         return $pdf->stream($facturaNumber.'.pdf');
     }
 
+    public function ticketCreditNote(Ticket $ticket)
+    {
+        $ticket->load(['client', 'trip.route', 'soldBy']);
+
+        // N° Nota de Crédito
+        $creditNoteNumber = 'E001-'.str_pad($ticket->id, 8, '0', STR_PAD_LEFT);
+
+        // Documento que modifica (Boleta o Factura original)
+        // Por simplicidad, referenciamos el ID o un código estándar como "B001-..." o "F001-..."
+        // Asumiendo que el cliente tiene RUC se le dio factura, sino boleta
+        $docOriginal = strlen($ticket->client->document_number) === 11
+            ? 'F001-'.str_pad($ticket->id, 8, '0', STR_PAD_LEFT)
+            : 'B001-'.str_pad($ticket->id, 8, '0', STR_PAD_LEFT);
+
+        $amountWords = NumberToLetters::convert($ticket->fare);
+
+        $data = [
+            'ticket' => $ticket,
+            'receiptNumber' => $creditNoteNumber,
+            'originalDocument' => $docOriginal,
+            'amountWords' => $amountWords,
+            'title' => 'Nota de Crédito - '.$creditNoteNumber,
+        ];
+
+        $pdf = Pdf::loadView('receipts.credit_note', $data)
+            ->setPaper('A4', 'portrait');
+
+        return $pdf->stream($creditNoteNumber.'.pdf');
+    }
+
     /**
      * Generar Voucher de Encomienda (Package)
      */

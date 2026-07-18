@@ -102,6 +102,7 @@ export default function TicketsIndex({ tickets, counts, availableTrips, filters,
                         { key: 'total', label: 'Total boletos', color: 'bg-gray-100 text-gray-600' },
                         { key: 'emitido', label: 'Emitidos', color: 'bg-blue-100 text-blue-600' },
                         { key: 'abordado', label: 'Abordados', color: 'bg-green-100 text-green-600' },
+                        { key: 'cancelado', label: 'Cancelados', color: 'bg-amber-100 text-amber-600' },
                         { key: 'anulado', label: 'Anulados', color: 'bg-red-100 text-red-500' },
                     ].map(s => (
                         <button key={s.key}
@@ -202,6 +203,9 @@ export default function TicketsIndex({ tickets, counts, availableTrips, filters,
                                             {t.ticket_status === 'anulado' && t.voided_by && (
                                                 <span className="text-[10px] text-red-500">Anulado por: {t.voided_by.name}</span>
                                             )}
+                                            {t.ticket_status === 'cancelado' && t.voided_by && (
+                                                <span className="text-[10px] text-amber-500">Cancelado por: {t.voided_by.name}</span>
+                                            )}
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
@@ -236,11 +240,28 @@ export default function TicketsIndex({ tickets, counts, availableTrips, filters,
                                                     </button>
                                                 </>
                                             )}
-                                            {t.ticket_status !== 'anulado' && (
-                                                <button onClick={() => setDelete(t)} title="Anular"
-                                                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                </button>
+                                            {t.ticket_status !== 'anulado' && t.ticket_status !== 'cancelado' && (
+                                                <>
+                                                    <button onClick={() => {
+                                                        if (confirm('¿Estás seguro de cancelar este boleto? Se emitirá una nota de crédito.')) {
+                                                            router.patch(route('tickets.cancel', t.id));
+                                                        }
+                                                    }} title="Cancelar (Nota de Crédito)"
+                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                                    </button>
+                                                    <button onClick={() => setDelete(t)} title="Anular (Error de digitación)"
+                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    </button>
+                                                </>
+                                            )}
+                                            {t.ticket_status === 'cancelado' && (
+                                                <a href={route('receipts.ticket.credit_note', t.id)} target="_blank" title="Imprimir Nota de Crédito"
+                                                    className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors font-bold text-[10px] flex items-center gap-1">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                                                    N.C
+                                                </a>
                                             )}
                                         </div>
                                     </td>

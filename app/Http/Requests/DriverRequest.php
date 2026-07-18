@@ -53,6 +53,7 @@ class DriverRequest extends FormRequest
             'rental_fee' => ['nullable', 'numeric', 'min:0', 'required_if:contract_type,alquiler'],
 
             'observations' => ['nullable', 'string', 'max:1000'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ];
     }
 

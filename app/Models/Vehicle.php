@@ -55,6 +55,16 @@ class Vehicle extends Model
         };
     }
 
+    public function soatRenewals()
+    {
+        return $this->hasMany(VehicleSoatRenewal::class);
+    }
+
+    public function maintenances()
+    {
+        return $this->hasMany(VehicleMaintenance::class);
+    }
+
     public function drivers()
     {
         return $this->hasMany(Driver::class);

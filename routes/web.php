@@ -56,6 +56,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
         Route::delete('vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
         Route::patch('vehicles/{vehicle}/status', [VehicleController::class, 'updateStatus'])->name('vehicles.updateStatus');
+        Route::post('vehicles/{vehicle}/maintenances', [VehicleController::class, 'addMaintenance'])->name('vehicles.addMaintenance');
+        Route::post('vehicles/{vehicle}/soat-renewals', [VehicleController::class, 'addSoatRenewal'])->name('vehicles.addSoatRenewal');
     });
 
     // Módulo de Conductores
@@ -68,6 +70,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('drivers/{driver}', [DriverController::class, 'update'])->name('drivers.update');
         Route::delete('drivers/{driver}', [DriverController::class, 'destroy'])->name('drivers.destroy');
         Route::patch('drivers/{driver}/status', [DriverController::class, 'updateStatus'])->name('drivers.updateStatus');
+        Route::post('drivers/{driver}/license-renewals', [DriverController::class, 'addLicenseRenewal'])->name('drivers.addLicenseRenewal');
     });
 
     // Módulo de Rutas y Paradas
@@ -128,6 +131,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('tickets', [TicketController::class, 'store'])->name('tickets.store');
         Route::put('tickets/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
         Route::delete('tickets/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
+        Route::patch('tickets/{ticket}/void', [TicketController::class, 'voidTicket'])->name('tickets.void');
+        Route::patch('tickets/{ticket}/cancel', [TicketController::class, 'cancelTicket'])->name('tickets.cancel');
+        Route::patch('tickets/{ticket}/boarding-status', [TicketController::class, 'updateBoardingStatus'])->name('tickets.updateBoardingStatus');
         Route::patch('tickets/{ticket}/board', [TicketController::class, 'markBoarded'])->name('tickets.markBoarded');
     });
 
@@ -148,6 +154,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('receipts/ticket/{ticket}/voucher', [ReceiptController::class, 'ticketVoucher'])->name('receipts.ticket.voucher');
     Route::get('receipts/ticket/{ticket}/boleta', [ReceiptController::class, 'ticketBoleta'])->name('receipts.ticket.boleta');
     Route::get('receipts/ticket/{ticket}/factura', [ReceiptController::class, 'ticketFactura'])->name('receipts.ticket.factura');
+    Route::get('receipts/ticket/{ticket}/credit-note', [ReceiptController::class, 'ticketCreditNote'])->name('receipts.ticket.credit_note')->withTrashed();
 
     Route::get('receipts/package/{package}/voucher', [ReceiptController::class, 'packageVoucher'])->name('receipts.package.voucher');
     Route::get('receipts/package/{package}/boleta', [ReceiptController::class, 'packageBoleta'])->name('receipts.package.boleta');

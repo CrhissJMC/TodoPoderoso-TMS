@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Driver;
+use App\Models\DriverLicenseRenewal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -69,6 +70,16 @@ class DriverLicenseController extends Controller
         $driver->license_type = $request->license_type;
         $driver->license_expiry = $request->license_expiry;
         $driver->save();
+
+        // Registrar en historial
+        DriverLicenseRenewal::create([
+            'driver_id' => $driver->id,
+            'license_number' => $driver->license_number,
+            'expiry_date' => $request->license_expiry,
+            'renewed_at' => now(),
+            'document_path' => $driver->license_document_path ?? null,
+            'notes' => 'Renovado por el propio conductor desde su panel.',
+        ]);
 
         return redirect()->route('dashboard')->with('success', 'Tu licencia ha sido actualizada correctamente.');
     }
